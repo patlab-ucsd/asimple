@@ -22,14 +22,14 @@ provide a second cross-file with that variable overriden. For example:
 Contents of `my_cross`:
 ```
 [constants]
-prefix = /home/gabriel/.local/redboard
+prefix = '/home/gabriel/.local/redboard'
 ```
 
 # Building and Flashing RedBoard
 ```
 mkdir build
 cd build
-meson --prefix [prefix-where-sdk-installed] --cross-file redboard_artemis --cross-file ../my_cross --buildtype release
+meson --prefix [prefix-where-sdk-installed] --cross-file redboard_artemis --cross-file ../my_cross --buildtype release ../
 meson compile
 meson flash
 ```
