@@ -1,4 +1,4 @@
-project('serial_experiment', 'c',
+project('redboard_adc_experiment', 'c',
   default_options: ['b_lto=false', 'b_staticpic=false'],
   license: ['Apache-2.0'],
   version: '0.1.0')
@@ -19,9 +19,20 @@ link_args = [
   '-static', '-Wl,--gc-sections', '-fno-exceptions'
 ]
 
+sources = files([
+  'src/main.c',
+  'src/uart.c',
+  'src/adc.c',
+])
+
+includes = include_directories([
+  'include',
+])
+
 exe = executable(meson.project_name(),
-  'main.c',
+  sources,
   dependencies: [lib],
+  include_directories: includes,
   c_args: c_args,
   link_args: link_args + ['-T' + meson.source_root() / 'linker.ld']
 )
