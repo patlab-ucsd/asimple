@@ -10,6 +10,7 @@
 
 #include <uart.h>
 #include <adc.h>
+#include <spi.h>
 
 #define CHECK_ERRORS(x)               \
 	if ((x) != AM_HAL_STATUS_SUCCESS) \
@@ -31,6 +32,7 @@ static void error_handler(uint32_t error)
 
 static struct uart uart;
 static struct adc adc;
+static struct spi spi;
 
 int main(void)
 {
@@ -47,6 +49,9 @@ int main(void)
 
 	// Initialize the ADC.
 	adc_init(&adc);
+
+	// Set up the IOM
+    spi_init(&spi, 0);
 
 	// After init is done, enable interrupts
 	am_hal_interrupt_master_enable();
@@ -133,7 +138,6 @@ int main(void)
 		uint32_t data = 0;
 		if (adc_get_sample(&adc, &data))
 		{
-
 			// The math here is straight forward: we've asked the ADC to give
 			// us data in 14 bits (max value of 2^14 -1). We also specified the
 			// reference voltage to be 1.5V. A reading of 1.5V would be
@@ -147,6 +151,8 @@ int main(void)
 				"voltage = <%.3f> (0x%04X) ", voltage, data);
 
 			am_util_stdio_printf("\r\n");
+
+			spi_write(&spi, 0xF0, &data, 4);
 		}
 
 		// Sleep here until the next ADC interrupt comes along.

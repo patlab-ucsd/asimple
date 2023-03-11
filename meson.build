@@ -23,6 +23,7 @@ sources = files([
   'src/main.c',
   'src/uart.c',
   'src/adc.c',
+  'src/spi.c',
 ])
 
 includes = include_directories([
