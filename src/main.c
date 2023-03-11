@@ -12,10 +12,10 @@
 #include <adc.h>
 #include <spi.h>
 
-#define CHECK_ERRORS(x)               \
-	if ((x) != AM_HAL_STATUS_SUCCESS) \
-	{                                 \
-		error_handler(x);             \
+#define CHECK_ERRORS(x)\
+	if ((x) != AM_HAL_STATUS_SUCCESS)\
+	{\
+		error_handler(x);\
 	}
 
 static void error_handler(uint32_t error)
@@ -51,7 +51,7 @@ int main(void)
 	adc_init(&adc);
 
 	// Set up the IOM
-    spi_init(&spi, 0);
+	spi_init(&spi, 0);
 
 	// After init is done, enable interrupts
 	am_hal_interrupt_master_enable();

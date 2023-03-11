@@ -1,4 +1,4 @@
-project('redboard_adc_experiment', 'c',
+project('redboard_spi_experiment', 'c',
   default_options: ['b_lto=false', 'b_staticpic=false'],
   license: ['Apache-2.0'],
   version: '0.1.0')
@@ -10,13 +10,14 @@ c_args = [
   '-DWSF_TRACE_ENABLED', '-DWSF_TRACE_ENABLED', '-DAM_PART_APOLLO3',
   '-DPART_APOLLO3', '-mthumb', '-mcpu=cortex-m4', '-mfpu=fpv4-sp-d16',
   '-mfloat-abi=hard', '-std=c17', '-ffunction-sections', '-Wall', '-Wextra',
-  '-pedantic',
+  '-pedantic', '-fno-delete-null-pointer-checks',
 ]
 
 link_args = [
   '--specs=nosys.specs', '--specs=nano.specs', '-mthumb',
   '-mcpu=cortex-m4', '-mfpu=fpv4-sp-d16', '-mfloat-abi=hard', '-nostartfiles',
-  '-static', '-Wl,--gc-sections', '-fno-exceptions'
+  '-static', '-Wl,--gc-sections', '-fno-exceptions',
+  '-fno-delete-null-pointer-checks',
 ]
 
 sources = files([

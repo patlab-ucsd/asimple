@@ -77,7 +77,7 @@ SECTIONS
   /* purpose is to place padding between initial (empty) stack and heap */
   .dmz (NOLOAD):
   {
-    . = ORIGIN(sram) + LENGTH(sram) - 8; /* Automatically give the rest of the space in sram to the stack */
+    . = ORIGIN(sram) + LENGTH(sram); /* Automatically give the rest of the space in sram to the stack */
     . = ALIGN(8);
   }
 
