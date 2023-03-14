@@ -66,4 +66,11 @@ void spi_read(
 void spi_write(
 	struct spi *spi, uint32_t command, const uint32_t *buffer, uint32_t size);
 
+void spi_readwrite(
+	struct spi *spi,
+	uint32_t command,
+	uint32_t *rx_buffer,
+	const uint32_t *tx_buffer,
+	uint32_t size);
+
 #endif//SPI_H_

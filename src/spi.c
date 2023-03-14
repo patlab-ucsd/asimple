@@ -75,3 +75,29 @@ void spi_write(
 	};
 	am_hal_iom_blocking_transfer(spi->handle, &transaction);
 }
+
+void spi_readwrite(
+	struct spi *spi,
+	uint32_t command,
+	uint32_t *rx_buffer,
+	const uint32_t *tx_buffer,
+	uint32_t size)
+{
+	am_hal_iom_transfer_t transaction =
+	{
+		.ui32InstrLen	= 1,
+		.ui32Instr	   = command,
+		.eDirection	  = AM_HAL_IOM_FULLDUPLEX,
+		.ui32NumBytes	= size,
+		// FIXME I really don't like how I need to strip const here...
+		.pui32TxBuffer   = (uint32_t*)tx_buffer,
+		.pui32RxBuffer = rx_buffer,
+		.bContinue	   = false,
+		.ui8RepeatCount  = 0,
+		.ui32PauseCondition = 0,
+		.ui32StatusSetClr = 0,
+
+		.uPeerInfo.ui32SpiChipSelect = AM_BSP_GPIO_IOM0_CS_CHNL,
+	};
+	am_hal_iom_spi_blocking_fullduplex(spi->handle, &transaction);
+}

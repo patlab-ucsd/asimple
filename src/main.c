@@ -11,6 +11,7 @@
 #include <uart.h>
 #include <adc.h>
 #include <spi.h>
+#include <lora.h>
 
 #define CHECK_ERRORS(x)\
 	if ((x) != AM_HAL_STATUS_SUCCESS)\
@@ -32,7 +33,6 @@ static void error_handler(uint32_t error)
 
 static struct uart uart;
 static struct adc adc;
-static struct spi spi;
 
 int main(void)
 {
@@ -49,9 +49,6 @@ int main(void)
 
 	// Initialize the ADC.
 	adc_init(&adc);
-
-	// Set up the IOM
-	spi_init(&spi, 0);
 
 	// After init is done, enable interrupts
 	am_hal_interrupt_master_enable();
@@ -130,6 +127,17 @@ int main(void)
 	// Trigger the ADC to start collecting data
 	adc_trigger(&adc);
 
+	uint32_t rx_data = 0;
+	uint32_t tx_data = 0x80;
+	struct lora lora;
+	lora_init(&lora, 915000000);
+	lora_standby(&lora);
+	lora_set_spreading_factor(&lora, 7);
+	lora_set_coding_rate(&lora, 1);
+	lora_set_bandwidth(&lora, 0x7);
+	//lora_receive_mode(&lora);
+
+
 	// Wait here for the ISR to grab a buffer of samples.
 	while (1)
 	{
@@ -147,12 +155,27 @@ int main(void)
 			const double reference = 1.5;
 			double voltage = data * reference / ((1 << 14) - 1);
 
-			am_util_stdio_printf(
+			/*for (int i = 0; i < 0x30; ++i)
+			{
+				am_util_stdio_printf("Reg %02X: Value: %02X\r\n", i, lora_get_register(&lora, i));
+			}*/
+			unsigned char buffer[32] = "Hello World!!!\r\n";
+
+				am_util_stdio_printf("Reg %02X: Value: %02X\r\n", 1, lora_get_register(&lora, 1));
+			am_util_stdio_printf("transmit? %i\r\n", lora_transmitting(&lora));
+			lora_transmit_mode(&lora);
+			lora_send_packet(&lora, buffer, strlen(buffer));
+			if (lora_rx_amount(&lora))
+			{
+			am_util_stdio_printf("length %i\r\n", lora_rx_amount(&lora));
+			lora_receive_packet(&lora, buffer, 32);
+			am_util_stdio_printf("Data: %s\r\n", buffer);
+			}
+		/*	am_util_stdio_printf(
 				"voltage = <%.3f> (0x%04X) ", voltage, data);
 
 			am_util_stdio_printf("\r\n");
-
-			spi_write(&spi, 0xF0, &data, 4);
+*/
 		}
 
 		// Sleep here until the next ADC interrupt comes along.

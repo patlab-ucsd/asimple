@@ -25,6 +25,7 @@ sources = files([
   'src/uart.c',
   'src/adc.c',
   'src/spi.c',
+  'src/lora.c',
 ])
 
 includes = include_directories([
