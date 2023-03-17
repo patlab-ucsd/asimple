@@ -3,7 +3,7 @@ project('redboard_spi_experiment', 'c',
   license: ['Apache-2.0'],
   version: '0.1.0')
 
-lib = dependency('rba_atp')
+rba_lib = dependency('rba_atp')
 
 c_args = [
   '-DAM_CUSTOM_BDADDR', '-DAM_PACKAGE_BGA', '-DWSF_TRACE_ENABLED',
@@ -22,6 +22,9 @@ link_args = [
 
 sources = files([
   'src/main.c',
+])
+
+lib_sources = files([
   'src/uart.c',
   'src/adc.c',
   'src/spi.c',
@@ -29,12 +32,24 @@ sources = files([
 ])
 
 includes = include_directories([
-  'include',
+  'include/rba_simple',
 ])
+
+lib = library('rba_simple',
+  lib_sources,
+  dependencies: [rba_lib],
+  include_directories: includes,
+  c_args: c_args,
+  link_args: link_args,
+  install: true,
+)
+
+install_subdir('include', install_dir: 'include/')
 
 exe = executable(meson.project_name(),
   sources,
-  dependencies: [lib],
+  dependencies: [rba_lib],
+  link_with: lib,
   include_directories: includes,
   c_args: c_args,
   link_args: link_args + ['-T' + meson.source_root() / 'linker.ld']
@@ -57,3 +72,7 @@ run_target('flash',
     '-b', '921600', '-v'],
   depends : bin,
 )
+
+pkg = import('pkgconfig')
+
+pkg.generate(lib, subdirs: ['rba_simple'])
