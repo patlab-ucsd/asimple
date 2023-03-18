@@ -1,28 +1,23 @@
-project('redboard_spi_experiment', 'c',
-  default_options: ['b_lto=false', 'b_staticpic=false'],
+project('rba_simple', 'c',
+  default_options: ['b_lto=false', 'b_staticpic=false', 'c_std=c2x'],
   license: ['Apache-2.0'],
   version: '0.1.0')
 
 rba_lib = dependency('rba_atp')
 
+# FIXME There are way too many defines the SDK needs-- all of these were in use
+# by the Makefile used to build for the Artemis ATP.
+
 c_args = [
   '-DAM_CUSTOM_BDADDR', '-DAM_PACKAGE_BGA', '-DWSF_TRACE_ENABLED',
   '-DWSF_TRACE_ENABLED', '-DWSF_TRACE_ENABLED', '-DAM_PART_APOLLO3',
-  '-DPART_APOLLO3', '-mthumb', '-mcpu=cortex-m4', '-mfpu=fpv4-sp-d16',
-  '-mfloat-abi=hard', '-std=c17', '-ffunction-sections', '-Wall', '-Wextra',
-  '-pedantic', '-fno-delete-null-pointer-checks',
+  '-DPART_APOLLO3', '-ffunction-sections', '-fno-delete-null-pointer-checks',
 ]
 
 link_args = [
-  '--specs=nosys.specs', '--specs=nano.specs', '-mthumb',
-  '-mcpu=cortex-m4', '-mfpu=fpv4-sp-d16', '-mfloat-abi=hard', '-nostartfiles',
-  '-static', '-Wl,--gc-sections', '-fno-exceptions',
-  '-fno-delete-null-pointer-checks',
+  '--specs=nosys.specs', '--specs=nano.specs', '-nostartfiles',
+  '-Wl,--gc-sections', '-fno-exceptions', '-fno-delete-null-pointer-checks',
 ]
-
-sources = files([
-  'src/main.c',
-])
 
 lib_sources = files([
   'src/uart.c',
@@ -45,6 +40,10 @@ lib = library('rba_simple',
 )
 
 install_subdir('include', install_dir: 'include/')
+
+sources = files([
+  'src/main.c',
+])
 
 exe = executable(meson.project_name(),
   sources,
@@ -72,6 +71,8 @@ run_target('flash',
     '-b', '921600', '-v'],
   depends : bin,
 )
+
+# Create a pkgconfig file
 
 pkg = import('pkgconfig')
 
