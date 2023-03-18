@@ -62,19 +62,16 @@ exe = executable(meson.project_name(),
 
 objcopy = find_program('objcopy')
 
-bin = custom_target(meson.project_name() + '.bin',
+bin = custom_target(
   input : exe,
-  output : meson.project_name() + '.bin',
-  command : [objcopy, '-O', 'binary',
-    '@INPUT@', '@OUTPUT@',
-  ],
+  output : exe.name().split('.')[0] + '.bin',
+  command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@', ],
   build_by_default: true
 )
 
 run_target('flash',
   command : ['python3', meson.source_root() / 'svl.py',
-    get_option('tty'), '-f',  meson.project_name() + '.bin',
-    '-b', '921600', '-v'],
+    get_option('tty'), '-f',  bin, '-b', '921600', '-v'],
   depends : bin,
 )
 
