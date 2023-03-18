@@ -19,6 +19,8 @@ link_args = [
   '-Wl,--gc-sections', '-fno-exceptions', '-fno-delete-null-pointer-checks',
 ]
 
+# Library
+
 lib_sources = files([
   'src/uart.c',
   'src/adc.c',
@@ -41,6 +43,8 @@ lib = library('rba_simple',
 
 install_subdir('include', install_dir: 'include/')
 
+# Executables
+
 sources = files([
   'src/main.c',
 ])
@@ -53,6 +57,8 @@ exe = executable(meson.project_name(),
   c_args: c_args,
   link_args: link_args + ['-T' + meson.source_root() / 'linker.ld']
 )
+
+# Custom flash target, to make it easier to program the RedBoard
 
 objcopy = find_program('objcopy')
 
