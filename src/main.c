@@ -161,21 +161,20 @@ int main(void)
 			}*/
 			unsigned char buffer[32] = "Hello World!!!\r\n";
 
-				am_util_stdio_printf("Reg %02X: Value: %02X\r\n", 1, lora_get_register(&lora, 1));
-			am_util_stdio_printf("transmit? %i\r\n", lora_transmitting(&lora));
-			lora_transmit_mode(&lora);
+			am_util_stdio_printf("Reg %02X: Value: %02X\r\n", 1, lora_get_register(&lora, 1));
 			lora_send_packet(&lora, buffer, strlen(buffer));
 			if (lora_rx_amount(&lora))
 			{
-			am_util_stdio_printf("length %i\r\n", lora_rx_amount(&lora));
-			lora_receive_packet(&lora, buffer, 32);
-			am_util_stdio_printf("Data: %s\r\n", buffer);
+				am_util_stdio_printf("length %i\r\n", lora_rx_amount(&lora));
+				lora_receive_packet(&lora, buffer, 32);
+				am_util_stdio_printf("Data: %s\r\n", buffer);
 			}
-		/*	am_util_stdio_printf(
+			/*
+			am_util_stdio_printf(
 				"voltage = <%.3f> (0x%04X) ", voltage, data);
 
 			am_util_stdio_printf("\r\n");
-*/
+			*/
 		}
 
 		// Sleep here until the next ADC interrupt comes along.

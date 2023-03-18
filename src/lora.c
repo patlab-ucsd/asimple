@@ -106,9 +106,7 @@ void lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffe
 void lora_send_packet(struct lora *lora, unsigned char buffer[], uint8_t buffer_size)
 {
 	struct spi *spi = &lora->spi;
-	// If we're not in transmit mode, bail
-	if (!lora_transmitting(lora))
-		return;
+	// FIXME do we want to not transmit if we're in receive mode???
 
 	lora_standby(lora);
 
