@@ -4,6 +4,8 @@
 #ifndef ADC_H_
 #define ADC_H_
 
+#include <stdbool.h>
+
 struct adc
 {
 	void *handle;
