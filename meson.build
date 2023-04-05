@@ -41,7 +41,7 @@ lib = library('rba_simple',
   install: true,
 )
 
-install_subdir('include', install_dir: 'include/')
+install_subdir('include', install_dir: '')
 
 # Executables
 
@@ -79,4 +79,4 @@ run_target('flash',
 
 pkg = import('pkgconfig')
 
-pkg.generate(lib, subdirs: ['rba_simple'])
+pkg.generate(lib, subdirs: ['', 'rba_simple'])
