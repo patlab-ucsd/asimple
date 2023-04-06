@@ -34,6 +34,8 @@ void spi_init(struct spi *spi, uint32_t iom_module);
 
 /** Read data (blocking) from the SPI peripheral.
  *
+ * FIXME is there any way to time out?
+ *
  * This function will block until the read buffer is filled.
  *
  * The buffer is a pointer to a uint32_t for two reasons: 1. the Ambiq SDK uses
@@ -54,6 +56,8 @@ void spi_read(
 
 /** Write data (blocking) to the SPI peripheral.
  *
+ * FIXME is there any way to time out?
+ *
  * This function will block until the write buffer is sent.
  *
  * See spi_read for an explanation as to why buffer is a uint32_t pointer.
@@ -66,6 +70,17 @@ void spi_read(
 void spi_write(
 	struct spi *spi, uint32_t command, const uint32_t *buffer, uint32_t size);
 
+/** Write and read data to/from the SPI peripheral simultaneously.
+ *
+ * This function will block until all of the wrte buffer is sent and an equal
+ * number of bytes received in the read buffer.
+ *
+ * @param[in,out] spi Pointer to the spi structure to use.
+ * @param[in] command Command byte to send first.
+ * @param[in] rx_buffer Pointer to buffer with outgoing data.
+ * @param[out] tx_buffer Pointer to buffer to hold incoming data.
+ * @param[in] size Size of the buffers, should be the same for both.
+ */
 void spi_readwrite(
 	struct spi *spi,
 	uint32_t command,
