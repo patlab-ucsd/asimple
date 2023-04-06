@@ -78,34 +78,241 @@
 #define LORA_RESERVED10 0x3Eu
 #define LORA_RESERVED11 0x3Fu
 
+#define LORA_DIO_MAPPING0_3 0x40u
+#define LORA_DIO_MAPPING4_5 0x41u
+#define LORA_VERSION 0x42u
+#define LORA_TCXO_XTAL 0x4Bu
+#define LORA_PA_DAC 0x4Du
+#define LORA_FORMER_TEMPERATURE 0x5Bu
+#define LORA_AGC_REF 0x61u
+#define LORA_AGC_THRESH1 0x62u
+#define LORA_AGC_THRESH2 0x63u
+#define LORA_AGC_THRESH3 0x64u
+#define LORA_PLL 0x70
+
 /** Structure holding RFM95W information and state. */
 struct lora
 {
 	struct spi spi;
 };
 
-/** Initialize the lora module.
+enum lora_lna_gain
+{
+    LORA_LNA_G1,
+    LORA_LNA_G2,
+    LORA_LNA_G3,
+    LORA_LNA_G4,
+    LORA_LNA_G5,
+    LORA_LNA_G6
+};
+
+/** Initializes the lora module.
+ *
+ * Internally, this module uses the first SPI module on the Artemis, taking
+ * ownership over it. Specifically, the SPI is initialized using pin 11 as the
+ * chip select for the LoRa radio.
+ *
+ * This implementation assumes a radio module compatible with the Semtech
+ * SX1276.
+ *
+ * The init function checks to see if it recognizes the silicon version of the
+ * module it finds. If it does not, it returns false.
+ *
+ * On a successful return, the LoRa module is fully configured, and set to its
+ * sleep mode. Specifically:
+ *  - Sets the radio to LoRa mode
+ *  - The frequency is set to the parameter provided, setting up the module for
+ *    the correct frequency range desired
+ *  - The power amplifier is enabled, using the PA_OUTPUT pin for output
+ *  - LNA high current is enabled
+ *
+ * All other parameters are left at their defaults. It is recommended to
+ * explicitly set the spreading factor, bandwidth, and the coding rate after
+ * initialization.
+ *
+ * FIXME do I want to allow passing in a spi device??? this way, so long as the
+ * device is configured to use different chip selects, these can be used in
+ * tandem?
  *
  * @param[out] lora Pointer to the lora structure to initialize.
  * @param[in] frequency
+ *
+ * @returns True on success, false otherwise. Fails if LoRa module is unknown.
  */
-void lora_init(struct lora *lora, uint32_t frequency);
+bool lora_init(struct lora *lora, uint32_t frequency);
 
+/** Receives a single LoRa packet, blocking until it is received.
+ *
+ * FIXME is this acceptable? Or should we always allow trying to copy a packet,
+ * so long as we have a valid one in the FIFO?
+ * The lora module must be in its receiving mode, else nothing is returned.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[out] buffer Pointer to buffer to move packet to.
+ * @param[in] buffer_size The size of the buffer in bytes.
+ *
+ * FIXME should we return if we actually return something??
+ */
 void lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size);
-void lora_send_packet(struct lora *lora, unsigned char buffer[], uint8_t buffer_size);
-void lora_set_spreading_factor(struct lora *lora, uint8_t spreading_factor);
+
+/** Sends a LoRa packet, blocking until it is transmitted.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] buffer Pointer to the buffer containing the data to transmit.
+ * @param[in] buffer_size The number of bytes to transmit.
+ *
+ * FIXME should there be any status return?
+ */
+void lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size);
+
+/** Configures the LoRa spreading factor for RX and TX.
+ *
+ * Valid spreading factors are between 6 and 12. Note, that for a spreading
+ * factor of 6 the packet mode is automatically changed to implicit (packet
+ * length must be agreed upon by transmitter and receiver).
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] spreading_factor A value between 6 and 12.
+ *
+ * @returns True on success, false if the requested spreading factor is
+ *  invalid.
+ */
+bool lora_set_spreading_factor(struct lora *lora, uint8_t spreading_factor);
+
+/** Returns the current LoRa spreading factor.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ *
+ * @returns The current spreading factor.
+ */
 uint8_t lora_get_spreading_factor(struct lora *lora);
+
+/** Returns the number of bytes in the last packet received.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ *
+ * @returns The number of bytes in the last packet received.
+ */
 uint8_t lora_rx_amount(struct lora *lora);
+
+/** Changes the LoRa module to receive mode. FIXME should we expose this?
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ */
 void lora_receive_mode(struct lora *lora);
+
+/** Changes the LoRa module to transmit mode. FIXME should we expose this?
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ */
 void lora_transmit_mode(struct lora *lora);
+
+/** Returns whether the LoRa module is in its transmit mode.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ *
+ * @returns True if the module is in its transmit mode, false otherwise.
+ */
 bool lora_transmitting(struct lora *lora);
+
+/** Changes the LoRa module's mode to sleep.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ */
 void lora_sleep(struct lora *lora);
+
+/** Changes the LoRa module's mode to standby.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ */
 void lora_standby(struct lora *lora);
+
+/** Sets the LoRa module's frequency to the value specified.
+ *
+ * FIXME can this fail?
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] frequency The frequency to set the carrier to.
+ */
 void lora_set_frequency(struct lora *lora, uint32_t frequency);
+
+/** Sets the LoRa module's bandwidth to the value specified.
+ *
+ * FIXME can this fail?
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] bandwidth The bandwidth to set the module to.
+ */
 void lora_set_bandwidth(struct lora *lora, uint8_t bandwidth);
+
+/** Gets the LoRa module's bandwidth setting.
+ *
+ * FIXME can this fail?
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ *
+ * @returns The current bandwidth the module is configured for.
+ */
 uint8_t lora_get_bandwidth(struct lora *lora);
+
+/** Sets the LoRa module's coding rate to the value specified.
+ *
+ * FIXME can this fail?
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] rate The coding rate to set the module to.
+ */
 void lora_set_coding_rate(struct lora *lora, uint8_t rate);
+
+/** Gets the LoRa module's coding rate setting.
+ *
+ * FIXME can this fail?
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ *
+ * @returns The current coding rate the module is configured for.
+ */
 uint8_t lora_get_coding_rate(struct lora *lora);
+
+/** Get the value of the arbitrary LoRa register requested.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] address Address of the register to read.
+ *
+ * @returns The value of the register requested.
+ */
 uint8_t lora_get_register(struct lora *lora, uint8_t address);
+
+/** Configures the Low Noise Amplifier (LNA) for receiving packets.
+ *
+ * According to the SX1276 datasheet, the LNA gain selection is controleld by
+ * the auto gain control mode-- if that is enabled, the gain is automatically
+ * selected, ignoring the value presented to this function. The value is
+ * recorded in the hardware, however, should the AGC be turned off.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] gain The gain setting for the LNA. G1 is the highest gain, G6 is
+ *  the lowest.
+ * @param[in] high_current Whether to boost the current to 150% or not, ignored
+ *  for low frequency operation.
+ */
+void lora_set_lna(struct lora *lora, enum lora_lna_gain gain, bool high_current);
+
+/** Sets the transmit level in dBm.
+ *
+ * Note, that for the RFM95W module, the low power antenna pins are
+ * disconnected-- for this board always set high_power to true.
+ *
+ * This function configures the Power Amplifier (PA), max power, and desired
+ * power levels based on the given parameters.
+ *
+ * @param[in,out] lora Pointer to an initialized lora structure.
+ * @param[in] dBm The transmit gain to target. Must be between -4 and 15 for
+ *  normal power, or 2 and 17 for high power.
+ * @param[in] high_power Whether to enable the Power Amplifier (PA) for
+ * transmitting, using the PA_BOOST pin for output. Otherwise the RFO_LF or
+ *  RFO_HF pins are used for output.
+ */
+bool lora_set_transmit_level(struct lora *lora, int8_t dBm, bool high_power);
 
 #endif//LORA_H_

@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// FIXME overall error checking is missing
+
 static uint8_t read_register(struct spi *spi, uint8_t address)
 {
 	uint32_t rx_buffer;
@@ -31,44 +33,98 @@ static void change_mode(struct spi *spi, uint8_t mode)
 	write_register(spi, LORA_OPMODE, new_mode);
 }
 
-void lora_init(struct lora *lora, uint32_t frequency)
+bool lora_init(struct lora *lora, uint32_t frequency)
 {
 	struct spi *spi = &lora->spi;
 	spi_init(spi, 0);
-	//int version = read_register(spi, 0x42);
+
+	// do not initialize if the version is unknown
+	int version = read_register(spi, LORA_VERSION);
+	if (version != 0x12)
+	{
+		return false;
+	}
+
+	// Can only switch between FSQ and LoRa while sleeping...
 	lora_sleep(lora);
 
 	// Enable Lora mode
-	write_register(spi, LORA_OPMODE, read_register(spi, 0x01) | 0x80);
-
-	if (frequency > 800000000)
-	{
-		uint8_t reg = read_register(spi, LORA_OPMODE);
-		reg &= 0xF7;
-		write_register(spi, LORA_OPMODE, reg);
-	}
-	// FIXME what about low freq?
+	write_register(spi, LORA_OPMODE, read_register(spi, LORA_OPMODE) | 0x80);
 
 	lora_set_frequency(lora, frequency);
+	lora_set_lna(lora, LORA_LNA_G1, true);
+
 	// Set pointers for FIFOs, RX and TX
+	// FIXME these are hard-coded
+	// FIXME do I care about them being separated?
 	write_register(spi, LORA_FIFO_TX_BASE, 0x80);
 	write_register(spi, LORA_FIFO_RX_BASE, 0x00);
-
-	// Turn on HF LNA boost
-	write_register(spi, LORA_LNA, read_register(spi, LORA_LNA) | 0x03);
 
 	// Enable AGC
 	write_register(spi, LORA_MODEM_CONFIG3, 0x04);
 
-	// Configure which pin to output of
-	// enable RFO pin, 14dB
-	write_register(spi, LORA_PA_CONFIG, 0x7E);
+	// Gabriel Marcano: Note that the RFM95W module does not connect the RFO_*
+	// pins, and only connects PA_BOOST. As such, for this board, high_power
+	// must always be true.
+	lora_set_transmit_level(lora, 2, true);
 
-	lora_standby(lora);
+	return true;
+}
+
+bool lora_set_transmit_level(struct lora *lora, int8_t dBm, bool high_power)
+{
+	uint8_t max_power;
+	int8_t output_power;
+
+	if (high_power)
+	{
+		// valid range from +2 to +17 dBm
+		if ((dBm < 2) || (dBm > 17))
+			return false;
+
+		// Set max output power to 17 dBm (actually 16.8 dBm)
+		// Pmax=10.8+0.6*MaxPower
+		// MaxPower = (Pmax - 10.8) / 0.6
+		max_power = 10;
+
+		// Pout = 17 - (15 - OutputPower)
+		// OutputPower = Pout - 2
+		output_power = dBm - 2;
+	}
+	else
+	{
+		// valid range from -4 to 15 dBm
+		if ((dBm < -4) || (dBm > 15))
+			return false;
+		// Delta between max output and current output can't be more than 13
+		if (dBm < 0)
+		{
+			max_power = 0;
+			output_power = dBm + 4;
+		}
+		else
+		{
+			max_power = 7; // Pmax = 15
+			// Pout=Pmax-(15-OutputPower)
+			// OutputPower = Pout + 15 - Pmax
+			output_power = dBm;
+		}
+	}
+
+	uint8_t pa_config = (high_power ? 1 : 0) << 7;
+	pa_config |= (max_power & 0x3) << 4;
+	pa_config |= (output_power & 0x0F);
+
+	struct spi *spi = &lora->spi;
+	write_register(spi, LORA_PA_CONFIG, pa_config);
+
+	return true;
 }
 
 void lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size)
 {
+	// FIXME should we block until we receive something?
+	// FIXME what if we don't receive something?
 	struct spi *spi = &lora->spi;
 	// If we're not in reading mode, bail
 	if ((read_register(spi, LORA_OPMODE) & 0x7) != 0x05)
@@ -103,7 +159,7 @@ void lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffe
 	}
 }
 
-void lora_send_packet(struct lora *lora, unsigned char buffer[], uint8_t buffer_size)
+void lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size)
 {
 	struct spi *spi = &lora->spi;
 	// FIXME do we want to not transmit if we're in receive mode???
@@ -138,13 +194,11 @@ void lora_send_packet(struct lora *lora, unsigned char buffer[], uint8_t buffer_
 	write_register(spi, LORA_IRQ_FLAGS, tx_irq);
 }
 
-void lora_set_spreading_factor(struct lora *lora, uint8_t spreading_factor)
+bool lora_set_spreading_factor(struct lora *lora, uint8_t spreading_factor)
 {
 	struct spi *spi = &lora->spi;
-	if (spreading_factor < 6)
-		spreading_factor = 6;
-	else if (spreading_factor > 12)
-		spreading_factor = 12;
+	if ((spreading_factor < 6) || (spreading_factor > 12))
+		return false;
 
 	// with spreading_factor 6, required:
 	// - header must be implicit
@@ -152,6 +206,7 @@ void lora_set_spreading_factor(struct lora *lora, uint8_t spreading_factor)
 	// - 0x37 must be 0x0C
 	if (spreading_factor == 6)
 	{
+		// FIXME change packet mode to implicit, and remember previous?
 		write_register(spi, LORA_DETECT_OPTIMIZE, 0xC5);
 		write_register(spi, LORA_DETECTION_THRESHOLD, 0x0C);
 	}
@@ -165,6 +220,7 @@ void lora_set_spreading_factor(struct lora *lora, uint8_t spreading_factor)
 	config &= 0x0F;
 	config |= spreading_factor << 4;
 	write_register(spi, LORA_MODEM_CONFIG2, config);
+	return true;
 }
 
 uint8_t lora_get_spreading_factor(struct lora *lora)
@@ -219,9 +275,64 @@ void lora_standby(struct lora *lora)
 	change_mode(spi, 1);
 }
 
+void lora_set_lna(struct lora *lora, enum lora_lna_gain gain, bool high_current)
+{
+	struct spi *spi = &lora->spi;
+
+	// configure LNA current
+	uint8_t lna_config = read_register(spi, LORA_LNA);
+	if (high_current)
+	{
+		lna_config |= 0x03u;
+	}
+	else
+	{
+		lna_config &= 0xFCu;
+	}
+
+	// Clear top 3 bits, LnaGain
+	lna_config &= 0x1Fu;
+	switch (gain)
+	{
+		case LORA_LNA_G1:
+			lna_config |= (0x1 << 5);
+			break;
+		case LORA_LNA_G2:
+			lna_config |= (0x2 << 5);
+			break;
+		case LORA_LNA_G3:
+			lna_config |= (0x3 << 5);
+			break;
+		case LORA_LNA_G4:
+			lna_config |= (0x4 << 5);
+			break;
+		case LORA_LNA_G5:
+			lna_config |= (0x5 << 5);
+			break;
+		case LORA_LNA_G6:
+			lna_config |= (0x6 << 5);
+			break;
+	}
+
+	write_register(spi, LORA_LNA, lna_config);
+}
+
 void lora_set_frequency(struct lora *lora, uint32_t frequency)
 {
 	struct spi *spi = &lora->spi;
+
+	if (frequency > 800000000)
+	{
+		uint8_t reg = read_register(spi, LORA_OPMODE);
+		reg &= 0xF7;
+		write_register(spi, LORA_OPMODE, reg);
+	}
+	else
+	{
+		uint8_t reg = read_register(spi, LORA_OPMODE);
+		reg |= 0x08;
+		write_register(spi, LORA_OPMODE, reg);
+	}
 
 	// fsf = fstep * frequency
 	// fstep = f_xosc / 2^19
