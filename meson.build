@@ -26,6 +26,7 @@ lib_sources = files([
   'src/adc.c',
   'src/spi.c',
   'src/lora.c',
+  'src/gpio.c'
 ])
 
 includes = include_directories([
