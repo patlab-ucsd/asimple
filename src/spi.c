@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 // Configuration structure for the IO Master.
 // FIXME I don't like why this isn't const...
@@ -28,11 +29,19 @@ const am_hal_gpio_pincfg_t g_AM_BSP_GPIO_HANDSHAKE =
 
 void spi_init(struct spi *spi, uint32_t iomModule)
 {
+	spi->iom_module = iomModule;
 	am_hal_iom_initialize(iomModule, &spi->handle);
 	am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_WAKE, false);
 	am_hal_iom_configure(spi->handle, &spi_config);
 	am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
 	am_hal_iom_enable(spi->handle);
+}
+
+void spi_destroy(struct spi *spi)
+{
+	am_bsp_iom_pins_disable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
+	am_hal_iom_disable(spi->handle);
+	memset(spi, 0, sizeof(*spi));
 }
 
 void spi_read(

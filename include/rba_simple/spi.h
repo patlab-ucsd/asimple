@@ -10,9 +10,10 @@
 struct spi
 {
 	void *handle;
+	int iom_module;
 };
 
-/** Initialize the given MIO module for SPI use.
+/** Initializes the given MIO module for SPI use.
  *
  * The SPI peripheral is being initialized to run at 4MHz and using SPI mode 0.
  *
@@ -32,7 +33,14 @@ struct spi
  */
 void spi_init(struct spi *spi, uint32_t iom_module);
 
-/** Read data (blocking) from the SPI peripheral.
+/** Releases all resources of the given spi object.
+ *
+ * This de-initializes the MIO module, returning the GPIO pins to their prior
+ * configuration. FIXME should we set them to a known state?
+ */
+void spi_destroy(struct spi *spi);
+
+/** Reads data (blocking) from the SPI peripheral.
  *
  * FIXME is there any way to time out?
  *

@@ -71,6 +71,12 @@ bool lora_init(struct lora *lora, uint32_t frequency)
 	return true;
 }
 
+void lora_destroy(struct lora *lora)
+{
+	spi_destroy(&lora->spi);
+	memset(lora, 0, sizeof(*lora));
+}
+
 bool lora_set_transmit_level(struct lora *lora, int8_t dBm, bool high_power)
 {
 	uint8_t max_power;
@@ -184,8 +190,7 @@ void lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t b
 
 	lora_transmit_mode(lora);
 
-	tx_irq = read_register(spi, LORA_IRQ_FLAGS) & 0x08;
-	while (!(read_register(spi, LORA_IRQ_FLAGS & 0x08)))
+	while (!(read_register(spi, LORA_IRQ_FLAGS) & 0x08))
 	{
 		// FIXME is there an interrupt way to wait while going to sleep?
 		// wait

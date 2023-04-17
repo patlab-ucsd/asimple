@@ -141,6 +141,16 @@ enum lora_lna_gain
  */
 bool lora_init(struct lora *lora, uint32_t frequency);
 
+/** Releases all resources held by the given lora object.
+ *
+ * The lora object owns a SPI module, and this function de-initializes that
+ * hardware and resets the pins to their prior configuration. This is useful,
+ * as some devices on a SPI bus, even when power is removed, will draw current
+ * through the SPI bus... FIXME do we want to explicitly set the pin state to
+ * input?
+ */
+void lora_destroy(struct lora *lora);
+
 /** Receives a single LoRa packet, blocking until it is received.
  *
  * FIXME is this acceptable? Or should we always allow trying to copy a packet,
