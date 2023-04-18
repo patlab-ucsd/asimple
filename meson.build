@@ -1,5 +1,10 @@
 project('rba_simple', 'c',
-  default_options: ['b_lto=false', 'b_staticpic=false', 'c_std=c2x'],
+  default_options: [
+    'b_lto=false',
+    'b_staticpic=false',
+    'c_std=c2x',
+    'c_link_args=--specs=nosys.specs'
+  ],
   license: ['Apache-2.0'],
   version: '0.1.0')
 
@@ -15,8 +20,8 @@ c_args = [
 ]
 
 link_args = [
-  '--specs=nosys.specs', '--specs=nano.specs', '-nostartfiles',
-  '-Wl,--gc-sections', '-fno-exceptions', '-fno-delete-null-pointer-checks',
+  '--specs=nano.specs', '-nostartfiles', '-Wl,--gc-sections',
+  '-fno-exceptions', '-fno-delete-null-pointer-checks',
 ]
 
 # Library
@@ -50,9 +55,12 @@ sources = files([
   'src/main.c',
 ])
 
+cc = meson.get_compiler('c', native: false)
+m_dep = cc.find_library('m', required : false)
+
 exe = executable(meson.project_name(),
   sources,
-  dependencies: [rba_lib],
+  dependencies: [rba_lib, m_dep],
   link_with: lib,
   include_directories: includes,
   c_args: c_args,
