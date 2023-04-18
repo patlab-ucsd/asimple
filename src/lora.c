@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 // FIXME overall error checking is missing
 
