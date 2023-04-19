@@ -3,7 +3,7 @@ project('rba_simple', 'c',
     'b_lto=false',
     'b_staticpic=false',
     'c_std=c2x',
-    'c_link_args=--specs=nosys.specs'
+    'warning_level=3',
   ],
   license: ['Apache-2.0'],
   version: '0.1.0')
