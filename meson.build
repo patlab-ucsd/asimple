@@ -1,6 +1,6 @@
 project('rba_simple', 'c',
   default_options: [
-    'b_lto=false',
+    'b_lto=true',
     'b_staticpic=false',
     'c_std=c2x',
     'warning_level=3',
