@@ -9,6 +9,7 @@
 struct uart
 {
 	void *handle;
+	int instance;
 	uint8_t tx_buffer[256*10];
 	uint8_t rx_buffer[2];
 };
@@ -20,5 +21,6 @@ enum uart_instance
 };
 
 void uart_init(struct uart *uart, enum uart_instance instance);
+void uart_destroy(struct uart *uart);
 
 #endif//UART_H_

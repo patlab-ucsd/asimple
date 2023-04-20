@@ -70,6 +70,7 @@ void uart_init(struct uart *uart, enum uart_instance instance)
 	};
 	static_assert(sizeof(uart->tx_buffer) == 2560, "unexpected tx_buffer size");
 
+	uart->instance = (int)instance;
 	CHECK_ERRORS(am_hal_uart_initialize((int)instance, &uart->handle));
 	CHECK_ERRORS(am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_WAKE, false));
 	CHECK_ERRORS(am_hal_uart_configure(uart->handle, &config));
@@ -82,6 +83,17 @@ void uart_init(struct uart *uart, enum uart_instance instance)
 	am_util_stdio_printf_init(uart_print);
 
 	NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + (int)instance));
+}
+
+void uart_destroy(struct uart *uart)
+{
+	NVIC_DisableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));
+	am_util_stdio_printf_init(NULL);
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_HAL_GPIO_DISABLE);
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_HAL_GPIO_DISABLE);
+	am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+	am_hal_uart_deinitialize(uart->handle);
+	memset(uart, 0, sizeof(*uart));
 }
 
 // This is a weak symbol, override
