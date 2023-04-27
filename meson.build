@@ -14,14 +14,11 @@ rba_lib = dependency('rba_atp')
 # by the Makefile used to build for the Artemis ATP.
 
 c_args = [
-  '-DAM_CUSTOM_BDADDR', '-DAM_PACKAGE_BGA', '-DWSF_TRACE_ENABLED',
-  '-DWSF_TRACE_ENABLED', '-DWSF_TRACE_ENABLED', '-DAM_PART_APOLLO3',
-  '-DPART_APOLLO3', '-ffunction-sections', '-fno-delete-null-pointer-checks',
+  '-ffunction-sections',
 ]
 
 link_args = [
-  '--specs=nano.specs', '-nostartfiles', '-Wl,--gc-sections',
-  '-fno-exceptions', '-fno-delete-null-pointer-checks',
+  '-Wl,--gc-sections', '-fno-exceptions',
 ]
 
 # Library
