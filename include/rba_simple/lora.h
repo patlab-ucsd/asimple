@@ -96,6 +96,7 @@ struct lora
 	struct spi spi;
 };
 
+/** LoRa low-noise amplifier gain. The maximum gain is G1, minimum is G6 */
 enum lora_lna_gain
 {
     LORA_LNA_G1,

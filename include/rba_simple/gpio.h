@@ -7,8 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/** GPIO struct.
- */
+/** GPIO struct. */
 struct gpio
 {
 	uint8_t pin;

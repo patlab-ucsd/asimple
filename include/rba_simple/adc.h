@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 
+/** ADC structure. */
 struct adc
 {
 	void *handle;
