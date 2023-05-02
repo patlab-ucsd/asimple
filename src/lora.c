@@ -38,6 +38,7 @@ bool lora_init(struct lora *lora, uint32_t frequency)
 {
 	struct spi *spi = &lora->spi;
 	spi_init(spi, 0);
+	spi_enable(spi);
 
 	// do not initialize if the version is unknown
 	int version = read_register(spi, LORA_VERSION);

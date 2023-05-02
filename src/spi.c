@@ -30,18 +30,49 @@ const am_hal_gpio_pincfg_t g_AM_BSP_GPIO_HANDSHAKE =
 void spi_init(struct spi *spi, uint32_t iomModule)
 {
 	spi->iom_module = iomModule;
+	// This just initializes the handle-- no hardware function
 	am_hal_iom_initialize(iomModule, &spi->handle);
+	// ... and here we turn on the hardware so we can modify settings
 	am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_WAKE, false);
 	am_hal_iom_configure(spi->handle, &spi_config);
 	am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
 	am_hal_iom_enable(spi->handle);
+	spi_sleep(spi);
 }
 
 void spi_destroy(struct spi *spi)
 {
-	am_bsp_iom_pins_disable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
 	am_hal_iom_disable(spi->handle);
+	am_bsp_iom_pins_disable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
+	am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+	am_hal_iom_uninitialize(spi->handle);
 	memset(spi, 0, sizeof(*spi));
+}
+
+bool spi_sleep(struct spi *spi)
+{
+	// Note that turning off the hardware resets registers, which is why we
+	// request saving the state
+	int status = am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
+	if (status != AM_HAL_STATUS_SUCCESS)
+	{
+		return false;
+	}
+	am_bsp_iom_pins_disable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
+	return true;
+}
+
+bool spi_enable(struct spi *spi)
+{
+	// This can fail if there is no saved state, which indicates we've never
+	// gone asleep
+	int status = am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_WAKE, true);
+	if (status != AM_HAL_STATUS_SUCCESS)
+	{
+		return false;
+	}
+	am_bsp_iom_pins_enable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
+	return true;
 }
 
 void spi_read(

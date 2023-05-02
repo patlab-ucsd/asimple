@@ -12,6 +12,7 @@
 #include <adc.h>
 #include <spi.h>
 #include <lora.h>
+#include <gpio.h>
 
 #define CHECK_ERRORS(x)\
 	if ((x) != AM_HAL_STATUS_SUCCESS)\
@@ -127,16 +128,13 @@ int main(void)
 	// Trigger the ADC to start collecting data
 	adc_trigger(&adc);
 
+	struct gpio lora_power;
+	gpio_init(&lora_power, 10, false);
+
 	uint32_t rx_data = 0;
 	uint32_t tx_data = 0x80;
 	struct lora lora;
-	lora_init(&lora, 915000000);
-	lora_standby(&lora);
-	lora_set_spreading_factor(&lora, 7);
-	lora_set_coding_rate(&lora, 1);
-	lora_set_bandwidth(&lora, 0x7);
 	//lora_receive_mode(&lora);
-
 
 	// Wait here for the ISR to grab a buffer of samples.
 	while (1)
@@ -155,13 +153,28 @@ int main(void)
 			const double reference = 1.5;
 			double voltage = data * reference / ((1 << 14) - 1);
 
-			/*for (int i = 0; i < 0x30; ++i)
-			{
-				am_util_stdio_printf("Reg %02X: Value: %02X\r\n", i, lora_get_register(&lora, i));
-			}*/
-			unsigned char buffer[32] = "Hello World!!!\r\n";
+			double temperature = 5.506 - sqrt((-5.506)*(-5.506) + 4 * 0.00176 * (870.6 - voltage*1000));
+			temperature /= (2 * -.00176);
+			temperature += 30;
 
-			am_util_stdio_printf("Reg %02X: Value: %02X\r\n", 1, lora_get_register(&lora, 1));
+			gpio_set(&lora_power, true);
+			// The documentation for the SX1276 states that it takes 10 ms for
+			// the radio to come online from coldboot.
+			am_util_delay_ms(10);
+			// Only continue if we initialize
+			// FIXME what if we never initialize?
+			while(!lora_init(&lora, 915000000));
+			lora_standby(&lora);
+			lora_set_spreading_factor(&lora, 7);
+			lora_set_coding_rate(&lora, 1);
+			lora_set_bandwidth(&lora, 0x7);
+
+			unsigned char buffer[64] = "Hello World!!!\r\n";
+			int magnitude = 10000;
+			snprintf(buffer, sizeof(buffer),
+				"{ \"temperature\": %i, \"magnitude\": %i }",
+				(int)(temperature * magnitude),
+				magnitude);
 			lora_send_packet(&lora, buffer, strlen(buffer));
 			if (lora_rx_amount(&lora))
 			{
@@ -169,12 +182,8 @@ int main(void)
 				lora_receive_packet(&lora, buffer, 32);
 				am_util_stdio_printf("Data: %s\r\n", buffer);
 			}
-			/*
-			am_util_stdio_printf(
-				"voltage = <%.3f> (0x%04X) ", voltage, data);
-
-			am_util_stdio_printf("\r\n");
-			*/
+			lora_destroy(&lora);
+			gpio_set(&lora_power, false);
 		}
 
 		// Sleep here until the next ADC interrupt comes along.

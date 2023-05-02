@@ -5,6 +5,7 @@
 #define SPI_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /** Structure holding SPI information and state. */
 struct spi
@@ -28,6 +29,9 @@ struct spi
  *   MOSI - 7
  *   SCK  - 5
  *
+ * On initialization, the hardware is set to sleep-- call spi_enable to turn on
+ * the hardware.
+ *
  * @param[out] spi Pointer to the spi structure to initialize.
  * @param[in] iom_module Index of the IOM module to use.
  */
@@ -39,6 +43,24 @@ void spi_init(struct spi *spi, uint32_t iom_module);
  * configuration. FIXME should we set them to a known state?
  */
 void spi_destroy(struct spi *spi);
+
+/** Enables/wakes up the SPI module.
+ *
+ * @param[in,out] spi Pointer to the spi structure to enable.
+ *
+ * @returns True on success, false if it cannot be enabled. This usually
+ *  happens if the device is already awake.
+ */
+bool spi_enable(struct spi *spi);
+
+/** Places the SPI module to sleep.
+ *
+ * @param[in,out] spi Pointer to the spi structure to set to sleep.
+ *
+ * @returns True on success, false if it cannot be put to sleep. This usually
+ * happens if the SPI module is actively transfering data.
+ */
+bool spi_sleep(struct spi *spi);
 
 /** Reads data (blocking) from the SPI peripheral.
  *
