@@ -7,6 +7,8 @@
 
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
+#include <math.h>
 
 #include <uart.h>
 #include <adc.h>
@@ -131,8 +133,6 @@ int main(void)
 	struct gpio lora_power;
 	gpio_init(&lora_power, 10, false);
 
-	uint32_t rx_data = 0;
-	uint32_t tx_data = 0x80;
 	struct lora lora;
 	//lora_receive_mode(&lora);
 
@@ -169,13 +169,13 @@ int main(void)
 			lora_set_coding_rate(&lora, 1);
 			lora_set_bandwidth(&lora, 0x7);
 
-			unsigned char buffer[64] = "Hello World!!!\r\n";
+			unsigned char buffer[64];
 			int magnitude = 10000;
-			snprintf(buffer, sizeof(buffer),
+			snprintf((char*)buffer, sizeof(buffer),
 				"{ \"temperature\": %i, \"magnitude\": %i }",
 				(int)(temperature * magnitude),
 				magnitude);
-			lora_send_packet(&lora, buffer, strlen(buffer));
+			lora_send_packet(&lora, buffer, strlen((char*)buffer));
 			if (lora_rx_amount(&lora))
 			{
 				am_util_stdio_printf("length %i\r\n", lora_rx_amount(&lora));
