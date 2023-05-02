@@ -8,11 +8,11 @@ that uses meson for its build system
 If you are developing on Linux, it is very strongly recommended you do the
 following:
 
- 1. Copy the `redboard_artemis` file from the AmbiqSuiteSDK project to
+ 1. Copy the `artemis` file from the AmbiqSuiteSDK project to
     `~/.local/share/meson/cross/` (create the directory if it doesn't exist
     `mkdir -p ~/.local/share/meson/cross/`
     - This will make it so that you can access that cross-file just by calling
-      its name, e.g. `--cross-file redboard_artemis` instead of by its full
+      its name, e.g. `--cross-file artemis` instead of by its full
       path.
 
 In order for the SDK library to be found, `pkgconf` must know where it is. The

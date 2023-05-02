@@ -1,4 +1,4 @@
-project('rba_simple', 'c',
+project('asimple', 'c',
   default_options: [
     'b_lto=true',
     'b_staticpic=false',
