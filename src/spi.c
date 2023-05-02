@@ -90,7 +90,7 @@ void spi_read(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = AM_BSP_GPIO_IOM0_CS_CHNL,
+		.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL,
 	};
 	am_hal_iom_blocking_transfer(spi->handle, &transaction);
 }
@@ -111,7 +111,7 @@ void spi_write(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = AM_BSP_GPIO_IOM0_CS_CHNL,
+		.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL,
 	};
 	am_hal_iom_blocking_transfer(spi->handle, &transaction);
 }
@@ -137,7 +137,7 @@ void spi_readwrite(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = AM_BSP_GPIO_IOM0_CS_CHNL,
+		.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL,
 	};
 	am_hal_iom_spi_blocking_fullduplex(spi->handle, &transaction);
 }
