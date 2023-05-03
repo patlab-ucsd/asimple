@@ -50,7 +50,7 @@ foreach board : boards
 
   # Create a pkgconfig file
   pkg = import('pkgconfig')
-  pkg.generate(lib, subdirs: ['', 'rba_simple'])
+  pkg.generate(lib, subdirs: ['', 'asimple'])
 endforeach
 
 # Executables -- FIXME this is here more as an example for now...
