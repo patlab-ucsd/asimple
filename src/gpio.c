@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright: Gabriel Marcano, 2023
 
+#include "am_mcu_apollo.h"
+#include "am_bsp.h"
+#include "am_util.h"
+
 #include <gpio.h>
 
 #include <am_hal_status.h>
 #include <am_hal_gpio.h>
+
+static AM_HAL_GPIO_MASKCREATE(interrupt_mask);
 
 void gpio_init(
 	struct gpio *gpio, uint8_t pin, enum gpio_mode mode, bool init_state)
@@ -17,7 +23,20 @@ void gpio_init(
 	if (mode == GPIO_MODE_OUTPUT)
 		am_hal_gpio_pinconfig(pin, g_AM_HAL_GPIO_OUTPUT_WITH_READ);
 	if (mode == GPIO_MODE_INPUT)
-		am_hal_gpio_pinconfig(pin, g_AM_HAL_GPIO_INPUT);
+	{
+		const am_hal_gpio_pincfg_t input_gpio =
+		{
+			.uFuncSel  = 3,
+			.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_DISABLE,
+			.eGPInput  = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+			.eGPRdZero = AM_HAL_GPIO_PIN_RDZERO_READPIN,
+			.eIntDir   = AM_HAL_GPIO_PIN_INTDIR_LO2HI
+		};
+		am_hal_gpio_pinconfig(pin, input_gpio);
+		AM_HAL_GPIO_MASKBITSMULT(pinterrupt_mask, pin);
+		am_hal_gpio_interrupt_enable(pinterrupt_mask);
+		NVIC_EnableIRQ(GPIO_IRQn);
+	}
 }
 
 void gpio_set(struct gpio *gpio, bool state)
@@ -30,4 +49,9 @@ bool gpio_read(struct gpio *gpio)
 	uint32_t result = 0;
 	am_hal_gpio_state_read(gpio->pin, AM_HAL_GPIO_INPUT_READ, &result);
 	return result;
+}
+
+void am_gpio_isr(void)
+{
+    am_hal_gpio_interrupt_clear(pinterrupt_mask);
 }

@@ -163,10 +163,9 @@ int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer
 	// mode to standby once it receives something
 	lora_receive_mode(lora);
 
-	// FIXME use interrupts instead?
 	while (!gpio_read(&lora->dio0))
 	{
-		// FIXME is there a better way to wait?
+		am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
 	}
 	lora_standby(lora);
 	// FIXME should we be clearing ALL read IRQs?
@@ -231,16 +230,11 @@ int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t bu
 
 	lora_transmit_mode(lora);
 
-	// FIXME this should be in the lora struct
-	// FIXME hardcoded GPIO for RX done
-	// FIXME we should configure the radio to use DIO0 as RX done also instead
-	// of relying on defaults!
-	// FIXME use interrupts instead?
-
 	//while (!(tx_irq = read_register(spi, LORA_IRQ_FLAGS) & 0x08))
 	while (!gpio_read(&lora->dio0))
 	{
 		// FIXME is there an interrupt way to wait while going to sleep?
+		am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
 	}
 	// Clear TxDone IRQ flag
 	tx_irq = read_register(spi, LORA_IRQ_FLAGS) & 0x08;
@@ -435,12 +429,3 @@ uint8_t lora_get_register(struct lora *lora, uint8_t address)
 	struct spi *spi = &lora->spi;
 	return read_register(spi, address);
 }
-
-/*
-const am_hal_gpio_pincfg_t g_AM_BSP_GPIO_HANDSHAKE =
-{
-	.uFuncSel	   = AM_HAL_PIN_10_GPIO,
-	.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
-	.eIntDir		= AM_HAL_GPIO_PIN_INTDIR_LO2HI,
-	.eGPInput	   = AM_HAL_GPIO_PIN_INPUT_ENABLE,
-};*/
