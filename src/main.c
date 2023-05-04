@@ -131,7 +131,7 @@ int main(void)
 	adc_trigger(&adc);
 
 	struct gpio lora_power;
-	gpio_init(&lora_power, 10, false);
+	gpio_init(&lora_power, 10, GPIO_MODE_OUTPUT, false);
 
 	struct lora lora;
 	//lora_receive_mode(&lora);
@@ -163,7 +163,7 @@ int main(void)
 			am_util_delay_ms(10);
 			// Only continue if we initialize
 			// FIXME what if we never initialize?
-			while(!lora_init(&lora, 915000000));
+			while(!lora_init(&lora, 915000000, 42));
 			lora_standby(&lora);
 			lora_set_spreading_factor(&lora, 7);
 			lora_set_coding_rate(&lora, 1);

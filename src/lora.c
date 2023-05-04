@@ -3,6 +3,7 @@
 
 #include <lora.h>
 #include <spi.h>
+#include <gpio.h>
 
 #include <am_mcu_apollo.h>
 #include <am_bsp.h>
@@ -34,7 +35,7 @@ static void change_mode(struct spi *spi, uint8_t mode)
 	write_register(spi, LORA_OPMODE, new_mode);
 }
 
-bool lora_init(struct lora *lora, uint32_t frequency)
+bool lora_init(struct lora *lora, uint32_t frequency, unsigned dio0_pin)
 {
 	struct spi *spi = &lora->spi;
 	spi_init(spi, 0);
@@ -44,8 +45,17 @@ bool lora_init(struct lora *lora, uint32_t frequency)
 	int version = read_register(spi, LORA_VERSION);
 	if (version != 0x12)
 	{
+		spi_destroy(spi);
+		memset(lora, 0, sizeof(*lora));
 		return false;
 	}
+	gpio_init(&lora->dio0, dio0_pin, GPIO_MODE_INPUT, false);
+
+	// FIXME hardcoded locations for RX and TX buffers in modem
+	// FIXME do I care about them being separated? This does allow for
+	// back-to-back transmission and reception without having to move data out
+	lora->rx_addr = 0x00;
+	lora->tx_addr = 0x80;
 
 	// Can only switch between FSQ and LoRa while sleeping...
 	lora_sleep(lora);
@@ -57,10 +67,8 @@ bool lora_init(struct lora *lora, uint32_t frequency)
 	lora_set_lna(lora, LORA_LNA_G1, true);
 
 	// Set pointers for FIFOs, RX and TX
-	// FIXME these are hard-coded
-	// FIXME do I care about them being separated?
-	write_register(spi, LORA_FIFO_TX_BASE, 0x80);
-	write_register(spi, LORA_FIFO_RX_BASE, 0x00);
+	write_register(spi, LORA_FIFO_TX_BASE, lora->tx_addr);
+	write_register(spi, LORA_FIFO_RX_BASE, lora->rx_addr);
 
 	// Enable AGC
 	write_register(spi, LORA_MODEM_CONFIG3, 0x04);
@@ -69,6 +77,7 @@ bool lora_init(struct lora *lora, uint32_t frequency)
 	// pins, and only connects PA_BOOST. As such, for this board, high_power
 	// must always be true.
 	lora_set_transmit_level(lora, 2, true);
+
 
 	return true;
 }
@@ -129,76 +138,116 @@ bool lora_set_transmit_level(struct lora *lora, int8_t dBm, bool high_power)
 	return true;
 }
 
-void lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size)
+int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size)
 {
 	// FIXME should we block until we receive something?
 	// FIXME what if we don't receive something?
 	struct spi *spi = &lora->spi;
-	// If we're not in reading mode, bail
-	if ((read_register(spi, LORA_OPMODE) & 0x7) != 0x05)
-		return;
 
-	// FIXME check for explicit mode???
+	lora_standby(lora);
+
+	// Configure DIO0 to RX Done
+	uint8_t gpio0_3 = read_register(spi, LORA_DIO_MAPPING0_3);
+	gpio0_3 &= 0x3F;
+	write_register(spi, LORA_DIO_MAPPING0_3, gpio0_3);
 
 	uint8_t read_irq = read_register(spi, LORA_IRQ_FLAGS) & 0xF0;
 
+	// Reset RX IRQ flags
+	write_register(spi, LORA_IRQ_FLAGS, read_irq);
+
+	// Reset RX location
+	write_register(spi, LORA_FIFO_ADDR, lora->rx_addr);
+
+	// Receive a packet-- the radio automatically switches from single received
+	// mode to standby once it receives something
+	lora_receive_mode(lora);
+
+	// FIXME use interrupts instead?
+	while (!gpio_read(&lora->dio0))
+	{
+		// FIXME is there a better way to wait?
+	}
+	lora_standby(lora);
+	// FIXME should we be clearing ALL read IRQs?
+	read_irq = read_register(spi, LORA_IRQ_FLAGS) & 0xF0;
+	write_register(spi, LORA_IRQ_FLAGS, read_irq);
+
 	// If no CRC payload error, and RxDone
 	// Ignoring timeout and valid header IRQs? FIXME
+	uint8_t length = 0;
 	if (!(read_irq & (1 << 5)) && (read_irq & (1 << 6)))
 	{
-		// FIXME should we be clearing ALL read IRQs?
-		write_register(spi, LORA_IRQ_FLAGS, read_irq);
-
-		uint8_t length = read_register(spi, LORA_RX_BYTES);
+		length = read_register(spi, LORA_RX_BYTES);
+		length = length > buffer_size ? buffer_size : length;
 		// Move current pointer to current Rx location
 		write_register(spi, LORA_FIFO_ADDR, read_register(spi, LORA_FIFO_RX_CURRENT_ADDR));
-
-		lora_standby(lora);
 
 		// Now, start reading?
 		for (uint8_t i = 0; i < length; ++i)
 		{
-			// FIXME use buffer_size!
 			buffer[i] = read_register(spi, LORA_FIFO);
 		}
-		// Update pointer to FIFO to beginning
-		write_register(spi, LORA_FIFO_ADDR, 0x0);
-		lora_receive_mode(lora);
 	}
+
+	return length;
 }
 
-void lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size)
+uint8_t lora_get_rx_bytes(struct lora *lora)
 {
+	return read_register(&lora->spi, LORA_RX_BYTES);
+}
+
+int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size)
+{
+	if (!buffer || buffer_size == 0)
+		return 0;
+
 	struct spi *spi = &lora->spi;
-	// FIXME do we want to not transmit if we're in receive mode???
+	// FIXME should we check if the hardware is busy???
 
 	lora_standby(lora);
+	// Configure DIO0 to TX Done
+	uint8_t gpio0_3 = read_register(spi, LORA_DIO_MAPPING0_3);
+	gpio0_3 &= 0x3F;
+	gpio0_3 |= 0x40;
+	write_register(spi, LORA_DIO_MAPPING0_3, gpio0_3);
 
-	// Clear IRQ if set
+	// Clear TxDone IRQ if set
 	uint8_t tx_irq = read_register(spi, LORA_IRQ_FLAGS) & 0x08;
 	write_register(spi, LORA_IRQ_FLAGS, tx_irq);
 
-	// FIXME check for explicit mode?
+	write_register(spi, LORA_FIFO_ADDR, lora->tx_addr);
+	// Limit the amount to send per packet to the amount that will fit in the
+	// TX portion of the FIFO
+	const uint8_t max_to_send = 0x100 - lora->tx_addr;
+	uint8_t to_send =  buffer_size > max_to_send ? max_to_send : buffer_size;
+	write_register(spi, LORA_PAYLOAD_LEN, to_send);
 
-	// FIXME 0x80 is hardcoded TX base address
-	write_register(spi, LORA_FIFO_ADDR, 0x80);
-	// FIXME what if buffer_size > space available in FIFO buffer?
-	write_register(spi, LORA_PAYLOAD_LEN, buffer_size);
-
-	for (uint8_t i = 0; i < buffer_size; ++i)
+	for (uint8_t i = 0; i < to_send; ++i)
 	{
 		write_register(spi, LORA_FIFO, buffer[i]);
 	}
 
 	lora_transmit_mode(lora);
 
-	while (!(read_register(spi, LORA_IRQ_FLAGS) & 0x08))
+	// FIXME this should be in the lora struct
+	// FIXME hardcoded GPIO for RX done
+	// FIXME we should configure the radio to use DIO0 as RX done also instead
+	// of relying on defaults!
+	// FIXME use interrupts instead?
+
+	//while (!(tx_irq = read_register(spi, LORA_IRQ_FLAGS) & 0x08))
+	while (!gpio_read(&lora->dio0))
 	{
 		// FIXME is there an interrupt way to wait while going to sleep?
-		// wait
 	}
+	// Clear TxDone IRQ flag
 	tx_irq = read_register(spi, LORA_IRQ_FLAGS) & 0x08;
 	write_register(spi, LORA_IRQ_FLAGS, tx_irq);
+
+	int sent = read_register(spi, LORA_FIFO_ADDR) - lora->tx_addr;
+	return sent;
 }
 
 bool lora_set_spreading_factor(struct lora *lora, uint8_t spreading_factor)

@@ -5,6 +5,7 @@
 #define LORA_H_
 
 #include <spi.h>
+#include <gpio.h>
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -94,6 +95,9 @@
 struct lora
 {
 	struct spi spi;
+	struct gpio dio0;
+	uint8_t tx_addr;
+	uint8_t rx_addr;
 };
 
 /** LoRa low-noise amplifier gain. The maximum gain is G1, minimum is G6 */
@@ -131,16 +135,21 @@ enum lora_lna_gain
  * explicitly set the spreading factor, bandwidth, and the coding rate after
  * initialization.
  *
+ * One point to note from the SX1276 documentation-- on power-on the modem
+ * requires 10 milliseconds to become ready. This initialization code does not
+ * have a good way to enforce/verify that the hardware is initialized!
+ *
  * FIXME do I want to allow passing in a spi device??? this way, so long as the
  * device is configured to use different chip selects, these can be used in
  * tandem?
  *
  * @param[out] lora Pointer to the lora structure to initialize.
  * @param[in] frequency
+ * @param[in] dio0_pin GPIO connected to the DIO0 pin on the radio module.
  *
  * @returns True on success, false otherwise. Fails if LoRa module is unknown.
  */
-bool lora_init(struct lora *lora, uint32_t frequency);
+bool lora_init(struct lora *lora, uint32_t frequency, unsigned dio0_pin);
 
 /** Releases all resources held by the given lora object.
  *
@@ -152,29 +161,38 @@ bool lora_init(struct lora *lora, uint32_t frequency);
  */
 void lora_destroy(struct lora *lora);
 
-/** Receives a single LoRa packet, blocking until it is received.
+/** Receives a packet and returns its payload, or at least what will fit in the
+ * buffer provided.
  *
- * FIXME is this acceptable? Or should we always allow trying to copy a packet,
- * so long as we have a valid one in the FIFO?
- * The lora module must be in its receiving mode, else nothing is returned.
+ * This function does timeout by after the time it would have taken to receive
+ * 64 symbols (FIXME by default at least).
  *
  * @param[in,out] lora Pointer to an initialized lora structure.
  * @param[out] buffer Pointer to buffer to move packet to.
  * @param[in] buffer_size The size of the buffer in bytes.
  *
- * FIXME should we return if we actually return something??
+ * @returns The number of bytes read into the buffer. This may be less than the
+ * given buffer size if there was not enough data in the FIFO to fill the
+ * buffer. This returns a negative number of error.
  */
-void lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size);
+int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size);
 
 /** Sends a LoRa packet, blocking until it is transmitted.
+ *
+ * Note that this function does not check how the message will be on the air
+ * for compliance with regulatory rules!
+ *
+ * This function will only send a single packet. If it cannot send the buffer
+ * in a single packet, it will return how many bytes were transmitted, which
+ * may be less than the given buffer size.
  *
  * @param[in,out] lora Pointer to an initialized lora structure.
  * @param[in] buffer Pointer to the buffer containing the data to transmit.
  * @param[in] buffer_size The number of bytes to transmit.
  *
- * FIXME should there be any status return?
+ * @returns The number of bytes sent on success, a negative number of failure.
  */
-void lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size);
+int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size);
 
 /** Configures the LoRa spreading factor for RX and TX.
  *
@@ -206,7 +224,7 @@ uint8_t lora_get_spreading_factor(struct lora *lora);
  */
 uint8_t lora_rx_amount(struct lora *lora);
 
-/** Changes the LoRa module to receive mode. FIXME should we expose this?
+/** Changes the LoRa module to single receive mode. FIXME should we expose this?
  *
  * @param[in,out] lora Pointer to an initialized lora structure.
  */
