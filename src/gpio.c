@@ -6,14 +6,18 @@
 #include <am_hal_status.h>
 #include <am_hal_gpio.h>
 
-void gpio_init(struct gpio *gpio, uint8_t pin, bool init_state)
+void gpio_init(
+	struct gpio *gpio, uint8_t pin, enum gpio_mode mode, bool init_state)
 {
 	gpio->pin = pin;
 	// Make sure to set the hardware registers indicating the pin value before
 	// changing the pin configuration, so that the state is activated as soon
 	// as we configure the hardware
 	gpio_set(gpio, init_state);
-	am_hal_gpio_pinconfig(pin, g_AM_HAL_GPIO_OUTPUT_WITH_READ);
+	if (mode == GPIO_MODE_OUTPUT)
+		am_hal_gpio_pinconfig(pin, g_AM_HAL_GPIO_OUTPUT_WITH_READ);
+	if (mode == GPIO_MODE_INPUT)
+		am_hal_gpio_pinconfig(pin, g_AM_HAL_GPIO_INPUT);
 }
 
 void gpio_set(struct gpio *gpio, bool state)

@@ -13,14 +13,23 @@ struct gpio
 	uint8_t pin;
 };
 
+enum gpio_mode
+{
+	GPIO_MODE_OUTPUT,
+	GPIO_MODE_INPUT
+};
+
+// FIXME we should let the type of GPIO be configurable, or document how to do so
+
 /** Initializes the GPIO structure and given pin hardware.
  *
  * @param[out] gpio Pointer to the GPIO structure to initialize as a push-pull
- *  GPIO.
+ *  GPIO or as input.
  * @param[in] Pin number of the GPIO to initialize.
- * @param[in] Initial state of the GPIO pin.
+ * @param[in] mode The mode of the GPIO, see enum gpio_mode for options.
+ * @param[in] init_state Initial state of the GPIO pin.
  */
-void gpio_init(struct gpio *gpio, uint8_t pin, bool init_state);
+void gpio_init(struct gpio *gpio, uint8_t pin, enum gpio_mode mode, bool init_state);
 
 /** Sets the GPIO pin state.
  *
