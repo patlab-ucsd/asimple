@@ -31,8 +31,8 @@ struct timeval am1815_read_time(struct am1815 *rtc)
 
 	struct tm date = {
 		.tm_year = from_bcd(data[6]) + 100,
-		.tm_mon = from_bcd(data[5] & 0x1F),
-		.tm_mday = from_bcd(data[4] & 0x3F) + 1,
+		.tm_mon = from_bcd(data[5] & 0x1F) - 1,
+		.tm_mday = from_bcd(data[4] & 0x3F),
 		.tm_hour = from_bcd(data[3] & 0x3F),
 		.tm_min = from_bcd(data[2] & 0x7F),
 		.tm_sec = from_bcd(data[1] & 0x7F),
