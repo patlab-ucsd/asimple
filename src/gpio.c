@@ -53,7 +53,7 @@ bool gpio_read(struct gpio *gpio)
 
 void am_gpio_isr(void)
 {
-    uint64_t ui64Status;
+	uint64_t ui64Status;
 	am_hal_gpio_interrupt_status_get(false, &ui64Status);
 	am_hal_gpio_interrupt_clear(ui64Status);
 	am_hal_gpio_interrupt_service(ui64Status);
