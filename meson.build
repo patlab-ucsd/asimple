@@ -30,7 +30,9 @@ foreach board : boards
     'src/adc.c',
     'src/spi.c',
     'src/lora.c',
-    'src/gpio.c'
+    'src/gpio.c',
+    'src/am1815.c',
+    'src/syscalls.c',
   ])
 
   includes = include_directories([
