@@ -70,13 +70,13 @@ struct timeval am1815_read_time(struct am1815 *rtc);
  * we set the year to 0 (i.e, 0 years since 1900). Note that the AM1815 has at best
  * centiseconds resolution.
 */
-struct timeval am1815_read_alarm(struct am1815 *rtc)
+struct timeval am1815_read_alarm(struct am1815 *rtc);
 
 /** Writes the alarm time on the RTC.
  * 
  * @param[in, out] rtc RTC to write the alarm time of.
  * @param[in] atime The time in seconds and microseconds that we want to set the alarm to.
 */
-void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime)
+void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime);
 
 #endif//AM1815_H_
