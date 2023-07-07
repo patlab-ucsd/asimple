@@ -19,21 +19,59 @@ static am_hal_iom_config_t spi_config =
 	.eSpiMode = AM_HAL_IOM_SPI_MODE_0,
 };
 
-const am_hal_gpio_pincfg_t g_AM_BSP_GPIO_HANDSHAKE =
+static int32_t select_clock(uint32_t clock)
 {
-	.uFuncSel	   = AM_HAL_PIN_10_GPIO,
-	.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
-	.eIntDir		= AM_HAL_GPIO_PIN_INTDIR_LO2HI,
-	.eGPInput	   = AM_HAL_GPIO_PIN_INPUT_ENABLE,
-};
+	if (clock >= 48000000u)
+		return AM_HAL_IOM_48MHZ;
+	else if (clock >= 24000000u)
+		return AM_HAL_IOM_24MHZ;
+	else if (clock >= 16000000u)
+		return AM_HAL_IOM_16MHZ;
+	else if (clock >= 12000000u)
+		return AM_HAL_IOM_12MHZ;
+	else if (clock >= 8000000u)
+		return AM_HAL_IOM_8MHZ;
+	else if (clock >= 6000000u)
+		return AM_HAL_IOM_6MHZ;
+	else if (clock >= 4000000u)
+		return AM_HAL_IOM_4MHZ;
+	else if (clock >= 3000000u)
+		return AM_HAL_IOM_3MHZ;
+	else if (clock >= 2000000u)
+		return AM_HAL_IOM_2MHZ;
+	else if (clock >= 1500000u)
+		return AM_HAL_IOM_1_5MHZ;
+	else if (clock >= 1000000u)
+		return AM_HAL_IOM_1MHZ;
+	else if (clock >= 750000u)
+		return AM_HAL_IOM_750KHZ;
+	else if (clock >= 500000u)
+		return AM_HAL_IOM_500KHZ;
+	else if (clock >= 400000u)
+		return AM_HAL_IOM_400KHZ;
+	else if (clock >= 375000u)
+		return AM_HAL_IOM_375KHZ;
+	else if (clock >= 250000u)
+		return AM_HAL_IOM_250KHZ;
+	else if (clock >= 125000u)
+		return AM_HAL_IOM_125KHZ;
+	else if (clock >= 100000u)
+		return AM_HAL_IOM_100KHZ;
+	else if (clock >= 50000u)
+		return AM_HAL_IOM_50KHZ;
+	else // Any other clocks
+		return AM_HAL_IOM_10KHZ;
+}
 
-void spi_init(struct spi *spi, uint32_t iomModule)
+void spi_init(struct spi *spi, uint32_t iomModule, uint32_t clock)
 {
 	spi->iom_module = iomModule;
 	// This just initializes the handle-- no hardware function
 	am_hal_iom_initialize(iomModule, &spi->handle);
 	// ... and here we turn on the hardware so we can modify settings
 	am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_WAKE, false);
+	clock = select_clock(clock);
+	spi_config.ui32ClockFreq = clock;
 	am_hal_iom_configure(spi->handle, &spi_config);
 	am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
 	am_hal_iom_enable(spi->handle);

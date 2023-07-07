@@ -34,8 +34,11 @@ struct spi
  *
  * @param[out] spi Pointer to the spi structure to initialize.
  * @param[in] iom_module Index of the IOM module to use.
+ * @param[in] clock The clock speed in Hz. The actual hardware has limitations
+ *  on the speeds and the actual clock will be rounded down to the closes
+ *  supported one.
  */
-void spi_init(struct spi *spi, uint32_t iom_module);
+void spi_init(struct spi *spi, uint32_t iom_module, uint32_t clock);
 
 /** Releases all resources of the given spi object.
  *
