@@ -13,7 +13,7 @@ uint8_t am1815_read_register(struct am1815 *rtc, uint8_t addr)
 void am1815_write_register(struct am1815 *rtc, uint8_t addr, uint8_t data)
 {
 	uint32_t buffer = data;
-	spi_write(rtc->spi, addr, &buffer, 1);
+	spi_write(rtc->spi, 0x80 | addr, &buffer, 1);
 }
 
 static uint8_t from_bcd(uint8_t bcd)
