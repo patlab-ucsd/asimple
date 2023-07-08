@@ -4,6 +4,8 @@
 #ifndef SPI_H_
 #define SPI_H_
 
+#include <am_bsp.h>
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -12,6 +14,15 @@ struct spi
 {
 	void *handle;
 	int iom_module;
+	int chip_select;
+};
+
+enum spi_chip_select
+{
+	SPI_CS_0,
+//	SPI_CS_1, FIXME these are not used in IOM0 currently in the SDK
+//	SPI_CS_2,
+	SPI_CS_3 = 3,
 };
 
 /** Initializes the given MIO module for SPI use.
@@ -39,6 +50,20 @@ struct spi
  *  supported one.
  */
 void spi_init(struct spi *spi, uint32_t iom_module, uint32_t clock);
+
+/** Selects which CS line to use.
+ *
+ * Which pin is used by the Apollo3 depends on the IOM in use.
+ *
+ * For IOM0:
+ *   SPI_CS_0 - pin 11
+ *   SPI_CS_3 - pin 15
+ *
+ * @param[in,out] spi Spi structure to update the currenctly selected chip
+ *  select line.
+ * @param[in] chip_select Chip select ID to use.
+ */
+void spi_chip_select(struct spi *spi, enum spi_chip_select chip_select);
 
 /** Releases all resources of the given spi object.
  *

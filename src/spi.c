@@ -63,6 +63,22 @@ static int32_t select_clock(uint32_t clock)
 		return AM_HAL_IOM_10KHZ;
 }
 
+static int convert_chip_select(enum spi_chip_select cs)
+{
+	switch (cs)
+	{
+		/*case SPI_CS_1:
+			return AM_BSP_IOM0_CS1_CHNL;
+		case SPI_CS_2:
+			return AM_BSP_IOM0_CS2_CHNL;*///FIXME Not implemented in SDK for some reason
+		case SPI_CS_3:
+			return AM_BSP_IOM0_CS3_CHNL;
+		case SPI_CS_0:
+		default:
+			return AM_BSP_IOM0_CS_CHNL;
+	}
+}
+
 void spi_init(struct spi *spi, uint32_t iomModule, uint32_t clock)
 {
 	spi->iom_module = iomModule;
@@ -75,7 +91,13 @@ void spi_init(struct spi *spi, uint32_t iomModule, uint32_t clock)
 	am_hal_iom_configure(spi->handle, &spi_config);
 	am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
 	am_hal_iom_enable(spi->handle);
+	spi_chip_select(spi, SPI_CS_0);
 	spi_sleep(spi);
+}
+
+void spi_chip_select(struct spi *spi, enum spi_chip_select chip_select)
+{
+	spi->chip_select = convert_chip_select(chip_select);
 }
 
 void spi_destroy(struct spi *spi)
@@ -128,7 +150,7 @@ void spi_read(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL,
+		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
 	};
 	am_hal_iom_blocking_transfer(spi->handle, &transaction);
 }
@@ -149,7 +171,7 @@ void spi_write(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL,
+		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
 	};
 	am_hal_iom_blocking_transfer(spi->handle, &transaction);
 }
@@ -175,7 +197,7 @@ void spi_readwrite(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL,
+		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
 	};
 	am_hal_iom_spi_blocking_fullduplex(spi->handle, &transaction);
 }

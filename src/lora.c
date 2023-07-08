@@ -39,6 +39,7 @@ bool lora_init(struct lora *lora, uint32_t frequency, unsigned dio0_pin)
 {
 	struct spi *spi = &lora->spi;
 	spi_init(spi, 0, 4000000);
+	spi_chip_select(spi, SPI_CS_0); // FIXME hardcoded
 	spi_enable(spi);
 
 	// do not initialize if the version is unknown
