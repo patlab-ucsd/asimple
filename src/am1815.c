@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Gabriel Marcano, 2023
+
 #include <am1815.h>
 #include <time.h>
 #include <sys/time.h>
