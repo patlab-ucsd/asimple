@@ -2,6 +2,7 @@
 // Copyright: Gabriel Marcano, 2023
 
 #include <spi.h>
+#include <gpio.h>
 
 #include <am_mcu_apollo.h>
 #include <am_bsp.h>
@@ -63,19 +64,172 @@ static int32_t select_clock(uint32_t clock)
 		return AM_HAL_IOM_10KHZ;
 }
 
-static int convert_chip_select(enum spi_chip_select cs)
+static int convert_chip_select(uint8_t module, enum spi_chip_select cs)
 {
-	switch (cs)
+	// FIXME what about modules other than 0?
+	switch (module)
 	{
-		/*case SPI_CS_1:
+	default:
+	case 0:
+		switch (cs)
+		{
+#ifdef AM_BSP_IOM0_CS1_CHNL
+		case SPI_CS_1:
 			return AM_BSP_IOM0_CS1_CHNL;
+#endif//AM_BSP_IOM0_CS1_CHNL
+#ifdef AM_BSP_IOM0_CS2_CHNL
 		case SPI_CS_2:
-			return AM_BSP_IOM0_CS2_CHNL;*///FIXME Not implemented in SDK for some reason
+			return AM_BSP_IOM0_CS2_CHNL;
+#endif//AM_BSP_IOM0_CS2_CHNL
+#ifdef AM_BSP_IOM0_CS3_CHNL
 		case SPI_CS_3:
 			return AM_BSP_IOM0_CS3_CHNL;
+#endif//AM_BSP_IOM0_CS3_CHNL
 		case SPI_CS_0:
 		default:
 			return AM_BSP_IOM0_CS_CHNL;
+		}
+	case 1:
+		switch (cs)
+		{
+#ifdef AM_BSP_IOM1_CS1_CHNL
+		case SPI_CS_1:
+			return AM_BSP_IOM1_CS1_CHNL;
+#endif//AM_BSP_IOM1_CS1_CHNL
+#ifdef AM_BSP_IOM1_CS2_CHNL
+		case SPI_CS_2:
+			return AM_BSP_IOM1_CS2_CHNL;
+#endif//AM_BSP_IOM1_CS2_CHNL
+#ifdef AM_BSP_IOM1_CS3_CHNL
+		case SPI_CS_3:
+			return AM_BSP_IOM1_CS3_CHNL;
+#endif//AM_BSP_IOM1_CS3_CHNL
+		case SPI_CS_0:
+		default:
+			return AM_BSP_IOM1_CS_CHNL;
+		}
+	case 2:
+		switch (cs)
+		{
+#ifdef AM_BSP_IOM2_CS1_CHNL
+		case SPI_CS_1:
+			return AM_BSP_IOM2_CS1_CHNL;
+#endif//AM_BSP_IOM2_CS1_CHNL
+#ifdef AM_BSP_IOM2_CS2_CHNL
+		case SPI_CS_2:
+			return AM_BSP_IOM2_CS2_CHNL;
+#endif//AM_BSP_IOM2_CS2_CHNL
+#ifdef AM_BSP_IOM2_CS3_CHNL
+		case SPI_CS_3:
+			return AM_BSP_IOM2_CS3_CHNL;
+#endif//AM_BSP_IOM2_CS3_CHNL
+		case SPI_CS_0:
+		default:
+			return AM_BSP_IOM2_CS_CHNL;
+		}
+	case 3:
+		switch (cs)
+		{
+#ifdef AM_BSP_IOM3_CS1_CHNL
+		case SPI_CS_1:
+			return AM_BSP_IOM3_CS1_CHNL;
+#endif//AM_BSP_IOM3_CS1_CHNL
+#ifdef AM_BSP_IOM3_CS2_CHNL
+		case SPI_CS_2:
+			return AM_BSP_IOM3_CS2_CHNL;
+#endif//AM_BSP_IOM3_CS2_CHNL
+#ifdef AM_BSP_IOM3_CS3_CHNL
+		case SPI_CS_3:
+			return AM_BSP_IOM3_CS3_CHNL;
+#endif//AM_BSP_IOM3_CS3_CHNL
+		case SPI_CS_0:
+		default:
+			return AM_BSP_IOM3_CS_CHNL;
+		}
+	}
+}
+
+static int get_pin(uint32_t module, enum spi_chip_select chip_select)
+{
+	switch (module)
+	{
+	default:
+	case 0:
+		switch (chip_select)
+		{
+#ifdef AM_BSP_GPIO_IOM0_CS1
+		case SPI_CS_1:
+			return AM_BSP_GPIO_IOM0_CS1;
+#endif//AM_BSP_GPIO_IOM0_CS1
+#ifdef AM_BSP_GPIO_IOM0_CS2
+		case SPI_CS_2:
+			return AM_BSP_GPIO_IOM0_CS2;
+#endif//AM_BSP_GPIO_IOM0_CS2
+#ifdef AM_BSP_GPIO_IOM0_CS3
+		case SPI_CS_3:
+			return AM_BSP_GPIO_IOM0_CS3;
+#endif//AM_BSP_GPIO_IOM0_CS
+		case SPI_CS_0:
+		default:
+			return AM_BSP_GPIO_IOM0_CS;
+		}
+	case 1:
+		switch (chip_select)
+		{
+#ifdef AM_BSP_GPIO_IOM1_CS1
+		case SPI_CS_1:
+			return AM_BSP_GPIO_IOM1_CS1;
+#endif//AM_BSP_GPIO_IOM1_CS1
+#ifdef AM_BSP_GPIO_IOM1_CS2
+		case SPI_CS_2:
+			return AM_BSP_GPIO_IOM1_CS2;
+#endif//AM_BSP_GPIO_IOM1_CS2
+#ifdef AM_BSP_GPIO_IOM1_CS3
+		case SPI_CS_3:
+			return AM_BSP_GPIO_IOM1_CS3;
+#endif//AM_BSP_GPIO_IOM1_CS
+		case SPI_CS_0:
+		default:
+			return AM_BSP_GPIO_IOM1_CS;
+		}
+	case 2:
+		switch (chip_select)
+		{
+#ifdef AM_BSP_GPIO_IOM2_CS1
+		case SPI_CS_1:
+			return AM_BSP_GPIO_IOM2_CS1;
+#endif//AM_BSP_GPIO_IOM2_CS1
+#ifdef AM_BSP_GPIO_IOM2_CS2
+		case SPI_CS_2:
+			return AM_BSP_GPIO_IOM2_CS2;
+#endif//AM_BSP_GPIO_IOM2_CS2
+#ifdef AM_BSP_GPIO_IOM2_CS3
+		case SPI_CS_3:
+			return AM_BSP_GPIO_IOM2_CS3;
+#endif//AM_BSP_GPIO_IOM2_CS
+		case SPI_CS_0:
+		default:
+			return AM_BSP_GPIO_IOM2_CS;
+		}
+	case 3:
+		switch (chip_select)
+		{
+#ifdef AM_BSP_GPIO_IOM3_CS1
+		case SPI_CS_1:
+			return AM_BSP_GPIO_IOM3_CS1;
+#endif//AM_BSP_GPIO_IOM3_CS1
+#ifdef AM_BSP_GPIO_IOM3_CS2
+		case SPI_CS_2:
+			return AM_BSP_GPIO_IOM3_CS2;
+#endif//AM_BSP_GPIO_IOM3_CS2
+#ifdef AM_BSP_GPIO_IOM3_CS3
+		case SPI_CS_3:
+			return AM_BSP_GPIO_IOM3_CS3;
+#endif//AM_BSP_GPIO_IOM3_CS
+		case SPI_CS_0:
+		default:
+			return AM_BSP_GPIO_IOM3_CS;
+		}
 	}
 }
 
@@ -97,7 +251,7 @@ void spi_init(struct spi *spi, uint32_t iomModule, uint32_t clock)
 
 void spi_chip_select(struct spi *spi, enum spi_chip_select chip_select)
 {
-	spi->chip_select = convert_chip_select(chip_select);
+	spi->chip_select = chip_select;
 }
 
 void spi_destroy(struct spi *spi)
@@ -136,7 +290,7 @@ bool spi_enable(struct spi *spi)
 }
 
 void spi_cmd_read(
-	struct spi *spi, uint32_t command, uint32_t *buffer, uint32_t size)
+	struct spi *spi, uint8_t command, uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -156,7 +310,7 @@ void spi_cmd_read(
 }
 
 void spi_cmd_write(
-	struct spi *spi, uint32_t command, const uint32_t *buffer, uint32_t size)
+	struct spi *spi, uint8_t command, const uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -275,7 +429,22 @@ void spi_readwrite(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+		.uPeerInfo.ui32SpiChipSelect = convert_chip_select(spi->iom_module, spi->chip_select),
 	};
 	am_hal_iom_spi_blocking_fullduplex(spi->handle, &transaction);
+}
+
+void spi_toggle(struct spi *spi, uint32_t size)
+{
+	// We need this for SD card support
+	// and this is cursed-- we need to take over the SPI pins for the nCS
+	// lines, keep it high ourselves, then clock size number of bytes
+	struct gpio cs;
+	gpio_init(&cs, get_pin(spi->iom_module, spi->chip_select), GPIO_MODE_OUTPUT, 1);
+	uint32_t data = 0xFFFFFFFFu;
+	for (; size > 4; size -= 4)
+		spi_write(spi, &data, 4);
+	spi_write(spi, &data, size);
+	// Restore pin assignments
+	am_bsp_iom_pins_enable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
 }

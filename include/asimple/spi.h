@@ -20,8 +20,8 @@ struct spi
 enum spi_chip_select
 {
 	SPI_CS_0,
-//	SPI_CS_1, FIXME these are not used in IOM0 currently in the SDK
-//	SPI_CS_2,
+	SPI_CS_1,
+	SPI_CS_2,
 	SPI_CS_3 = 3,
 };
 
@@ -57,6 +57,8 @@ void spi_init(struct spi *spi, uint32_t iom_module, uint32_t clock);
  *
  * For IOM0:
  *   SPI_CS_0 - pin 11
+ *   SPI_CS_1 - pin 17
+ *   SPI_CS_2 - pin 14
  *   SPI_CS_3 - pin 15
  *
  * @param[in,out] spi Spi structure to update the currenctly selected chip
@@ -90,7 +92,8 @@ bool spi_enable(struct spi *spi);
  */
 bool spi_sleep(struct spi *spi);
 
-/** Reads data (blocking) from the SPI peripheral.
+/** Reads data (blocking) from the SPI peripheral, sending a command byte
+ *  beforehand.
  *
  * FIXME is there any way to time out?
  *
@@ -110,9 +113,10 @@ bool spi_sleep(struct spi *spi);
  * @param[in] size Size of the buffer.
  */
 void spi_cmd_read(
-	struct spi *spi, uint32_t command, uint32_t *buffer, uint32_t size);
+	struct spi *spi, uint8_t command, uint32_t *buffer, uint32_t size);
 
-/** Write data (blocking) to the SPI peripheral.
+/** Writes data (blocking) to the SPI peripheral, sending a command byte
+ *  beforehand.
  *
  * FIXME is there any way to time out?
  *
@@ -126,14 +130,54 @@ void spi_cmd_read(
  * @param[in] size Size of the buffer.
  */
 void spi_cmd_write(
-	struct spi *spi, uint32_t command, const uint32_t *buffer, uint32_t size);
+	struct spi *spi, uint8_t command, const uint32_t *buffer, uint32_t size);
 
+/** Reads data (blocking) from the SPI peripheral.
+ *
+ * This sets the CS line to logical false (high) on completion.
+ *
+ * See spi_read for an explanation as to why buffer is a uint32_t pointer.
+ *
+ * @param[in,out] spi Pointer to the spi structure to use.
+ * @param[in] buffer Pointer to buffer with outgoing data.
+ * @param[in] size Size of the buffer.
+ */
 void spi_read(struct spi *spi, uint32_t *buffer, uint32_t size);
 
+/** Writes data (blocking) to the SPI peripheral.
+ *
+ * This sets the CS line to logical false (high) on completion.
+ *
+ * See spi_read for an explanation as to why buffer is a uint32_t pointer.
+ *
+ * @param[in,out] spi Pointer to the spi structure to use.
+ * @param[in] buffer Pointer to buffer with outgoing data.
+ * @param[in] size Size of the buffer.
+ */
 void spi_write(struct spi *spi, const uint32_t *buffer, uint32_t size);
 
+/** Reads data (blocking) to the SPI peripheral, and leave CS active (low).
+ *
+ * This leaves the CS line as logical true (low) on completion.
+ *
+ * See spi_read for an explanation as to why buffer is a uint32_t pointer.
+ *
+ * @param[in,out] spi Pointer to the spi structure to use.
+ * @param[in] buffer Pointer to buffer with outgoing data.
+ * @param[in] size Size of the buffer.
+ */
 void spi_read_continue(struct spi *spi, uint32_t *buffer, uint32_t size);
 
+/** Writes data (blocking) to the SPI peripheral, and leaves CS active (low).
+ *
+ * This sets the CS line to logical true (low) on completion.
+ *
+ * See spi_read for an explanation as to why buffer is a uint32_t pointer.
+ *
+ * @param[in,out] spi Pointer to the spi structure to use.
+ * @param[in] buffer Pointer to buffer with outgoing data.
+ * @param[in] size Size of the buffer.
+ */
 void spi_write_continue(
 	struct spi *spi, const uint32_t *buffer, uint32_t size);
 
@@ -154,5 +198,15 @@ void spi_readwrite(
 	uint32_t *rx_buffer,
 	const uint32_t *tx_buffer,
 	uint32_t size);
+
+/** Toggles the SPI clock while sending 0xFF and keeping CS logical false (high).
+ *
+ * SD cards require some clocking after the CS line is deasserted-- this
+ * function is meant to do this.
+ *
+ * @param[in,out] spi Pointer to the spi structure to use.
+ * @param[in] size Number of bytes to clock.
+ */
+void spi_toggle(struct spi *spi, uint32_t size);
 
 #endif//SPI_H_
