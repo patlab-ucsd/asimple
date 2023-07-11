@@ -135,7 +135,7 @@ bool spi_enable(struct spi *spi)
 	return true;
 }
 
-void spi_read(
+void spi_cmd_read(
 	struct spi *spi, uint32_t command, uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
@@ -155,7 +155,7 @@ void spi_read(
 	am_hal_iom_blocking_transfer(spi->handle, &transaction);
 }
 
-void spi_write(
+void spi_cmd_write(
 	struct spi *spi, uint32_t command, const uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
@@ -167,6 +167,84 @@ void spi_write(
 		// FIXME I really don't like how I need to strip const here...
 		.pui32TxBuffer   = (uint32_t*)buffer,
 		.bContinue	   = false,
+		.ui8RepeatCount  = 0,
+		.ui32PauseCondition = 0,
+		.ui32StatusSetClr = 0,
+
+		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+	};
+	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+}
+
+void spi_read(
+	struct spi *spi, uint32_t *buffer, uint32_t size)
+{
+	am_hal_iom_transfer_t transaction =
+	{
+		.ui32InstrLen = 0,
+		.eDirection = AM_HAL_IOM_RX,
+		.ui32NumBytes = size,
+		.pui32RxBuffer = buffer,
+		.bContinue = false,
+		.ui8RepeatCount = 0,
+		.ui32PauseCondition = 0,
+		.ui32StatusSetClr = 0,
+
+		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+	};
+	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+}
+
+void spi_write(
+	struct spi *spi, const uint32_t *buffer, uint32_t size)
+{
+	am_hal_iom_transfer_t transaction =
+	{
+		.ui32InstrLen	= 0,
+		.eDirection	  = AM_HAL_IOM_TX,
+		.ui32NumBytes	= size,
+		// FIXME I really don't like how I need to strip const here...
+		.pui32TxBuffer   = (uint32_t*)buffer,
+		.bContinue	   = false,
+		.ui8RepeatCount  = 0,
+		.ui32PauseCondition = 0,
+		.ui32StatusSetClr = 0,
+
+		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+	};
+	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+}
+
+void spi_read_continue(
+	struct spi *spi, uint32_t *buffer, uint32_t size)
+{
+	am_hal_iom_transfer_t transaction =
+	{
+		.ui32InstrLen = 0,
+		.eDirection = AM_HAL_IOM_RX,
+		.ui32NumBytes = size,
+		.pui32RxBuffer = buffer,
+		.bContinue = true,
+		.ui8RepeatCount = 0,
+		.ui32PauseCondition = 0,
+		.ui32StatusSetClr = 0,
+
+		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+	};
+	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+}
+
+void spi_write_continue(
+	struct spi *spi, const uint32_t *buffer, uint32_t size)
+{
+	am_hal_iom_transfer_t transaction =
+	{
+		.ui32InstrLen	= 0,
+		.eDirection	  = AM_HAL_IOM_TX,
+		.ui32NumBytes	= size,
+		// FIXME I really don't like how I need to strip const here...
+		.pui32TxBuffer   = (uint32_t*)buffer,
+		.bContinue	   = true,
 		.ui8RepeatCount  = 0,
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,

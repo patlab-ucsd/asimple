@@ -17,14 +17,14 @@
 static uint8_t read_register(struct spi *spi, uint8_t address)
 {
 	uint32_t rx_buffer;
-	spi_read(spi, address, &rx_buffer, 1);
+	spi_cmd_read(spi, address, &rx_buffer, 1);
 	return rx_buffer;
 }
 
 static void write_register(struct spi *spi, uint8_t address, uint8_t data)
 {
 	uint32_t tx_buffer = data;
-	spi_write(spi, address | 0x80, &tx_buffer, 1);
+	spi_cmd_write(spi, address | 0x80, &tx_buffer, 1);
 }
 
 static void change_mode(struct spi *spi, uint8_t mode)

@@ -109,7 +109,7 @@ bool spi_sleep(struct spi *spi);
  * @param[out] buffer Pointer to buffer to hold incoming data.
  * @param[in] size Size of the buffer.
  */
-void spi_read(
+void spi_cmd_read(
 	struct spi *spi, uint32_t command, uint32_t *buffer, uint32_t size);
 
 /** Write data (blocking) to the SPI peripheral.
@@ -125,8 +125,17 @@ void spi_read(
  * @param[in] buffer Pointer to buffer with outgoing data.
  * @param[in] size Size of the buffer.
  */
-void spi_write(
+void spi_cmd_write(
 	struct spi *spi, uint32_t command, const uint32_t *buffer, uint32_t size);
+
+void spi_read(struct spi *spi, uint32_t *buffer, uint32_t size);
+
+void spi_write(struct spi *spi, const uint32_t *buffer, uint32_t size);
+
+void spi_read_continue(struct spi *spi, uint32_t *buffer, uint32_t size);
+
+void spi_write_continue(
+	struct spi *spi, const uint32_t *buffer, uint32_t size);
 
 /** Write and read data to/from the SPI peripheral simultaneously.
  *
