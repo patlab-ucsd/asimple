@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: Gabriel Marcano, 2023
-// SPDX-FileCopyrightText: Kristin Ebuengan, 2023
-// SPDX-FileCopyrightText: Melody Gill, 2023
+// Copyright: Gabriel Marcano, 2023
+// Copyright: Kristin Ebuengan, 2023
+// Copyright: Melody Gill, 2023
 
 #include <flash.h>
+#include <spi.h>
 
 #include <am_mcu_apollo.h>
 #include <am_bsp.h>
 
 #include <stdint.h>
 #include <string.h>
-
 #include <stdio.h>
-
-#include <spi.h>
-#include <uart.h>
 
 struct flash
 {
