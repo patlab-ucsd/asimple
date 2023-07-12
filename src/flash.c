@@ -13,11 +13,6 @@
 #include <string.h>
 #include <stdio.h>
 
-struct flash
-{
-	struct spi *spi;
-};
-
 void flash_init(struct flash *flash, struct spi *spi)
 {
 	flash->spi = spi;
