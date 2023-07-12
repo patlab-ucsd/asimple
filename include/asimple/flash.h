@@ -81,4 +81,4 @@ uint8_t flash_sector_erase(struct flash *flash, uint32_t addr);
 */
 uint32_t flash_read_id(struct flash *flash);
 
-#endif//AM1815_H_
+#endif//FLASH_H_
