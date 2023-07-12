@@ -80,3 +80,5 @@ uint8_t flash_sector_erase(struct flash *flash, uint32_t addr);
  * @returns A 4-byte integer, which contains 3 bytes of ID information.
 */
 uint32_t flash_read_id(struct flash *flash);
+
+#endif//AM1815_H_
