@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright: Gabriel Marcano, 2023
-// Copyright: Kristin Ebuengan, 2023
-// Copyright: Melody Gill, 2023
+// SPDX-FileCopyrightText: Gabriel Marcano, 2023
+// SPDX-FileCopyrightText: Kristin Ebuengan, 2023
+// SPDX-FileCopyrightText: Melody Gill, 2023
 
 #include <flash.h>
 
@@ -16,8 +16,6 @@
 #include <spi.h>
 #include <uart.h>
 
-
-// Structure representing the flash chip
 struct flash
 {
 	struct spi *spi;
@@ -58,7 +56,6 @@ void flash_read_data(struct flash *flash, uint32_t addr, uint32_t *buffer, uint3
 	spi_read(flash->spi, buffer, size);
 }
 
-// Write data from buffer to flash chip
 uint8_t flash_page_program(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size)
 {
 	// Enable writing and check that status register updated
