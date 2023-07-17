@@ -11,14 +11,14 @@
 
 #include <stdint.h>
 
-struct am1815 *rtc;
+static struct am1815 *rtc;
 
 void initialize_time(struct am1815 *rtc_)
 {
 	rtc = rtc_;
 }
 
-int _gettimeofday (struct timeval *ptimeval, void *ptimezone)
+int _gettimeofday(struct timeval *ptimeval, void *ptimezone)
 {
 	(void)ptimezone;
 
