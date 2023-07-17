@@ -74,6 +74,13 @@ void spi_chip_select(struct spi *spi, enum spi_chip_select chip_select);
  */
 void spi_destroy(struct spi *spi);
 
+/** Sets the SPI clock to the nearest supported value, rounding down.
+ *
+ * @param[in,out] spi SPI structure to modify.
+ * @param[in] clock Desired clock rate in Hertz.
+ */
+void spi_set_clock(struct spi *spi, uint32_t clock);
+
 /** Enables/wakes up the SPI module.
  *
  * @param[in,out] spi Pointer to the spi structure to enable.

@@ -254,6 +254,12 @@ void spi_chip_select(struct spi *spi, enum spi_chip_select chip_select)
 	spi->chip_select = chip_select;
 }
 
+void spi_set_clock(struct spi *spi, uint32_t clock)
+{
+	spi_config.ui32ClockFreq = select_clock(clock);;
+	am_hal_iom_configure(spi->handle, &spi_config);
+}
+
 void spi_destroy(struct spi *spi)
 {
 	am_hal_iom_disable(spi->handle);
