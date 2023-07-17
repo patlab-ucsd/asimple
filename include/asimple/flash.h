@@ -35,14 +35,14 @@ uint8_t flash_read_status_register(struct flash *flash);
 
 /**
  * Writes to flash status register to enable writing.
- * 
+ *
  * @param[in,out] flash Flash to enable writing on.
 */
 void flash_write_enable(struct flash *flash);
 
 /**
  * Reads data from the flash chip.
- * 
+ *
  * @param[in] flash Flash to read the data from.
  * @param[in] addr Flash address to read from.
  * @param[out] buffer Buffer that data from flash chip will be written into.
@@ -52,31 +52,31 @@ void flash_read_data(struct flash *flash, uint32_t addr, uint32_t *buffer, uint3
 
 /**
  * Writes data to the flash chip.
- * 
+ *
  * @param[in,out] flash Flash chip to write data to.
  * @param[in] addr Address to begin writing at.
  * @param[in] buffer Buffer to hold data to be written.
  * @param[in] size Number of bytes in the buffer.
- * 
+ *
  * @returns 0 if chip was busy and write failed, or 1 if write command was accepted.
 */
 uint8_t flash_page_program(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size);
 
 /**
  * Erases a 4K sector of the flash chip.
- * 
+ *
  * @param[in,out] flash Flash chip that contains a sector to be erased.
  * @param[in] addr An address within the sector that will be erased.
- * 
+ *
  * @returns 0 if chip was busy and erase failed, or 1 if erase command was accepted.
 */
 uint8_t flash_sector_erase(struct flash *flash, uint32_t addr);
 
 /**
  * Reads the device and manufacturer ID of the flash chip.
- * 
+ *
  * @param[in] flash Flash chip to read ID of.
- * 
+ *
  * @returns A 4-byte integer, which contains 3 bytes of ID information.
 */
 uint32_t flash_read_id(struct flash *flash);
