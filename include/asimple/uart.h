@@ -40,6 +40,16 @@ void uart_init(struct uart *uart, enum uart_instance instance);
  */
 void uart_destroy(struct uart *uart);
 
+/** Sends the given buffer over UART.
+ *
+ * @param[in,out] uart
+ * @param[in] data Buffer to write.
+ * @param[in] size Size of buffer to write.
+ *
+ * @returns The number of bytes written.
+ */
+size_t uart_write(struct uart *uart, const unsigned char *data, size_t size);
+
 //FIXME what about RX and TX functions?
 
 #endif//UART_H_
