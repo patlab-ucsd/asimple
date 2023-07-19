@@ -48,7 +48,13 @@ size_t uart_write(struct uart *uart, const unsigned char *data, size_t size)
 
 static void am_uart_write(char *string)
 {
-	uart_write(isr_uart_handle, (uint8_t*)string, strlen(string));
+	size_t left = strlen(string);
+	do
+	{
+		size_t written = uart_write(isr_uart_handle, ((uint8_t*)string), left);
+		string += written;
+		left -= written;
+	} while (left);
 }
 
 void uart_init(struct uart *uart, enum uart_instance instance)
