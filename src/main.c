@@ -15,6 +15,7 @@
 #include <spi.h>
 #include <lora.h>
 #include <gpio.h>
+#include <syscalls.h>
 
 #define CHECK_ERRORS(x)\
 	if ((x) != AM_HAL_STATUS_SUCCESS)\
@@ -59,6 +60,8 @@ int main(void)
 	// Print the banner.
 	am_util_stdio_terminal_clear();
 	am_util_stdio_printf("Hello World!\r\n\r\n");
+	initialize_sys_uart(&uart);
+	printf("Hello World2!\r\n\r\n");
 
 	// Print the device info.
 	am_util_id_t device_id;
