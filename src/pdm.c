@@ -15,10 +15,6 @@
 
 static volatile bool g_bPDMDataReady = false;
 
-static uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
-static uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
-static void *PDMHandle;
-
 am_hal_pdm_config_t g_sPdmConfig =
 {
     .eClkDivider = AM_HAL_PDM_MCLKDIV_1,
@@ -39,13 +35,13 @@ am_hal_pdm_config_t g_sPdmConfig =
     .bLRSwap = 0,
 };
 
-void pdm_init(void)
+void pdm_init(struct pdm *pdm)
 {
     // Initialize, power-up, and configure the PDM.
-    am_hal_pdm_initialize(0, &PDMHandle);
-    am_hal_pdm_power_control(PDMHandle, AM_HAL_PDM_POWER_ON, false);
-    am_hal_pdm_configure(PDMHandle, &g_sPdmConfig);
-    am_hal_pdm_enable(PDMHandle);
+    am_hal_pdm_initialize(0, pdm->PDMHandle);
+    am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_PDM_POWER_ON, false);
+    am_hal_pdm_configure(pdm->PDMHandle, &g_sPdmConfig);
+    am_hal_pdm_enable(pdm->PDMHandle);
 
     // Configure the necessary pins.
     am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_BSP_GPIO_MIC_DATA);
@@ -53,7 +49,7 @@ void pdm_init(void)
 
     // Configure and enable PDM interrupts (set up to trigger on DMA
     // completion).
-    am_hal_pdm_interrupt_enable(PDMHandle, (AM_HAL_PDM_INT_DERR
+    am_hal_pdm_interrupt_enable(pdm->PDMHandle, (AM_HAL_PDM_INT_DERR
                                             | AM_HAL_PDM_INT_DCMP
                                             | AM_HAL_PDM_INT_UNDFL
                                             | AM_HAL_PDM_INT_OVF));
@@ -61,12 +57,12 @@ void pdm_init(void)
     NVIC_EnableIRQ(PDM_IRQn);
 
     // Start the data transfer
-    am_hal_pdm_enable(PDMHandle);
+    am_hal_pdm_enable(pdm->PDMHandle);
     am_util_delay_ms(100);
-    am_hal_pdm_fifo_flush(PDMHandle);
+    am_hal_pdm_fifo_flush(pdm->PDMHandle);
 }
 
-void pdm_data_get(uint32_t* g_ui32PDMDataBuffer)
+void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer)
 {
     // Configure DMA and target address.
     am_hal_pdm_transfer_t sTransfer;
@@ -74,16 +70,16 @@ void pdm_data_get(uint32_t* g_ui32PDMDataBuffer)
     sTransfer.ui32TotalCount = PDM_BYTES;
 
     // Start the data transfer.
-    am_hal_pdm_dma_start(PDMHandle, &sTransfer);
+    am_hal_pdm_dma_start(pdm->PDMHandle, &sTransfer);
 }
 
-void am_pdm0_isr(void)
+void am_pdm0_isr(struct pdm *pdm)
 {
     uint32_t ui32Status;
 
     // Read the interrupt status.
-    am_hal_pdm_interrupt_status_get(PDMHandle, &ui32Status, true);
-    am_hal_pdm_interrupt_clear(PDMHandle, ui32Status);
+    am_hal_pdm_interrupt_status_get(pdm->PDMHandle, &ui32Status, true);
+    am_hal_pdm_interrupt_clear(pdm->PDMHandle, ui32Status);
 
     if (ui32Status & AM_HAL_PDM_INT_DCMP)
     {

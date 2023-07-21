@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
 // SPDX-FileCopyrightText: Kristin Ebuengan, 2023
 // SPDX-FileCopyrightText: Melody Gill, 2023
-// SPDX-FileCopyrightText: Ambiq Micro, Inc., 2023
 
 #ifndef PDM_H_
 #define PDM_H_
@@ -15,17 +14,28 @@
 #define PDM_SIZE                4096
 #define PDM_BYTES               (PDM_SIZE * 2)
 
+/** Structure representing the microphone */
+struct pdm
+{
+	uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
+    uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
+    void *PDMHandle;
+};
+
 /**
  * PDM initialization.
+ * 
+ * @param[in] pdm PDM structure to initialize.
 */
-void pdm_init(void);
+void pdm_init(struct pdm *pdm);
 
 /**
  * Gets 4096 btyes of DMA data from the microphone.
  * 
+ * @param[in] pdm PDM structure to get data from.
  * @param[in,out] g_ui32PDMDataBuffer buffer array to store the data.
 */
-void pdm_data_get(uint32_t* g_ui32PDMDataBuffer);
+void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer);
 
 /**
  * Print the DMA data from the microhpone to UART.
