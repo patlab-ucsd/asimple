@@ -13,6 +13,12 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
+static volatile bool g_bPDMDataReady = false;
+
+static uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
+static uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
+static void *PDMHandle;
+
 am_hal_pdm_config_t g_sPdmConfig =
 {
     .eClkDivider = AM_HAL_PDM_MCLKDIV_1,
@@ -97,4 +103,12 @@ void pcm_print(struct uart *uart, uint32_t* g_ui32PDMDataBuffer)
             sent += uart_write(uart, (uint8_t *)&data + sent, 2 - sent);
         }
     }
+}
+
+bool isPDMDataReady(void)
+{
+    am_hal_interrupt_master_disable();
+    bool ready = g_bPDMDataReady;
+    am_hal_interrupt_master_enable();
+    return ready;
 }

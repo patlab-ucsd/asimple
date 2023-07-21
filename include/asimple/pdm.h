@@ -15,13 +15,6 @@
 #define PDM_SIZE                4096
 #define PDM_BYTES               (PDM_SIZE * 2)
 
-volatile bool g_bPDMDataReady = false;
-uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
-uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
-uint32_t g_ui32SampleFreq;
-
-void *PDMHandle;
-
 /**
  * PDM initialization.
 */
@@ -35,16 +28,18 @@ void pdm_init(void);
 void pdm_data_get(uint32_t* g_ui32PDMDataBuffer);
 
 /**
- * PDM interrupt handler.
-*/
-void am_pdm0_isr(void);
-
-/**
  * Print the DMA data from the microhpone to UART.
  * 
  * @param[in] uart UART structure to sned the data to.
  * @param[in] g_ui32PDMDataBuffer buffer array of the data we're sending.
 */
 void pcm_print(struct uart *uart, uint32_t* g_ui32PDMDataBuffer);
+
+/**
+ * Return whether PDM data is ready to be printed.
+ * 
+ * @return g_bPDMDataReady
+*/
+bool isPDMDataReady(void);
 
 #endif//PDM_H_
