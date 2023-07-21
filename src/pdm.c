@@ -14,6 +14,7 @@
 #include "am_util.h"
 
 static volatile bool g_bPDMDataReady = false;
+static struct pdm* isr_pdm_handle;
 
 am_hal_pdm_config_t g_sPdmConfig =
 {
@@ -38,7 +39,7 @@ am_hal_pdm_config_t g_sPdmConfig =
 void pdm_init(struct pdm *pdm)
 {
     // Initialize, power-up, and configure the PDM.
-    am_hal_pdm_initialize(0, pdm->PDMHandle);
+    am_hal_pdm_initialize(0, &pdm->PDMHandle);
     am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_PDM_POWER_ON, false);
     am_hal_pdm_configure(pdm->PDMHandle, &g_sPdmConfig);
     am_hal_pdm_enable(pdm->PDMHandle);
@@ -46,6 +47,8 @@ void pdm_init(struct pdm *pdm)
     // Configure the necessary pins.
     am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_BSP_GPIO_MIC_DATA);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_BSP_GPIO_MIC_CLK);
+
+    isr_pdm_handle = pdm;
 
     // Configure and enable PDM interrupts (set up to trigger on DMA
     // completion).
@@ -64,6 +67,10 @@ void pdm_init(struct pdm *pdm)
 
 void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer)
 {
+    am_hal_interrupt_master_disable();
+    g_bPDMDataReady = false;
+    am_hal_interrupt_master_enable();
+
     // Configure DMA and target address.
     am_hal_pdm_transfer_t sTransfer;
     sTransfer.ui32TargetAddr = (uint32_t ) g_ui32PDMDataBuffer;
@@ -73,13 +80,13 @@ void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer)
     am_hal_pdm_dma_start(pdm->PDMHandle, &sTransfer);
 }
 
-void am_pdm0_isr(struct pdm *pdm)
+void am_pdm0_isr(void)
 {
     uint32_t ui32Status;
 
     // Read the interrupt status.
-    am_hal_pdm_interrupt_status_get(pdm->PDMHandle, &ui32Status, true);
-    am_hal_pdm_interrupt_clear(pdm->PDMHandle, ui32Status);
+    am_hal_pdm_interrupt_status_get(isr_pdm_handle->PDMHandle, &ui32Status, true);
+    am_hal_pdm_interrupt_clear(isr_pdm_handle->PDMHandle, ui32Status);
 
     if (ui32Status & AM_HAL_PDM_INT_DCMP)
     {
