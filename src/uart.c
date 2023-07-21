@@ -95,6 +95,30 @@ void uart_init(struct uart *uart, enum uart_instance instance)
 	NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + (int)instance));
 }
 
+void uart_set_baud_rate(struct uart *uart, unsigned int baud_rate)
+{
+	const am_hal_uart_config_t config =
+	{
+		// Standard UART settings: 115200-8-N-1
+		.ui32BaudRate = baud_rate,
+		.ui32DataBits = AM_HAL_UART_DATA_BITS_8,
+		.ui32Parity = AM_HAL_UART_PARITY_NONE,
+		.ui32StopBits = AM_HAL_UART_ONE_STOP_BIT,
+		.ui32FlowControl = AM_HAL_UART_FLOW_CTRL_NONE,
+
+		// Set TX and RX FIFOs to interrupt at half-full.
+		.ui32FifoLevels = (AM_HAL_UART_TX_FIFO_1_2 |
+						   AM_HAL_UART_RX_FIFO_1_2),
+
+		// Buffers
+		.pui8TxBuffer = uart->tx_buffer,
+		.ui32TxBufferSize = sizeof(uart->tx_buffer),
+		.pui8RxBuffer = uart->rx_buffer,
+		.ui32RxBufferSize = sizeof(uart->rx_buffer),
+	};
+	CHECK_ERRORS(am_hal_uart_configure(uart->handle, &config));
+}
+
 void uart_destroy(struct uart *uart)
 {
 	NVIC_DisableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));

@@ -50,6 +50,17 @@ void uart_destroy(struct uart *uart);
  */
 size_t uart_write(struct uart *uart, const unsigned char *data, size_t size);
 
+/** Sets the UART baud rate to the requested amount.
+ *
+ * Note that in reality, there is an upper limit to the baud rate. For Apollo3
+ * A1, 921600, for Apollo3 B0, 1500000. FIXME currently this function hangs if
+ * a bad baud rate is given.
+ *
+ * @param[in,out] uart Uart instance to update.
+ * @param[in] baud_rate Desired baud rate.
+ */
+void uart_set_baud_rate(struct uart *uart, unsigned int baud_rate);
+
 //FIXME what about RX and TX functions?
 
 #endif//UART_H_
