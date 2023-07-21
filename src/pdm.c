@@ -13,15 +13,6 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
-#define PDM_SIZE                4096
-#define PDM_BYTES               (PDM_SIZE * 2)
-
-volatile bool g_bPDMDataReady = false;
-uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
-uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
-
-void *PDMHandle;
-
 am_hal_pdm_config_t g_sPdmConfig =
 {
     .eClkDivider = AM_HAL_PDM_MCLKDIV_1,
