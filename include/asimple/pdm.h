@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
 // SPDX-FileCopyrightText: Kristin Ebuengan, 2023
 // SPDX-FileCopyrightText: Melody Gill, 2023
+// SPDX-FileCopyrightText: Ambiq Micro, Inc., 2023
 
 #ifndef PDM_H_
 #define PDM_H_

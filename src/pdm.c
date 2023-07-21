@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright: Gabriel Marcano, 2023
-// Copyright: Kristin Ebuengan, 2023
-// Copyright: Melody Gill, 2023
-// Copyright: Ambiq Micro, Inc., 2023
+// SPDX-FileCopyrightText: Gabriel Marcano, 2023
+// SPDX-FileCopyrightText: Kristin Ebuengan, 2023
+// SPDX-FileCopyrightText: Melody Gill, 2023
+// SPDX-FileCopyrightText: Ambiq Micro, Inc., 2023
 
 #include <pdm.h>
 #include <uart.h>
@@ -96,10 +96,7 @@ void am_pdm0_isr(void)
 
 void pcm_print(struct uart *uart, uint32_t* g_ui32PDMDataBuffer)
 {
-    float fMaxValue;
-    uint32_t ui32MaxIndex;
     int16_t *pi16PDMData = (int16_t *) g_ui32PDMDataBuffer;
-    uint32_t ui32LoudestFrequency;
 
     // Convert the PDM samples to floats.
     for (uint32_t i = 0; i < PDM_SIZE; i++)
