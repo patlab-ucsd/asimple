@@ -36,6 +36,7 @@ foreach board : boards
     'src/flash.c',
     'src/bmp280.c',
     'src/power_control.c',
+    'src/pdm.c',
   ])
 
   includes = include_directories([
