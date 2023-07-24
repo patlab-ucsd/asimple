@@ -5,6 +5,7 @@
 #define UART_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 /** UART structure. */
 struct uart
