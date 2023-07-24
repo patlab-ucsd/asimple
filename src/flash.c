@@ -35,7 +35,7 @@ void flash_wait_busy(struct flash *flash)
 	uint32_t readBuffer = 0;
 	do {
 		spi_read_continue(flash->spi, &readBuffer, 1);
-	} while (!(readBuffer & 0x01));
+	} while (readBuffer & 0x01);
 	// This has the potential to waste sime cycles as we need to bring down the
 	// CS line, and only way I know how to do that is to complete a transaction
 	// with the continue flag unset.
