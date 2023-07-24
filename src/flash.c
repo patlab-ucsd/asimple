@@ -28,6 +28,20 @@ uint8_t flash_read_status_register(struct flash *flash)
 	return (uint8_t)readBuffer;
 }
 
+void flash_wait_busy(struct flash *flash)
+{
+	uint32_t writeBuffer = 0x05;
+	spi_write_continue(flash->spi, &writeBuffer, 1);
+	uint32_t readBuffer = 0;
+	do {
+		spi_read_continue(flash->spi, &readBuffer, 1);
+	} while (!(readBuffer & 0x01));
+	// This has the potential to waste sime cycles as we need to bring down the
+	// CS line, and only way I know how to do that is to complete a transaction
+	// with the continue flag unset.
+	spi_read(flash->spi, &readBuffer, 1);
+}
+
 void flash_write_enable(struct flash *flash)
 {
 	uint32_t writeBuffer = 0x06;
@@ -49,7 +63,7 @@ void flash_read_data(struct flash *flash, uint32_t addr, uint32_t *buffer, uint3
 	spi_read(flash->spi, buffer, size);
 }
 
-uint8_t flash_page_program(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size)
+uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *buffer, uint32_t size)
 {
 	// Enable writing and check that status register updated
 	flash_write_enable(flash);

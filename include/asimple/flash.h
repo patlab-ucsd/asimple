@@ -60,7 +60,7 @@ void flash_read_data(struct flash *flash, uint32_t addr, uint32_t *buffer, uint3
  *
  * @returns 0 if chip was busy and write failed, or 1 if write command was accepted.
 */
-uint8_t flash_page_program(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size);
+uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *buffer, uint32_t size);
 
 /**
  * Erases a 4K sector of the flash chip.
@@ -80,5 +80,11 @@ uint8_t flash_sector_erase(struct flash *flash, uint32_t addr);
  * @returns A 4-byte integer, which contains 3 bytes of ID information.
 */
 uint32_t flash_read_id(struct flash *flash);
+
+/** Spinloops until the status register returns a cleared busy bit.
+ *
+ * @param[in] flash Flash to query status register from.
+ */
+void flash_wait_busy(struct flash *flash);
 
 #endif//FLASH_H_
