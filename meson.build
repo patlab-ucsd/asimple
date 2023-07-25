@@ -21,8 +21,7 @@ link_args = [
   '-Wl,--gc-sections', '-fno-exceptions',
 ]
 
-cc = meson.get_compiler('c', native: false)
-lfs_lib = cc.find_library('lfs', has_headers: ['lfs.h'], required: true)
+lfs_lib = dependency('lfs')
 
 # Libraries per board
 foreach board : boards
@@ -69,6 +68,7 @@ sources = files([
 ])
 
 # Find libm...
+cc = meson.get_compiler('c', native: false)
 m_dep = cc.find_library('m', required : false)
 
 ambiq_lib = dependency('ambiq_rba_atp')
