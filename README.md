@@ -27,6 +27,11 @@ Contents of `my_cross`:
 prefix = '/home/gabriel/.local/redboard'
 ```
 
+# Dependencies
+
+ - [AmmbiqSuiteSDK](https://github.com/gemarcano/AmbiqSuiteSDK)
+ - [littlefs](https://github.com/littlefs-project/littlefs)
+
 # Compiling and installing
 ```
 mkdir build

@@ -21,6 +21,9 @@ link_args = [
   '-Wl,--gc-sections', '-fno-exceptions',
 ]
 
+cc = meson.get_compiler('c', native: false)
+lfs_lib = cc.find_library('lfs', has_headers: ['lfs.h'], required: true)
+
 # Libraries per board
 foreach board : boards
   ambiq_lib = dependency(board['dependency'])
@@ -37,6 +40,7 @@ foreach board : boards
     'src/bmp280.c',
     'src/power_control.c',
     'src/pdm.c',
+    'src/asimple_littlefs.c',
   ])
 
   includes = include_directories([
@@ -45,7 +49,7 @@ foreach board : boards
 
   lib = library(board['name'],
     lib_sources,
-    dependencies: [ambiq_lib],
+    dependencies: [lfs_lib, ambiq_lib],
     include_directories: includes,
     c_args: c_args,
     link_args: link_args,
@@ -65,7 +69,6 @@ sources = files([
 ])
 
 # Find libm...
-cc = meson.get_compiler('c', native: false)
 m_dep = cc.find_library('m', required : false)
 
 ambiq_lib = dependency('ambiq_rba_atp')

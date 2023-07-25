@@ -16,7 +16,7 @@
  *
  * @post gettimeofday syscall should work properly.
  */
-void initialize_time(struct am1815 *rtc_);
+void syscalls_rtc_init(struct am1815 *rtc_);
 
 /** Links the given UART object with stdin, stdout, and stderr.
  *
@@ -24,6 +24,6 @@ void initialize_time(struct am1815 *rtc_);
  *
  * @post stdio functions like printf should work.
  */
-void initialize_sys_uart(struct uart *uart_);
+void syscalls_uart_init(struct uart *uart_);
 
 #endif//SYSCALLS_H_

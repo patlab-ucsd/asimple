@@ -60,7 +60,7 @@ int main(void)
 	// Print the banner.
 	am_util_stdio_terminal_clear();
 	am_util_stdio_printf("Hello World!\r\n\r\n");
-	initialize_sys_uart(&uart);
+	syscalls_uart_init(&uart);
 	printf("Hello World2!\r\n\r\n");
 
 	// Print the device info.
