@@ -48,7 +48,7 @@ void flash_write_enable(struct flash *flash);
  * @param[out] buffer Buffer that data from flash chip will be written into.
  * @param[in] size Number of bytes to read, starting at addr.
 */
-void flash_read_data(struct flash *flash, uint32_t addr, uint32_t *buffer, uint32_t size);
+void flash_read_data(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size);
 
 /**
  * Writes data to the flash chip.

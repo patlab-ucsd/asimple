@@ -48,7 +48,7 @@ void flash_write_enable(struct flash *flash)
 	spi_write(flash->spi, &writeBuffer, 1);
 }
 
-void flash_read_data(struct flash *flash, uint32_t addr, uint32_t *buffer, uint32_t size)
+void flash_read_data(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size)
 {
 	// Write command as least significant bit
 	uint32_t toWrite = 0;
@@ -60,7 +60,12 @@ void flash_read_data(struct flash *flash, uint32_t addr, uint32_t *buffer, uint3
 	tmp[3] = addr;
 
 	spi_write_continue(flash->spi, &toWrite, 4);
-	spi_read(flash->spi, buffer, size);
+
+	uint32_t *data = malloc(((size+3)/4) * 4);
+	spi_read(flash->spi, data, size);
+	memcpy(buffer, data, size);
+	free(data);
+	data = NULL;
 }
 
 uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *buffer, uint32_t size)
