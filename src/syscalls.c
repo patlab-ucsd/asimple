@@ -12,6 +12,7 @@
 #include <lfs.h>
 
 #include <sys/time.h>
+#include <fcntl.h>
 
 #include <stdint.h>
 
@@ -22,8 +23,10 @@ extern int errno;
 struct syscalls_base
 {
 	int (*open)(void *context, const char *name, int flags, int mode);
+	int (*close)(void *context, int file);
 	int (*read)(void *context, int file, char *ptr, int len);
 	int (*write)(void *context, int file, char *ptr, int len);
+	int (*lseek)(void *context, int file, int ptr, int dir);
 };
 
 int syscalls_read(void *sys, int file, char *ptr, int len)
@@ -44,6 +47,18 @@ int syscalls_open(void *sys, const char *name, int flags, int mode)
 	return base->open(base, name, flags, mode);
 }
 
+int syscalls_lseek(void *sys, int file, int ptr, int dir)
+{
+	struct syscalls_base *base = sys;
+	return base->lseek(base, file, ptr, dir);
+}
+
+int syscalls_close(void *sys, int file)
+{
+	struct syscalls_base *base = sys;
+	return base->close(base, file);
+}
+
 struct syscalls_uart
 {
 	struct syscalls_base base;
@@ -59,14 +74,18 @@ int uart_write_(void *context, int file, char *ptr, int len)
 		errno = ENXIO;
 		return -1;
 	}
-	return uart_write(uart->uart, (unsigned char *)ptr, len);
+	int result = uart_write(uart->uart, (unsigned char *)ptr, len);
+	uart_sync(uart->uart);
+	return result;
 }
 
 static struct syscalls_uart uart = {
 	.base = {
 		.open = NULL,
+		.close = NULL,
 		.read = NULL, // FIXME
 		.write = uart_write_,
+		.lseek = NULL,
 	},
 };
 
@@ -84,8 +103,10 @@ struct syscalls_rtc
 static struct syscalls_rtc rtc = {
 	.base = {
 		.open = NULL,
+		.close = NULL,
 		.read = NULL,
 		.write = NULL, // FIXME I think I can come up with something here...
+		.lseek = NULL,
 	}
 };
 
@@ -106,6 +127,7 @@ struct syscalls_littlefs
 
 int littlefs_open_(void *context, const char *name, int flags, int mode)
 {
+	(void)mode; // We don't use mode as we don't have permissions
 	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
 	size_t max = ARRAY_SIZE(fs->files);
 	size_t i;
@@ -121,9 +143,25 @@ int littlefs_open_(void *context, const char *name, int flags, int mode)
 		return -1;
 	}
 
-	// FIXME convert flags and mode
+	int lfs_flags = 0;
+	if (O_RDONLY & flags)
+		lfs_flags |= LFS_O_RDONLY;
+	if (O_WRONLY & flags)
+		lfs_flags |= LFS_O_WRONLY;
+	if (O_RDWR & flags)
+		lfs_flags |= LFS_O_RDWR;
+	if (O_WRONLY & flags)
+		lfs_flags |= LFS_O_WRONLY;
+	if (O_EXCL & flags)
+		lfs_flags |= LFS_O_EXCL;
+	if (O_TRUNC & flags)
+		lfs_flags |= LFS_O_TRUNC;
+	if (O_APPEND & flags)
+		lfs_flags |= LFS_O_APPEND;
+	if (O_CREAT & flags)
+		lfs_flags |= LFS_O_CREAT;
 
-	int result = lfs_file_open(&fs->fs->lfs, &fs->files[i], name, flags);
+	int result = lfs_file_open(&fs->fs->lfs, &fs->files[i], name, lfs_flags);
 	if (result < 0)
 	{
 		//FIXME convert into errno
@@ -161,11 +199,62 @@ int littlefs_write_(void *context, int file, char *ptr, int len)
 	return result;
 }
 
+int littlefs_lseek_(void *context, int file, int ptr, int dir)
+{
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	int lfs_dir;
+	switch(dir)
+	{
+		case SEEK_SET:
+			lfs_dir = LFS_SEEK_SET;
+			break;
+		case SEEK_CUR:
+			lfs_dir = LFS_SEEK_CUR;
+			break;
+		case SEEK_END:
+			lfs_dir = LFS_SEEK_END;
+			break;
+	}
+	int result = lfs_file_seek(&fs->fs->lfs, fs->active_files[file], ptr, lfs_dir);
+	if (result < 0)
+	{
+		// FIXME convert into errno
+		errno = result;
+		return -1;
+	}
+	return result;
+}
+
+int littlefs_close_(void *context, int file)
+{
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	if (!fs->active_files[file])
+	{
+		errno = EBADF;
+		return -1;
+	}
+	int result = lfs_file_close(&fs->fs->lfs, fs->active_files[file]);
+	//FIXME what happens in the case of an error??????????????
+
+	if (result < 0)
+	{
+		// FIXME convert into errno
+		errno = result;
+		return -1;
+	}
+	fs->active_files[file] = NULL;
+	return result;
+
+
+}
+
 static struct syscalls_littlefs fs = {
 	.base = {
 		.open = littlefs_open_,
+		.close = littlefs_close_,
 		.read = littlefs_read_,
 		.write = littlefs_write_,
+		.lseek = littlefs_lseek_,
 	},
 };
 
@@ -192,7 +281,7 @@ int _gettimeofday(struct timeval *ptimeval, void *ptimezone)
 int _open(const char *name, int flags, int mode)
 {
 	// FIXME check if mounted?
-	if (fs.fs && strcmp(name, "fs:") == 0)
+	if (fs.fs && strncmp(name, "fs:/", 4) == 0)
 	{
 		int result = syscalls_open(&fs, name + 3, flags, mode);
 		if (result >= 0)
@@ -222,9 +311,36 @@ int _write(int file, char *ptr, int len)
 	{
 		return syscalls_write(&uart, file, ptr, len);
 	}
-	else if (file > 3)
+	else if (file >= 3)
 	{
 		return syscalls_write(&fs, file - 3, ptr, len);
+	}
+	errno = ENOSYS;
+	return -1;
+}
+
+int _lseek (int file, int ptr, int dir)
+{
+	if (file < 3)
+		return 0;
+	else if (file >= 3)
+	{
+		return syscalls_lseek(&fs, file - 3, ptr, dir);
+	}
+	errno = ENOSYS;
+	return -1;
+}
+
+int _close (int file)
+{
+	if (file < 3)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	else if (file >= 3)
+	{
+		return syscalls_close(&fs, file - 3);
 	}
 	errno = ENOSYS;
 	return -1;
