@@ -64,4 +64,10 @@ void uart_set_baud_rate(struct uart *uart, unsigned int baud_rate);
 
 //FIXME what about RX and TX functions?
 
+/** Blocks until UART is done transmitting.
+ *
+ * @param[in] uart UART instance to block on.
+ */
+void uart_sync(struct uart *uart);
+
 #endif//UART_H_

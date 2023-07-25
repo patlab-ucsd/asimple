@@ -49,12 +49,13 @@ size_t uart_write(struct uart *uart, const unsigned char *data, size_t size)
 static void am_uart_write(char *string)
 {
 	size_t left = strlen(string);
-	do
+	while (left)
 	{
 		size_t written = uart_write(isr_uart_handle, ((uint8_t*)string), left);
 		string += written;
 		left -= written;
-	} while (left);
+	}
+	uart_sync(isr_uart_handle);
 }
 
 void uart_init(struct uart *uart, enum uart_instance instance)
@@ -128,6 +129,11 @@ void uart_destroy(struct uart *uart)
 	am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
 	am_hal_uart_deinitialize(uart->handle);
 	memset(uart, 0, sizeof(*uart));
+}
+
+void uart_sync(struct uart *uart)
+{
+	am_hal_uart_tx_flush(uart->handle);
 }
 
 // This is a weak symbol, override
