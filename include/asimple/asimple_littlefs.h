@@ -17,5 +17,6 @@ struct asimple_littlefs
 void asimple_littlefs_init(struct asimple_littlefs *fs, struct flash *flash);
 int asimple_littlefs_format(struct asimple_littlefs *fs);
 int asimple_littlefs_mount(struct asimple_littlefs *fs);
+int asimple_littlefs_unmount(struct asimple_littlefs *fs);
 
 #endif//ASIMPLE_LITTLEFS_H_

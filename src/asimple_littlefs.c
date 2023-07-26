@@ -66,3 +66,8 @@ int asimple_littlefs_mount(struct asimple_littlefs *fs)
 {
 	return lfs_mount(&fs->lfs, &fs->config);
 }
+
+int asimple_littlefs_unmount(struct asimple_littlefs *fs)
+{
+	return lfs_unmount(&fs->lfs);
+}
