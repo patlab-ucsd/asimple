@@ -23,6 +23,8 @@ link_args = [
 
 lfs_lib = dependency('lfs')
 
+asimple_libs = {}
+
 # Libraries per board
 foreach board : boards
   ambiq_lib = dependency(board['dependency'])
@@ -55,6 +57,8 @@ foreach board : boards
     install: true,
   )
 
+  asimple_libs += {board['name']: lib}
+
   install_subdir('include', install_dir: '')
 
   # Create a pkgconfig file
@@ -71,10 +75,10 @@ sources = files([
 cc = meson.get_compiler('c', native: false)
 m_dep = cc.find_library('m', required : false)
 
-ambiq_lib = dependency('ambiq_rba_atp')
 exe = executable(meson.project_name(),
   sources,
-  dependencies: [ambiq_lib, m_dep],
+  dependencies: [ambiq_lib, lfs_lib, m_dep],
+  link_with: asimple_libs['asimple_rba_atp'],
   include_directories: includes,
   c_args: c_args,
   link_args: link_args + ['-T' + meson.source_root() / 'linker.ld']
