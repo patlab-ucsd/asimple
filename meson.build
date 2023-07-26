@@ -42,6 +42,7 @@ foreach board : boards
     'src/power_control.c',
     'src/pdm.c',
     'src/asimple_littlefs.c',
+    'src/syscalls.c',
     'src/syscalls/uart.c',
     'src/syscalls/rtc.c',
     'src/syscalls/littlefs.c',

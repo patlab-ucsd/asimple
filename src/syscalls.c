@@ -121,6 +121,7 @@ int _open(const char *name, int flags, int mode)
 	return -1;
 }
 
+__attribute__ ((used))
 int _read(int file, char *ptr, int len)
 {
 	if (file < 3)
@@ -135,6 +136,7 @@ int _read(int file, char *ptr, int len)
 	return -1;
 }
 
+__attribute__ ((used))
 int _write(int file, char *ptr, int len)
 {
 	// stdin, stdout, stderr
@@ -150,6 +152,7 @@ int _write(int file, char *ptr, int len)
 	return -1;
 }
 
+__attribute__ ((used))
 int _lseek (int file, int ptr, int dir)
 {
 	if (file < 3)
@@ -164,6 +167,7 @@ int _lseek (int file, int ptr, int dir)
 	return -1;
 }
 
+__attribute__ ((used))
 int _close (int file)
 {
 	if (file < 3)
