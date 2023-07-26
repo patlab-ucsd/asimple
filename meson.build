@@ -48,7 +48,7 @@ foreach board : boards
 
   lib = library(board['name'],
     lib_sources,
-    dependencies: [lfs_lib, ambiq_lib],
+    dependencies: [ambiq_lib, lfs_lib],
     include_directories: includes,
     c_args: c_args,
     link_args: link_args,
@@ -75,7 +75,6 @@ ambiq_lib = dependency('ambiq_rba_atp')
 exe = executable(meson.project_name(),
   sources,
   dependencies: [ambiq_lib, m_dep],
-  link_with: lib,
   include_directories: includes,
   c_args: c_args,
   link_args: link_args + ['-T' + meson.source_root() / 'linker.ld']
