@@ -30,6 +30,33 @@ struct pdm
 void pdm_init(struct pdm *pdm);
 
 /**
+ * Get g_ui32PDMDataBuffer1 from the PDM struct.
+ * 
+ * @param[in] pdm PDM structure to get from.
+ * 
+ * @returns g_ui32PDMDataBuffer1 from the PDM struct.
+*/
+uint32_t* pdm_get_buffer1(struct pdm *pdm);
+
+/**
+ * Get g_ui32PDMDataBuffer2 from the PDM struct.
+ * 
+ * @param[in] pdm PDM structure to get from.
+ * 
+ * @returns g_ui32PDMDataBuffer2 from the PDM struct.
+*/
+uint32_t* pdm_get_buffer2(struct pdm *pdm);
+
+/**
+ * Get PDMHandle from the PDM struct.
+ * 
+ * @param[in] pdm PDM structure to get from.
+ * 
+ * @returns PDMHandle from the PDM struct.
+*/
+uint32_t* pdm_get_handle(struct pdm *pdm);
+
+/**
  * Gets 4096 btyes of DMA data from the microphone.
  * 
  * @param[in] pdm PDM structure to get data from.

@@ -65,6 +65,21 @@ void pdm_init(struct pdm *pdm)
     am_hal_pdm_fifo_flush(pdm->PDMHandle);
 }
 
+uint32_t* pdm_get_buffer1(struct pdm *pdm)
+{
+    return pdm->g_ui32PDMDataBuffer1;
+}
+
+uint32_t* pdm_get_buffer2(struct pdm *pdm)
+{
+    return pdm->g_ui32PDMDataBuffer2;
+}
+
+uint32_t* pdm_get_handle(struct pdm *pdm)
+{
+    return pdm->PDMHandle;
+}
+
 void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer)
 {
     am_hal_interrupt_master_disable();
