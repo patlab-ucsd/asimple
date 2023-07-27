@@ -12,25 +12,25 @@
 
 #include <stdint.h>
 
-void bmp280_init(struct bmp280 *sensor, struct spi *spi)
+void bmp280_init(struct bmp280 *sensor, struct spi_device *device)
 {
-	sensor->spi = spi;
+	sensor->spi = device;
 }
 
 uint8_t bmp280_read_id(struct bmp280 *bmp280)
 {
 	uint32_t sensorID = 0xD0;
-	spi_write_continue(bmp280->spi, &sensorID, 1);
+	spi_device_write_continue(bmp280->spi, &sensorID, 1);
 	uint32_t readBuffer = 0;
-	spi_read(bmp280->spi, &readBuffer, 1);
+	spi_device_read(bmp280->spi, &readBuffer, 1);
 	return (uint8_t)readBuffer;
 }
 
 void bmp280_read_register(struct bmp280 *bmp280, uint32_t addr, uint32_t *buffer, uint32_t size)
 {
 	addr |= 0x80;
-	spi_write_continue(bmp280->spi, &addr, 1);
-	spi_read(bmp280->spi, buffer, size);
+	spi_device_write_continue(bmp280->spi, &addr, 1);
+	spi_device_read(bmp280->spi, buffer, size);
 }
 
 uint32_t bmp280_get_adc_temp(struct bmp280 *bmp280)
@@ -45,12 +45,12 @@ uint32_t bmp280_get_adc_temp(struct bmp280 *bmp280)
 	uint8_t* ptr = &buffer;
 	ptr[0] = addr;
 	ptr[1] = activate;
-	spi_write(bmp280->spi, &buffer, 2);
+	spi_device_write(bmp280->spi, &buffer, 2);
 
 	uint32_t tempRegister = 0xFA;
-	spi_write_continue(bmp280->spi, &tempRegister, 1);
+	spi_device_write_continue(bmp280->spi, &tempRegister, 1);
 	uint32_t readBuffer = 0;
-	spi_read(bmp280->spi, &readBuffer, 3);
+	spi_device_read(bmp280->spi, &readBuffer, 3);
 	uint8_t* ptr2 = &readBuffer;
 	uint32_t temp = ptr2[2] + (ptr2[1] << 8) + (ptr2[0] << 16);
 	temp = temp >> 4;
@@ -69,12 +69,12 @@ uint32_t bmp280_get_adc_pressure(struct bmp280 *bmp280)
 	uint8_t* ptr = &buffer;
 	ptr[0] = addr;
 	ptr[1] = activate;
-	spi_write(bmp280->spi, &buffer, 2);
+	spi_device_write(bmp280->spi, &buffer, 2);
 
 	uint32_t tempRegister = 0xF7;
-	spi_write_continue(bmp280->spi, &tempRegister, 1);
+	spi_device_write_continue(bmp280->spi, &tempRegister, 1);
 	uint32_t readBuffer = 0;
-	spi_read(bmp280->spi, &readBuffer, 3);
+	spi_device_read(bmp280->spi, &readBuffer, 3);
 	uint8_t* ptr2 = &readBuffer;
 	uint32_t temp = ptr2[2] + (ptr2[1] << 8) + (ptr2[0] << 16);
 	temp = temp >> 4;

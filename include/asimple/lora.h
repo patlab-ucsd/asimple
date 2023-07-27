@@ -94,7 +94,7 @@
 /** Structure holding RFM95W information and state. */
 struct lora
 {
-	struct spi spi;
+	struct spi_device *device;
 	struct gpio dio0;
 	uint8_t tx_addr;
 	uint8_t rx_addr;
@@ -139,17 +139,14 @@ enum lora_lna_gain
  * requires 10 milliseconds to become ready. This initialization code does not
  * have a good way to enforce/verify that the hardware is initialized!
  *
- * FIXME do I want to allow passing in a spi device??? this way, so long as the
- * device is configured to use different chip selects, these can be used in
- * tandem?
- *
  * @param[out] lora Pointer to the lora structure to initialize.
+ * @param[in,out] device SPI device connected to the lora device.
  * @param[in] frequency
  * @param[in] dio0_pin GPIO connected to the DIO0 pin on the radio module.
  *
  * @returns True on success, false otherwise. Fails if LoRa module is unknown.
  */
-bool lora_init(struct lora *lora, uint32_t frequency, unsigned dio0_pin);
+bool lora_init(struct lora *lora, struct spi_device *device, uint32_t frequency, unsigned dio0_pin);
 
 /** Releases all resources held by the given lora object.
  *

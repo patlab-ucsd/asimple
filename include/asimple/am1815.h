@@ -11,16 +11,16 @@
 /** Structure representing the AM1815 RTC */
 struct am1815
 {
-	struct spi *spi;
+	struct spi_device *spi;
 };
 
 /** Initializes the RTC structure.
  *
  * @param[out] rtc RTC object to initialize
- * @param[in,out] spi The SPI object to use for communication with the
+ * @param[in,out] device The SPI object to use for communication with the
  *  physical RTC. It should already be initialized.
  */
-void am1815_init(struct am1815 *rtc, struct spi *spi);
+void am1815_init(struct am1815 *rtc, struct spi_device *device);
 
 /** Reads a register from the RTC.
  *

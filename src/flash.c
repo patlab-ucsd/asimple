@@ -14,38 +14,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void flash_init(struct flash *flash, struct spi *spi)
+void flash_init(struct flash *flash, struct spi_device *device)
 {
-	flash->spi = spi;
+	flash->spi = device;
 }
 
 uint8_t flash_read_status_register(struct flash *flash)
 {
 	uint32_t writeBuffer = 0x05;
-	spi_write_continue(flash->spi, &writeBuffer, 1);
+	spi_device_write_continue(flash->spi, &writeBuffer, 1);
 	uint32_t readBuffer = 0;
-	spi_read(flash->spi, &readBuffer, 1);
+	spi_device_read(flash->spi, &readBuffer, 1);
 	return (uint8_t)readBuffer;
 }
 
 void flash_wait_busy(struct flash *flash)
 {
 	uint32_t writeBuffer = 0x05;
-	spi_write_continue(flash->spi, &writeBuffer, 1);
+	spi_device_write_continue(flash->spi, &writeBuffer, 1);
 	uint32_t readBuffer = 0;
 	do {
-		spi_read_continue(flash->spi, &readBuffer, 1);
+		spi_device_read_continue(flash->spi, &readBuffer, 1);
 	} while (readBuffer & 0x01);
 	// This has the potential to waste sime cycles as we need to bring down the
 	// CS line, and only way I know how to do that is to complete a transaction
 	// with the continue flag unset.
-	spi_read(flash->spi, &readBuffer, 1);
+	spi_device_read(flash->spi, &readBuffer, 1);
 }
 
 void flash_write_enable(struct flash *flash)
 {
 	uint32_t writeBuffer = 0x06;
-	spi_write(flash->spi, &writeBuffer, 1);
+	spi_device_write(flash->spi, &writeBuffer, 1);
 }
 
 void flash_read_data(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size)
@@ -59,10 +59,10 @@ void flash_read_data(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32
 	tmp[2] = addr >> 8;
 	tmp[3] = addr;
 
-	spi_write_continue(flash->spi, &toWrite, 4);
+	spi_device_write_continue(flash->spi, &toWrite, 4);
 
 	uint32_t *data = malloc(((size+3)/4) * 4);
-	spi_read(flash->spi, data, size);
+	spi_device_read(flash->spi, data, size);
 	memcpy(buffer, data, size);
 	free(data);
 	data = NULL;
@@ -90,12 +90,12 @@ uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *bu
 	tmp[1] = addr >> 16;
 	tmp[2] = addr >> 8;
 	tmp[3] = addr;
-	spi_write_continue(flash->spi, &toWrite, 4);
+	spi_device_write_continue(flash->spi, &toWrite, 4);
 
 	// Write the data
 	uint32_t *data = malloc(((size+3)/4) * 4);
 	memcpy(data, buffer, size);
-	spi_write(flash->spi, data, size);
+	spi_device_write(flash->spi, data, size);
 	free(data);
 	data = NULL;
 	return 1;
@@ -123,15 +123,15 @@ uint8_t flash_sector_erase(struct flash *flash, uint32_t addr)
 	tmp[1] = addr >> 16;
 	tmp[2] = addr >> 8;
 	tmp[3] = addr;
-	spi_write(flash->spi, &toWrite, 4);
+	spi_device_write(flash->spi, &toWrite, 4);
 	return 1;
 }
 
 uint32_t flash_read_id(struct flash *flash)
 {
 	uint32_t writeBuffer = 0x9F;
-	spi_write_continue(flash->spi, &writeBuffer, 1);
+	spi_device_write_continue(flash->spi, &writeBuffer, 1);
 	uint32_t readBuffer = 0;
-	spi_read(flash->spi, &readBuffer, 3);
+	spi_device_read(flash->spi, &readBuffer, 3);
 	return readBuffer;
 }

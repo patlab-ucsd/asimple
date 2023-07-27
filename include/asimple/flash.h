@@ -13,16 +13,16 @@
 /** Structure representing the flash chip */
 struct flash
 {
-	struct spi *spi;
+	struct spi_device *spi;
 };
 
 /** Initializes the flash structure.
  *
  * @param[out] flash Flash object to initialize
- * @param[in,out] spi The SPI object to use for communication with the
+ * @param[in,out] device The SPI object to use for communication with the
  *  physical flash chip. It should already be initialized.
  */
-void flash_init(struct flash *flash, struct spi *spi);
+void flash_init(struct flash *flash, struct spi_device *device);
 
 
 /** Reads the flash chip's status register.

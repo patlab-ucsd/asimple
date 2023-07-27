@@ -13,16 +13,16 @@
 /** Structure representing the BMP280 sensor */
 struct bmp280
 {
-	struct spi *spi;
+	struct spi_device *spi;
 };
 
 /** Initializes the BMP280 structure.
  *
  * @param[out] bmp280 BMP280 sensor object to initialize
- * @param[in,out] spi The SPI object to use for communication with the
- * BMP280 sensor. It should already be initialized.
+ * @param[in,out] device The SPI object to use for communication with the
+ *  BMP280 sensor. It should already be initialized.
  */
-void bmp280_init(struct bmp280 *bmp280, struct spi *spi);
+void bmp280_init(struct bmp280 *bmp280, struct spi_device *device);
 
 /**
  * Reads the device and manufacturer ID of the BMP280 sensor.

@@ -233,70 +233,85 @@ static int get_pin(uint32_t module, enum spi_chip_select chip_select)
 	}
 }
 
-void spi_init(struct spi *spi, uint32_t iomModule, uint32_t clock)
+void spi_bus_init(struct spi_bus *bus, uint32_t iomModule)
 {
-	spi->iom_module = iomModule;
+	bus->iom_module = iomModule;
 	// This just initializes the handle-- no hardware function
-	am_hal_iom_initialize(iomModule, &spi->handle);
+	am_hal_iom_initialize(iomModule, &bus->handle);
 	// ... and here we turn on the hardware so we can modify settings
-	am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_WAKE, false);
-	clock = select_clock(clock);
-	spi_config.ui32ClockFreq = clock;
-	am_hal_iom_configure(spi->handle, &spi_config);
+	am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_WAKE, false);
+	bus->current_clock = 2000000u;
+	spi_config.ui32ClockFreq = bus->current_clock;
+	am_hal_iom_configure(bus->handle, &spi_config);
 	am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
-	am_hal_iom_enable(spi->handle);
-	spi_chip_select(spi, SPI_CS_0);
-	spi_sleep(spi);
+	am_hal_iom_enable(bus->handle);
+	spi_bus_sleep(bus);
 }
 
-void spi_chip_select(struct spi *spi, enum spi_chip_select chip_select)
+void spi_bus_init_device(struct spi_bus *bus, struct spi_device *device, enum spi_chip_select chip_select, uint32_t clock)
 {
-	spi->chip_select = chip_select;
+	device->parent = bus;
+	device->chip_select = convert_chip_select(bus->iom_module, chip_select);
+	device->clock = select_clock(clock);
 }
 
-void spi_set_clock(struct spi *spi, uint32_t clock)
+static void spi_device_update_clock(struct spi_device *device)
 {
-	spi_config.ui32ClockFreq = select_clock(clock);;
-	am_hal_iom_configure(spi->handle, &spi_config);
+	if (device->parent->current_clock == device->clock)
+		return;
+
+	spi_config.ui32ClockFreq = device->clock;
+	device->parent->current_clock = device->clock;
+	am_hal_iom_configure(device->parent->handle, &spi_config);
 }
 
-void spi_destroy(struct spi *spi)
+void spi_device_set_clock(struct spi_device *device, uint32_t clock)
 {
-	am_hal_iom_disable(spi->handle);
-	am_bsp_iom_pins_disable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
-	am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
-	am_hal_iom_uninitialize(spi->handle);
-	memset(spi, 0, sizeof(*spi));
+	device->clock = select_clock(clock);
 }
 
-bool spi_sleep(struct spi *spi)
+void spi_bus_destroy(struct spi_bus *bus)
+{
+	am_hal_iom_disable(bus->handle);
+	am_bsp_iom_pins_disable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
+	am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+	am_hal_iom_uninitialize(bus->handle);
+	memset(bus, 0, sizeof(*bus));
+}
+
+void spi_device_destroy(struct spi_device *device)
+{
+	memset(device, 0, sizeof(*device));
+}
+
+bool spi_bus_sleep(struct spi_bus *bus)
 {
 	// Note that turning off the hardware resets registers, which is why we
 	// request saving the state
-	int status = am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
+	int status = am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
 	if (status != AM_HAL_STATUS_SUCCESS)
 	{
 		return false;
 	}
-	am_bsp_iom_pins_disable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
+	am_bsp_iom_pins_disable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
 	return true;
 }
 
-bool spi_enable(struct spi *spi)
+bool spi_bus_enable(struct spi_bus *bus)
 {
 	// This can fail if there is no saved state, which indicates we've never
 	// gone asleep
-	int status = am_hal_iom_power_ctrl(spi->handle, AM_HAL_SYSCTRL_WAKE, true);
+	int status = am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_WAKE, true);
 	if (status != AM_HAL_STATUS_SUCCESS)
 	{
 		return false;
 	}
-	am_bsp_iom_pins_enable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
+	am_bsp_iom_pins_enable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
 	return true;
 }
 
-void spi_cmd_read(
-	struct spi *spi, uint8_t command, uint32_t *buffer, uint32_t size)
+void spi_device_cmd_read(
+	struct spi_device *device, uint8_t command, uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -310,13 +325,14 @@ void spi_cmd_read(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
 	};
-	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+	spi_device_update_clock(device);
+	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
 }
 
-void spi_cmd_write(
-	struct spi *spi, uint8_t command, const uint32_t *buffer, uint32_t size)
+void spi_device_cmd_write(
+	struct spi_device *device, uint8_t command, const uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -331,13 +347,14 @@ void spi_cmd_write(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
 	};
-	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+	spi_device_update_clock(device);
+	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
 }
 
-void spi_read(
-	struct spi *spi, uint32_t *buffer, uint32_t size)
+void spi_device_read(
+	struct spi_device *device, uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -350,13 +367,14 @@ void spi_read(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
 	};
-	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+	spi_device_update_clock(device);
+	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
 }
 
-void spi_write(
-	struct spi *spi, const uint32_t *buffer, uint32_t size)
+void spi_device_write(
+	struct spi_device *device, const uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -370,13 +388,14 @@ void spi_write(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
 	};
-	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+	spi_device_update_clock(device);
+	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
 }
 
-void spi_read_continue(
-	struct spi *spi, uint32_t *buffer, uint32_t size)
+void spi_device_read_continue(
+	struct spi_device *device, uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -389,13 +408,14 @@ void spi_read_continue(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
 	};
-	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+	spi_device_update_clock(device);
+	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
 }
 
-void spi_write_continue(
-	struct spi *spi, const uint32_t *buffer, uint32_t size)
+void spi_device_write_continue(
+	struct spi_device *device, const uint32_t *buffer, uint32_t size)
 {
 	am_hal_iom_transfer_t transaction =
 	{
@@ -409,13 +429,14 @@ void spi_write_continue(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = spi->chip_select,
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
 	};
-	am_hal_iom_blocking_transfer(spi->handle, &transaction);
+	spi_device_update_clock(device);
+	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
 }
 
-void spi_readwrite(
-	struct spi *spi,
+void spi_device_readwrite(
+	struct spi_device *device,
 	uint32_t command,
 	uint32_t *rx_buffer,
 	const uint32_t *tx_buffer,
@@ -435,22 +456,24 @@ void spi_readwrite(
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
-		.uPeerInfo.ui32SpiChipSelect = convert_chip_select(spi->iom_module, spi->chip_select),
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
 	};
-	am_hal_iom_spi_blocking_fullduplex(spi->handle, &transaction);
+	spi_device_update_clock(device);
+	am_hal_iom_spi_blocking_fullduplex(device->parent->handle, &transaction);
 }
 
-void spi_toggle(struct spi *spi, uint32_t size)
+void spi_device_toggle(struct spi_device *device, uint32_t size)
 {
 	// We need this for SD card support
 	// and this is cursed-- we need to take over the SPI pins for the nCS
 	// lines, keep it high ourselves, then clock size number of bytes
 	struct gpio cs;
-	gpio_init(&cs, get_pin(spi->iom_module, spi->chip_select), GPIO_MODE_OUTPUT, 1);
+	gpio_init(&cs, get_pin(device->parent->iom_module, device->chip_select), GPIO_MODE_OUTPUT, 1);
 	uint32_t data = 0xFFFFFFFFu;
+	spi_device_update_clock(device);
 	for (; size > 4; size -= 4)
-		spi_write(spi, &data, 4);
-	spi_write(spi, &data, size);
+		spi_device_write(device, &data, 4);
+	spi_device_write(device, &data, size);
 	// Restore pin assignments
-	am_bsp_iom_pins_enable(spi->iom_module, AM_HAL_IOM_SPI_MODE);
+	am_bsp_iom_pins_enable(device->parent->iom_module, AM_HAL_IOM_SPI_MODE);
 }
