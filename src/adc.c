@@ -26,7 +26,7 @@ static const am_hal_adc_config_t adc_config = {
 	.eReference = AM_HAL_ADC_REFSEL_INT_1P5,
 	.eClockMode = AM_HAL_ADC_CLKMODE_LOW_POWER,
 	.ePowerMode = AM_HAL_ADC_LPMODE1,
-	.eRepeat = AM_HAL_ADC_REPEATING_SCAN
+	.eRepeat = AM_HAL_ADC_SINGLE_SCAN
 };
 
 // ADC handle used by the interrupt, registered by adc_init
