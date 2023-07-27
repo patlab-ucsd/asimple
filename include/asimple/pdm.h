@@ -48,13 +48,11 @@ uint32_t* pdm_get_buffer1(struct pdm *pdm);
 uint32_t* pdm_get_buffer2(struct pdm *pdm);
 
 /**
- * Get PDMHandle from the PDM struct.
+ * Calls PDM FIFO Flush.
  * 
- * @param[in] pdm PDM structure to get from.
- * 
- * @returns PDMHandle from the PDM struct.
+ * @param[in] pdm PDM structure to flush
 */
-uint32_t* pdm_get_handle(struct pdm *pdm);
+void pdm_flush(struct pdm *pdm);
 
 /**
  * Gets 4096 btyes of DMA data from the microphone.

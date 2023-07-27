@@ -75,9 +75,9 @@ uint32_t* pdm_get_buffer2(struct pdm *pdm)
     return pdm->g_ui32PDMDataBuffer2;
 }
 
-uint32_t* pdm_get_handle(struct pdm *pdm)
+void pdm_flush(struct pdm *pdm)
 {
-    return pdm->PDMHandle;
+    am_hal_pdm_fifo_flush(pdm->PDMHandle);
 }
 
 void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer)
