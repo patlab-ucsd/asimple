@@ -42,7 +42,7 @@ uint32_t bmp280_get_adc_temp(struct bmp280 *bmp280)
 	// write temp sampling to the register
 	uint32_t addr = 0xF4 & 0x7F;
 	uint32_t buffer = 0;
-	uint8_t* ptr = &buffer;
+	uint8_t* ptr = (uint8_t*)&buffer;
 	ptr[0] = addr;
 	ptr[1] = activate;
 	spi_device_write(bmp280->spi, &buffer, 2);
@@ -51,7 +51,7 @@ uint32_t bmp280_get_adc_temp(struct bmp280 *bmp280)
 	spi_device_write_continue(bmp280->spi, &tempRegister, 1);
 	uint32_t readBuffer = 0;
 	spi_device_read(bmp280->spi, &readBuffer, 3);
-	uint8_t* ptr2 = &readBuffer;
+	uint8_t* ptr2 = (uint8_t*)&readBuffer;
 	uint32_t temp = ptr2[2] + (ptr2[1] << 8) + (ptr2[0] << 16);
 	temp = temp >> 4;
 	return temp;
@@ -66,7 +66,7 @@ uint32_t bmp280_get_adc_pressure(struct bmp280 *bmp280)
 	// write temp sampling to the register
 	uint32_t addr = 0xF4 & 0x7F;
 	uint32_t buffer = 0;
-	uint8_t* ptr = &buffer;
+	uint8_t* ptr = (uint8_t*)&buffer;
 	ptr[0] = addr;
 	ptr[1] = activate;
 	spi_device_write(bmp280->spi, &buffer, 2);
@@ -75,7 +75,7 @@ uint32_t bmp280_get_adc_pressure(struct bmp280 *bmp280)
 	spi_device_write_continue(bmp280->spi, &tempRegister, 1);
 	uint32_t readBuffer = 0;
 	spi_device_read(bmp280->spi, &readBuffer, 3);
-	uint8_t* ptr2 = &readBuffer;
+	uint8_t* ptr2 = (uint8_t*)&readBuffer;
 	uint32_t temp = ptr2[2] + (ptr2[1] << 8) + (ptr2[0] << 16);
 	temp = temp >> 4;
 	return temp;
@@ -83,7 +83,7 @@ uint32_t bmp280_get_adc_pressure(struct bmp280 *bmp280)
 
 static uint16_t bmp280_unsigned_short_from_buffer(uint32_t* buffer)
 {
-	uint8_t* ptr = buffer;
+	uint8_t* ptr = (uint8_t*)buffer;
 	uint8_t msb = ptr[1];
 	uint8_t lsb = ptr[0];
 
@@ -93,7 +93,7 @@ static uint16_t bmp280_unsigned_short_from_buffer(uint32_t* buffer)
 
 static int16_t bmp280_signed_short_from_buffer(uint32_t* buffer)
 {
-	uint8_t* ptr = buffer;
+	uint8_t* ptr = (uint8_t*)buffer;
 	uint8_t msb = ptr[1];
 	uint8_t lsb = ptr[0];
 

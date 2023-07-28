@@ -17,24 +17,6 @@
 #include <gpio.h>
 #include <syscalls.h>
 
-#define CHECK_ERRORS(x)\
-	if ((x) != AM_HAL_STATUS_SUCCESS)\
-	{\
-		error_handler(x);\
-	}
-
-static void error_handler(uint32_t error)
-{
-	(void)error;
-	for(;;)
-	{
-		am_devices_led_on(am_bsp_psLEDs, 0);
-		am_util_delay_ms(500);
-		am_devices_led_off(am_bsp_psLEDs, 0);
-		am_util_delay_ms(500);
-	}
-}
-
 static struct uart uart;
 static struct adc adc;
 
