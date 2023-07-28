@@ -182,3 +182,36 @@ int _close (int file)
 	errno = ENOSYS;
 	return -1;
 }
+
+__attribute__((used))
+int _kill(int pid, int sig)
+{
+	(void)pid;
+	(void)sig;
+	errno = ENOSYS;
+	return -1;
+}
+
+__attribute((used))
+int _getpid(void)
+{
+	return 1;
+}
+
+__attribute__((used))
+int _isatty(int file)
+{
+	(void)file;
+	// FIXME what constitutes a tty???
+	return ENOTTY;
+}
+
+__attribute__((used))
+int _fstat(int fd, struct stat *st)
+{
+	(void)fd;
+	(void)st;
+	// FIXME fill in st for known fds
+	errno = ENOSYS;
+	return -1;
+}
