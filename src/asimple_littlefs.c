@@ -9,6 +9,7 @@
 static int asimple_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
 {
 	struct asimple_littlefs *fs = c->context;
+	flash_wait_busy(fs->flash);
 	flash_read_data(fs->flash, c->block_size * block + off, buffer, size);
 	return 0;
 }
@@ -16,17 +17,17 @@ static int asimple_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_o
 static int asimple_lfs_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
 {
 	struct asimple_littlefs *fs = c->context;
+	flash_wait_busy(fs->flash);
 	flash_write_enable(fs->flash);
 	flash_page_program(fs->flash, c->block_size * block + off, buffer, size);
-	flash_wait_busy(fs->flash);
 	return 0;
 }
 
 static int asimple_lfs_erase(const struct lfs_config *c, lfs_block_t block)
 {
 	struct asimple_littlefs *fs = c->context;
-	flash_sector_erase(fs->flash, block * c->block_size);
 	flash_wait_busy(fs->flash);
+	flash_sector_erase(fs->flash, block * c->block_size);
 	return 0;
 }
 
