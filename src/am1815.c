@@ -121,3 +121,73 @@ void am1815_init(struct am1815 *rtc, struct spi_device *device)
 	rtc->spi = device;
 	//am1815_enable_trickle(rtc);
 }
+
+uint8_t am1815_read_timer(struct am1815 *rtc)
+{
+	uint32_t buffer[1];
+	uint8_t *data = (uint8_t*)buffer;
+	spi_device_cmd_read(rtc->spi, 0x19, data, 1);
+	memcpy(data, buffer, 1);
+
+    return data;
+}
+
+static double find_timer(double timer)
+{
+    if(timer <= 0.0625){
+        timer = ((int)(timer * 4096))/4096.0;
+	}
+    else if(timer <= 4){
+        timer = ((int)(timer * 64))/64.0;
+	}
+    else if(timer <= 256){
+        timer = (int)timer;
+	}
+    else if(timer <= 15360){
+        timer = ((int)(timer/60)) * 60;
+	}
+    else{
+        timer = 15360;
+	}
+    return timer;
+}
+
+double am1815_write_timer(struct am1815 *rtc, double timer)
+{
+	double finalTimer = find_timer(timer);
+
+	if(finalTimer == 0){
+		return 0;
+	}
+
+	// TE (enables countdown timer)
+    // Sets the Countdown Timer Frequency and the Timer Initial Value
+    uint8_t countdowntimer = am1815_read_register(rtc, 0x18);
+    // clear TE first
+	am1815_write_register(rtc, 0x18, countdowntimer & ~0b10000000);
+    uint8_t RPT = countdowntimer & 0b00011100;
+    uint8_t timerResult = 0b10100000 + RPT;
+    uint32_t timerinitial = 0;
+    if(finalTimer <= 0.0625){
+        timerResult += 0b00;
+        timerinitial = ((int)(finalTimer * 4096)) - 1;
+	}
+    else if(finalTimer <= 4){
+        timerResult += 0b01;
+        timerinitial = ((int)(finalTimer * 64)) - 1;
+	}
+    else if(finalTimer <= 256){
+        timerResult += 0b10;
+        timerinitial = ((int)timer) - 1;
+	}
+    else{
+        timerResult += 0b11;
+        timerinitial = ((int)(finalTimer * (1/60))) - 1;
+	}
+
+	am1815_write_register(rtc, 0x19, timerinitial);
+	am1815_write_register(rtc, 0x1A, timerinitial);
+	am1815_write_register(rtc, 0x18, timerResult);
+
+	return finalTimer;
+}

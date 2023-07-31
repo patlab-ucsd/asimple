@@ -79,4 +79,26 @@ struct timeval am1815_read_alarm(struct am1815 *rtc);
 */
 void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime);
 
+/**
+ * Reads current value of RTC's countdown timer register.
+ * 
+ * @param[in] rtc RTC to read the countdown timer of.
+ * 
+ * @returns The current value of the countdown register (0x19).
+*/
+uint8_t am1815_read_timer(struct am1815 *rtc);
+
+/**
+ * Sets the RTC's countdown timer to a certain period. The timer will repeatedly
+ * generate an interrupt at the specified interval.
+ * 
+ * @param[in, out] rtc RTC to set the countdown timer of.
+ * @param[in] timer The period (in seconds) that the timer will be set to. If
+ * this parameter is 0 or too close to 0, then the timer will be disabled.
+ * 
+ * @returns The actual period (in seconds) that the timer was set to. (It may
+ * be different from the timer parameter because of the RTC's limitations.)
+*/
+double am1815_write_timer(struct am1815 *rtc, double timer);
+
 #endif//AM1815_H_
