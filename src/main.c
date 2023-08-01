@@ -34,7 +34,9 @@ int main(void)
 	uart_init(&uart, UART_INST0);
 
 	// Initialize the ADC.
-	adc_init(&adc);
+	uint8_t pins[1];
+	pins[0] = 16;
+	adc_init(&adc, pins, 1);
 
 	// After init is done, enable interrupts
 	am_hal_interrupt_master_enable();
@@ -130,8 +132,10 @@ int main(void)
 	{
 		// Print the battery voltage and temperature for each interrupt
 		//
-		uint32_t data = 0;
-		if (adc_get_sample(&adc, &data))
+		uint32_t* data[1];
+		uint8_t pins[1];
+		size_t size = 1;
+		if (adc_get_sample(&adc, data, pins, size))
 		{
 			// The math here is straight forward: we've asked the ADC to give
 			// us data in 14 bits (max value of 2^14 -1). We also specified the
@@ -140,7 +144,7 @@ int main(void)
 			// value from the ADC by this maximum, and multiply it by the
 			// reference, which then gives us the actual voltage measured.
 			const double reference = 1.5;
-			double voltage = data * reference / ((1 << 14) - 1);
+			double voltage = *data[0] * reference / ((1 << 14) - 1);
 
 			double temperature = 5.506 - sqrt((-5.506)*(-5.506) + 4 * 0.00176 * (870.6 - voltage*1000));
 			temperature /= (2 * -.00176);

@@ -92,9 +92,34 @@ static const am_hal_gpio_pincfg_t g_AM_PIN_16_ADCSE0 =
     .uFuncSel       = AM_HAL_PIN_16_ADCSE0,
 };
 
-void adc_init(struct adc *adc)
+static const am_hal_gpio_pincfg_t g_AM_PIN_29_ADCSE1 =
 {
-	am_hal_gpio_pinconfig(16, g_AM_PIN_16_ADCSE0);
+    .uFuncSel       = AM_HAL_PIN_29_ADCSE1,
+};
+
+static const am_hal_gpio_pincfg_t g_AM_PIN_11_ADCSE2 =
+{
+    .uFuncSel       = AM_HAL_PIN_11_ADCSE2,
+};
+
+void adc_init(struct adc *adc, uint8_t *pins, size_t size)
+{
+	for(size_t i = 0; i < size; i++){
+		if(pins[i] == 16){
+			am_hal_gpio_pinconfig(16, g_AM_PIN_16_ADCSE0);
+		}
+		else if(pins[i] == 29){
+			am_hal_gpio_pinconfig(29, g_AM_PIN_29_ADCSE1);
+		}
+		else if(pins[i] == 11){
+			am_hal_gpio_pinconfig(11, g_AM_PIN_11_ADCSE2);
+		}
+		else{
+			am_util_stdio_printf("Error - Pin cannot be configured with ADC\r\n");
+			return;
+		}
+	}
+
 	// Initialize the ADC and get the handle.
 	if (am_hal_adc_initialize(0, &adc->handle) != AM_HAL_STATUS_SUCCESS)
 	{
@@ -134,6 +159,7 @@ void adc_init(struct adc *adc)
 	};
 
 	// Unused slots
+	am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 1, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 2, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 3, &slot_config);
@@ -149,7 +175,22 @@ void adc_init(struct adc *adc)
 
 	// Configure the input slot
 	slot_config.ePrecisionMode = AM_HAL_ADC_SLOT_14BIT;
-	am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
+	// am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
+
+	for(size_t i = 0; i < size; i++){
+		if(pins[i] == 16){
+			slot_config.eChannel = AM_HAL_ADC_SLOT_CHSEL_SE0;
+			am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
+		}
+		else if(pins[i] == 29){
+			slot_config.eChannel = AM_HAL_ADC_SLOT_CHSEL_SE1;
+			am_hal_adc_configure_slot(adc->handle, 1, &slot_config);
+		}
+		else if(pins[i] == 11){
+			slot_config.eChannel = AM_HAL_ADC_SLOT_CHSEL_SE2;
+			am_hal_adc_configure_slot(adc->handle, 2, &slot_config);
+		}
+	}
 
 	// Enable the ADC.
 	am_hal_adc_enable(adc->handle);
@@ -167,16 +208,37 @@ void adc_init(struct adc *adc)
 		AM_HAL_ADC_INT_CNVCMP);
 }
 
-bool adc_get_sample(struct adc *adc, uint32_t *sample)
+bool adc_get_sample(struct adc *adc, uint32_t sample[][3], uint8_t *pins, size_t size)
 {
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) == 0)
 		return false;
+	
+	for(int i = 0; i < 3; i++){
+		uint32_t samples = 1;
+		am_hal_adc_sample_t slot = {0};
+		adc_trigger(adc);
+		am_hal_adc_samples_read(adc->handle, true, NULL, &samples, &slot);
 
-	uint32_t samples = 1;
-	am_hal_adc_sample_t slot = {0};
-	am_hal_adc_samples_read(adc->handle, true, NULL, &samples, &slot);
-
-	*sample = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
+		for(size_t j = 0; j < size; j++){
+			am_util_delay_ms(1);
+			// Determine which slot it came from?
+			if (slot.ui32Slot == 0 && pins[j] == 16)
+			{
+				// The returned ADC sample is from pin 16
+				sample[0][j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
+			}
+			else if (slot.ui32Slot == 1 && pins[j] == 29)
+			{
+				// The returned ADC sample is from pin 29
+				sample[0][j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
+			}
+			else if (slot.ui32Slot == 2 && pins[j] == 11)
+			{
+				// The returned ADC sample is from pin 11
+				sample[0][j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
+			}
+		}
+	}
 
 	return true;
 }

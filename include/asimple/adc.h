@@ -19,16 +19,18 @@ struct adc
  *
  * @param[in,out] adc Pointer to the ADC object to initialize.
  */
-void adc_init(struct adc *adc);
+void adc_init(struct adc *adc, uint8_t *pins, size_t size);
 
-/** Get a sample from the ADC.
+/** Get a sample from the ADC. The sample and pins arrays have to be the same size.
  *
  * @param[in] adc Pointer to the ADC object to use.
  * @param[out] sample Data extracted from the ADC, if there is data available.
+ * @param[in] pins The pins we want to get data from.
+ * @param[in] size The number of pins we want to get data from.
  *
  * @returns True if there was data in the queue to extract, false otherwise.
  */
-bool adc_get_sample(struct adc *adc, uint32_t *sample);
+bool adc_get_sample(struct adc *adc, uint32_t sample[][3], uint8_t *pins, size_t size);
 
 /** Trigger the ADC to start collecting data.
  *
