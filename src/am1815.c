@@ -124,12 +124,9 @@ void am1815_init(struct am1815 *rtc, struct spi_device *device)
 
 uint8_t am1815_read_timer(struct am1815 *rtc)
 {
-	uint32_t buffer[1];
-	uint8_t *data = (uint8_t*)buffer;
-	spi_device_cmd_read(rtc->spi, 0x19, data, 1);
-	memcpy(data, buffer, 1);
-
-    return data;
+	uint32_t buffer;
+	spi_device_cmd_read(rtc->spi, 0x19, &buffer, 1);
+    return (uint8_t)buffer;;
 }
 
 static double find_timer(double timer)
