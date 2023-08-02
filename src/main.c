@@ -36,7 +36,8 @@ int main(void)
 	// Initialize the ADC.
 	uint8_t pins[1];
 	pins[0] = 16;
-	adc_init(&adc, pins, 1);
+	size_t size = 1;
+	adc_init(&adc, pins, size);
 
 	// After init is done, enable interrupts
 	am_hal_interrupt_master_enable();
@@ -114,9 +115,6 @@ int main(void)
 		am_util_stdio_printf("am_hal_security_get_info failed 0x%X\r\n", status);
 	}
 
-	// Trigger the ADC to start collecting data
-	adc_trigger(&adc);
-
 	struct gpio lora_power;
 	gpio_init(&lora_power, 10, GPIO_MODE_OUTPUT, false);
 	struct spi_bus spi_bus;
@@ -130,11 +128,11 @@ int main(void)
 	// Wait here for the ISR to grab a buffer of samples.
 	while (1)
 	{
+		// Trigger the ADC to start collecting data
+		adc_trigger(&adc);
+
 		// Print the battery voltage and temperature for each interrupt
-		//
-		uint32_t* data[1];
-		uint8_t pins[1];
-		size_t size = 1;
+		uint32_t data[3] = {0};
 		if (adc_get_sample(&adc, data, pins, size))
 		{
 			// The math here is straight forward: we've asked the ADC to give
@@ -144,7 +142,7 @@ int main(void)
 			// value from the ADC by this maximum, and multiply it by the
 			// reference, which then gives us the actual voltage measured.
 			const double reference = 1.5;
-			double voltage = *data[0] * reference / ((1 << 14) - 1);
+			double voltage = data[0] * reference / ((1 << 14) - 1);
 
 			double temperature = 5.506 - sqrt((-5.506)*(-5.506) + 4 * 0.00176 * (870.6 - voltage*1000));
 			temperature /= (2 * -.00176);
