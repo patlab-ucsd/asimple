@@ -208,7 +208,7 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 		AM_HAL_ADC_INT_CNVCMP);
 }
 
-bool adc_get_sample(struct adc *adc, uint32_t sample[][3], uint8_t *pins, size_t size)
+bool adc_get_sample(struct adc *adc, uint32_t sample[3], uint8_t *pins, size_t size)
 {
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) == 0)
 		return false;
@@ -220,26 +220,17 @@ bool adc_get_sample(struct adc *adc, uint32_t sample[][3], uint8_t *pins, size_t
 		am_hal_adc_samples_read(adc->handle, true, NULL, &samples, &slot);
 
 		for(size_t j = 0; j < size; j++){
-			am_util_delay_ms(1);
-			// Determine which slot it came from?
-			if (slot.ui32Slot == 0 && pins[j] == 16)
+			// Determine which slot it came from
+			if ((slot.ui32Slot == 0 && pins[j] == 16) || 
+				(slot.ui32Slot == 1 && pins[j] == 29) ||
+				(slot.ui32Slot == 2 && pins[j] == 11))
 			{
-				// The returned ADC sample is from pin 16
-				sample[0][j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
-			}
-			else if (slot.ui32Slot == 1 && pins[j] == 29)
-			{
-				// The returned ADC sample is from pin 29
-				sample[0][j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
-			}
-			else if (slot.ui32Slot == 2 && pins[j] == 11)
-			{
-				// The returned ADC sample is from pin 11
-				sample[0][j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
+				// The returned ADC sample is from pin 16, 29, or 11
+				// and the user requested that pin
+				sample[j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
 			}
 		}
 	}
-
 	return true;
 }
 

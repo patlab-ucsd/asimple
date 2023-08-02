@@ -30,7 +30,7 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size);
  *
  * @returns True if there was data in the queue to extract, false otherwise.
  */
-bool adc_get_sample(struct adc *adc, uint32_t sample[][3], uint8_t *pins, size_t size);
+bool adc_get_sample(struct adc *adc, uint32_t sample[3], uint8_t *pins, size_t size);
 
 /** Trigger the ADC to start collecting data.
  *
