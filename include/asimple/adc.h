@@ -10,6 +10,7 @@
 struct adc
 {
 	void *handle;
+	uint8_t slots_configured;
 };
 
 /** Initializes the ADC.

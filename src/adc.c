@@ -87,6 +87,7 @@ static void adc_timer_init(void)
 	am_hal_ctimer_start(TIMERNUM, AM_HAL_CTIMER_TIMERA);
 }
 
+// Configure the pins on the redboard
 static const am_hal_gpio_pincfg_t g_AM_PIN_16_ADCSE0 =
 {
     .uFuncSel       = AM_HAL_PIN_16_ADCSE0,
@@ -104,6 +105,9 @@ static const am_hal_gpio_pincfg_t g_AM_PIN_11_ADCSE2 =
 
 void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 {
+	adc->slots_configured = size;
+
+	// Configure the pins given
 	for(size_t i = 0; i < size; i++){
 		if(pins[i] == 16){
 			am_hal_gpio_pinconfig(16, g_AM_PIN_16_ADCSE0);
@@ -177,6 +181,7 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 	slot_config.ePrecisionMode = AM_HAL_ADC_SLOT_14BIT;
 	// am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
 
+	// Configure the slots for the pins given
 	for(size_t i = 0; i < size; i++){
 		if(pins[i] == 16){
 			slot_config.eChannel = AM_HAL_ADC_SLOT_CHSEL_SE0;
@@ -210,13 +215,12 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 
 bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t *pins, size_t size)
 {
-	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) == 0)
+	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) < adc->slots_configured)
 		return false;
 	
-	for(int i = 0; i < 3; i++){
+	for(size_t i = 0; i < size; i++){
 		uint32_t samples = 1;
 		am_hal_adc_sample_t slot = {0};
-		adc_trigger(adc);
 		am_hal_adc_samples_read(adc->handle, true, NULL, &samples, &slot);
 
 		for(size_t j = 0; j < size; j++){
