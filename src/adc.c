@@ -208,7 +208,7 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 		AM_HAL_ADC_INT_CNVCMP);
 }
 
-bool adc_get_sample(struct adc *adc, uint32_t sample[3], uint8_t *pins, size_t size)
+bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t *pins, size_t size)
 {
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) == 0)
 		return false;
