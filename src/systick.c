@@ -10,26 +10,47 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void systick_init(void)
+static bool initialized = false;
+static volatile uint64_t jiffies;
+
+static uint32_t const SYSTEM_CLOCK = 48000000;
+
+bool systick_initialized(void)
 {
-	am_hal_systick_reset();
-	NVIC_EnableIRQ(SysTick_IRQn);
+	return initialized;
 }
 
-void systick_destroy(void)
+bool systick_started(void)
 {
+	return systick_initialized() && (SysTick->CTRL & SysTick_CTRL_ENABLE_Msk);
+}
+
+void systick_reset(void)
+{
+	// This clears the entire control register. The effect is:
+	// - COUNTFLAG is cleared
+	// - CLKSOURCE is set to IMPLEMENTATION DEFINED
+	// - TICKINT is cleared
+	// - ENABLE is cleared
 	am_hal_systick_reset();
-	NVIC_DisableIRQ(SysTick_IRQn);
+	jiffies = 0;
+	NVIC_EnableIRQ(SysTick_IRQn);
+	am_hal_systick_load((SYSTEM_CLOCK / 1000) - 1);
+	am_hal_systick_int_enable();
+	initialized = true;
+}
+
+void systick_stop(void)
+{
+	// This clears the TICKINT bit in CTRL
+	am_hal_systick_stop();
 }
 
 void systick_start(void)
 {
-	am_hal_systick_load(48000 - 1);
+	// This sets the TICKINT bit in CTRL
 	am_hal_systick_start();
-	am_hal_systick_int_enable();
 }
-
-static volatile uint64_t jiffies;
 
 void SysTick_Handler(void)
 {
@@ -48,9 +69,8 @@ void SysTick_Handler(void)
 
 uint64_t systick_jiffies(void)
 {
-	uint64_t result;
 	am_hal_interrupt_master_disable();
-	result = jiffies;
+	uint64_t result = jiffies;
 	am_hal_interrupt_master_enable();
 	return result;
 }
@@ -63,7 +83,7 @@ struct timespec systick_time(void)
 	do
 	{
 		prev = systick_jiffies();
-		counter = 47999 -  SysTick->VAL;
+		counter = ((SYSTEM_CLOCK / 1000) - 1) -  SysTick->VAL;
 		current = systick_jiffies();
 	} while (prev != current);
 
