@@ -9,9 +9,10 @@
 struct power_control
 {
 	struct gpio shd;
+	struct gpio active;
 };
 
-void power_control_init(struct power_control *control, uint8_t shd_pin);
+void power_control_init(struct power_control *control, uint8_t shd_pin, uint8_t active_pin);
 
 void power_control_shutdown(struct power_control *control);
 
