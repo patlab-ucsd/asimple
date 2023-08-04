@@ -13,9 +13,9 @@ struct uart
 	void *handle;
 	int instance;
 	// FIXME do we want the buffer size to be fixed?
-	uint8_t tx_buffer[256*10];
+	uint8_t tx_buffer[1024];
 	// FIXME does RX work?
-	uint8_t rx_buffer[2];
+	uint8_t rx_buffer[1024];
 };
 
 /** Represents the UART instance index.
@@ -50,6 +50,17 @@ void uart_destroy(struct uart *uart);
  * @returns The number of bytes written.
  */
 size_t uart_write(struct uart *uart, const unsigned char *data, size_t size);
+
+/** Receives data over UART.
+ *
+ * @param[in,out] uart
+ * @param[in] data Buffer to read into.
+ * @param[in] size Size of buffer to read into.
+ *
+ * @returns The number of bytes read, which may be less than the size of the
+ *  buffer.
+ */
+size_t uart_read(struct uart *uart, unsigned char *data, size_t size);
 
 /** Sets the UART baud rate to the requested amount.
  *

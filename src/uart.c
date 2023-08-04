@@ -58,6 +58,22 @@ static void am_uart_write(char *string)
 	uart_sync(isr_uart_handle);
 }
 
+size_t uart_read(struct uart *uart, unsigned char *data, size_t size)
+{
+	uint32_t read = 0;
+	const am_hal_uart_transfer_t config =
+	{
+		.ui32Direction = AM_HAL_UART_READ,
+		.pui8Data = (uint8_t *)data,
+		.ui32NumBytes = size,
+		.ui32TimeoutMs = 0,
+		.pui32BytesTransferred = &read,
+	};
+
+	CHECK_ERRORS(am_hal_uart_transfer(uart->handle, &config));
+	return read;
+}
+
 void uart_init(struct uart *uart, enum uart_instance instance)
 {
 	const am_hal_uart_config_t config =
@@ -79,7 +95,8 @@ void uart_init(struct uart *uart, enum uart_instance instance)
 		.pui8RxBuffer = uart->rx_buffer,
 		.ui32RxBufferSize = sizeof(uart->rx_buffer),
 	};
-	static_assert(sizeof(uart->tx_buffer) == 2560, "unexpected tx_buffer size");
+	static_assert(sizeof(uart->tx_buffer) == 1024, "unexpected tx_buffer size");
+	static_assert(sizeof(uart->rx_buffer) == 1024, "unexpected tx_buffer size");
 
 	uart->instance = (int)instance;
 	CHECK_ERRORS(am_hal_uart_initialize((int)instance, &uart->handle));
@@ -88,7 +105,6 @@ void uart_init(struct uart *uart, enum uart_instance instance)
 
 	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
 	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
-
 
 	isr_uart_handle = uart;
 	am_util_stdio_printf_init(am_uart_write);

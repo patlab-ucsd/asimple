@@ -32,11 +32,35 @@ int uart_write_(void *context, int file, char *ptr, int len)
 	return result;
 }
 
+int uart_read_(void *context, int file, char *ptr, int len)
+{
+	if (len < 0)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	(void)file;
+	struct syscalls_uart *uart = (struct syscalls_uart*)context;
+	if (!uart && !uart->uart)
+	{
+		errno = ENXIO;
+		return -1;
+	}
+	int read = 0;
+	while(read < len)
+	{
+		read += uart_read(uart->uart, (unsigned char *)ptr, len);
+		// FIXME sleep if interrupts are enabled?
+	}
+	return read;
+}
+
 static struct syscalls_uart uart = {
 	.base = {
 		.open = NULL,
 		.close = NULL,
-		.read = NULL, // FIXME
+		.read = uart_read_,
 		.write = uart_write_,
 		.lseek = NULL,
 	},
