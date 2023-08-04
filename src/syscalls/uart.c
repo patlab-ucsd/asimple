@@ -48,9 +48,10 @@ int uart_read_(void *context, int file, char *ptr, int len)
 		return -1;
 	}
 	int read = 0;
-	while(read < len)
+	//while(read < len)
+	while(!read)
 	{
-		read += uart_read(uart->uart, (unsigned char *)ptr, len);
+		read += uart_read(uart->uart, (unsigned char *)ptr, len - read);
 		// FIXME sleep if interrupts are enabled?
 	}
 	return read;

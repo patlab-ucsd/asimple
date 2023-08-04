@@ -48,5 +48,4 @@ cli_line_buffer *cli_read_line(struct cli *cli);
  */
 int read_line(char buf[], size_t size, bool echo);
 
-
 #endif//CLI_H_

@@ -202,8 +202,11 @@ __attribute__((used))
 int _isatty(int file)
 {
 	(void)file;
+	if (file < 3)
+		return 1;
 	// FIXME what constitutes a tty???
-	return ENOTTY;
+	errno = ENOTTY;
+	return 0;
 }
 
 __attribute__((used))
