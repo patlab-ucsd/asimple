@@ -47,6 +47,7 @@ foreach board : boards
     'src/syscalls/rtc.c',
     'src/syscalls/littlefs.c',
     'src/systick.c',
+    'src/cli.c',
   ])
 
   includes = include_directories([
