@@ -4,6 +4,7 @@
 #include <uart.h>
 #include <syscalls_internal.h>
 
+#include <sys/stat.h>
 #include <fcntl.h>
 
 #include <stdint.h>
@@ -18,7 +19,7 @@ struct syscalls_uart
 	struct uart *uart;
 };
 
-int uart_write_(void *context, int file, char *ptr, int len)
+static int uart_write_(void *context, int file, char *ptr, int len)
 {
 	(void)file;
 	struct syscalls_uart *uart = (struct syscalls_uart*)context;
@@ -32,7 +33,7 @@ int uart_write_(void *context, int file, char *ptr, int len)
 	return result;
 }
 
-int uart_read_(void *context, int file, char *ptr, int len)
+static int uart_read_(void *context, int file, char *ptr, int len)
 {
 	if (len < 0)
 	{
@@ -57,6 +58,34 @@ int uart_read_(void *context, int file, char *ptr, int len)
 	return read;
 }
 
+static int uart_fstat_(void *context, int file, struct stat *stat)
+{
+	(void)file;
+	struct syscalls_uart *uart = (struct syscalls_uart*)context;
+	if (!uart && !uart->uart)
+	{
+		errno = EBADF;
+		return -1;
+	}
+	struct stat result = {
+		.st_dev = 1, // FIXME some enum somewhere?
+		.st_ino = 1, // FIXME I don't even know what this means for a special file in no particular filesystem
+		.st_mode = S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO,
+		.st_nlink = 1,
+		.st_uid = 0,
+		.st_gid = 0,
+		.st_rdev = 1, // FIXME
+		.st_size = 0,
+		.st_blksize = 32, // FIXME confirm with datasheet what the FIFO depth is
+		.st_blocks = 1024/32, // FIXME base this on the actual TX/RX size
+		.st_atim = {0}, // FIXME
+		.st_mtim = {0}, // FIXME
+		.st_ctim = {0}, // FIXME
+	};
+	*stat = result;
+	return 0;
+}
+
 static struct syscalls_uart uart = {
 	.base = {
 		.open = NULL,
@@ -64,6 +93,7 @@ static struct syscalls_uart uart = {
 		.read = uart_read_,
 		.write = uart_write_,
 		.lseek = NULL,
+		.fstat = uart_fstat_,
 	},
 };
 

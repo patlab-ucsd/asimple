@@ -6,6 +6,7 @@
 
 #include <sys/time.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include <stdint.h>
 
@@ -16,37 +17,78 @@ extern int errno;
 static int syscalls_read(void *sys, int file, char *ptr, int len)
 {
 	struct syscalls_base *base = sys;
+	if (!base || !base->read)
+	{
+		errno = EBADF;
+		return -1;
+	}
 	return base->read(base, file, ptr, len);
 }
 
 static int syscalls_write(void *sys, int file, char *ptr, int len)
 {
 	struct syscalls_base *base = sys;
+	if (!base || !base->write)
+	{
+		errno = EBADF;
+		return -1;
+	}
 	return base->write(base, file, ptr, len);
 }
 
 static int syscalls_open(void *sys, const char *name, int flags, int mode)
 {
 	struct syscalls_base *base = sys;
+	if (!base || !base->open)
+	{
+		errno = ENXIO;
+		return -1;
+	}
 	return base->open(base, name, flags, mode);
 }
 
 static int syscalls_lseek(void *sys, int file, int ptr, int dir)
 {
 	struct syscalls_base *base = sys;
+	if (!base || !base->lseek)
+	{
+		errno = EBADF;
+		return -1;
+	}
 	return base->lseek(base, file, ptr, dir);
 }
 
 static int syscalls_close(void *sys, int file)
 {
 	struct syscalls_base *base = sys;
+	if (!base || !base->close)
+	{
+		errno = EBADF;
+		return -1;
+	}
 	return base->close(base, file);
 }
 
 static int syscalls_gettimeofday(void *sys, struct timeval *ptimeval, void *ptimezone)
 {
 	struct syscalls_base *base = sys;
+	if (!base || !base->gettimeofday)
+	{
+		errno = EFAULT;
+		return -1;
+	}
 	return base->gettimeofday(base, ptimeval, ptimezone);
+}
+
+static int syscalls_fstat(void *sys, int fd, struct stat *st)
+{
+	struct syscalls_base *base = sys;
+	if (!base || !base->fstat)
+	{
+		errno = EBADF;
+		return -1;
+	}
+	return base->fstat(base, fd, st);
 }
 
 struct syscalls_devices
@@ -210,11 +252,14 @@ int _isatty(int file)
 }
 
 __attribute__((used))
-int _fstat(int fd, struct stat *st)
+int _fstat(int file, struct stat *st)
 {
-	(void)fd;
-	(void)st;
-	// FIXME fill in st for known fds
-	errno = ENOSYS;
-	return -1;
+	if (file < 3)
+	{
+		return syscalls_fstat(devices.stdio[file], file, st);
+	}
+	else
+	{
+		return syscalls_fstat(devices.fs, file - 3, st);
+	}
 }

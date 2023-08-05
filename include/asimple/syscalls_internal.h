@@ -8,6 +8,9 @@
 #include <am1815.h>
 #include <asimple_littlefs.h>
 
+#include <sys/time.h>
+#include <sys/stat.h>
+
 /** Base polymorphic class for syscall implementations.
  *
  * This holds onto function pointers for the various system calls devices can
@@ -21,6 +24,7 @@ struct syscalls_base
 	int (*write)(void *context, int file, char *ptr, int len);
 	int (*lseek)(void *context, int file, int ptr, int dir);
 	int (*gettimeofday)(void *context, struct timeval *ptimeval, void *ptimezone);
+	int (*fstat)(void *context, int fd, struct stat *st);
 };
 
 ///{
