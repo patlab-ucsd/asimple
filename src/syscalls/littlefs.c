@@ -147,6 +147,44 @@ int littlefs_close_(void *context, int file)
 
 }
 
+static int littlefs_stat_(void *context, const char* filename, struct stat *stat)
+{
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	if (!fs)
+	{
+		errno = ENOENT;
+		return -1;
+	}
+
+	struct lfs_info info;
+	int err = lfs_stat(&fs->fs->lfs, filename, &info);
+
+	// FIXME any other errors we care to report?
+	if (err != LFS_ERR_OK)
+	{
+		errno = ENOENT;
+		return -1;
+	}
+
+	struct stat result = {
+		.st_dev = 2, // FIXME some enum somewhere?
+		.st_ino = 2, // FIXME I don't even know what this means for lfs
+		.st_mode = S_IFREG | S_IRWXU | S_IRWXG | S_IRWXO,
+		.st_nlink = 1,
+		.st_uid = 0,
+		.st_gid = 0,
+		.st_rdev = 2, // FIXME
+		.st_size = info.size,
+		.st_blksize = fs->fs->lfs.cfg->block_size, // FIXME is this right?
+		.st_blocks = (info.size - 1) / fs->fs->lfs.cfg->block_size + 1, // FIXME is this right?
+		.st_atim = {0}, // FIXME
+		.st_mtim = {0}, // FIXME
+		.st_ctim = {0}, // FIXME
+	};
+	*stat = result;
+	return 0;
+}
+
 static struct syscalls_littlefs fs = {
 	.base = {
 		.open = littlefs_open_,
@@ -154,6 +192,7 @@ static struct syscalls_littlefs fs = {
 		.read = littlefs_read_,
 		.write = littlefs_write_,
 		.lseek = littlefs_lseek_,
+		.stat = littlefs_stat_,
 	},
 };
 

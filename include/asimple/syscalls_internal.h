@@ -25,6 +25,7 @@ struct syscalls_base
 	int (*lseek)(void *context, int file, int ptr, int dir);
 	int (*gettimeofday)(void *context, struct timeval *ptimeval, void *ptimezone);
 	int (*fstat)(void *context, int fd, struct stat *st);
+	int (*stat)(void *context, const char *filename, struct stat *st);
 };
 
 ///{

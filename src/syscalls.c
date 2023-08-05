@@ -91,6 +91,17 @@ static int syscalls_fstat(void *sys, int fd, struct stat *st)
 	return base->fstat(base, fd, st);
 }
 
+static int syscalls_stat(void *sys, int fd, struct stat *st)
+{
+	struct syscalls_base *base = sys;
+	if (!base || !base->stat)
+	{
+		errno = ENOENT;
+		return -1;
+	}
+	return base->stat(base, fd, st);
+}
+
 struct syscalls_devices
 {
 	struct syscalls_base *stdio[3];
@@ -262,4 +273,15 @@ int _fstat(int file, struct stat *st)
 	{
 		return syscalls_fstat(devices.fs, file - 3, st);
 	}
+}
+
+__attribute__((used))
+int _stat (const char *filename, struct stat *st)
+{
+	if (devices.fs && strncmp(filename, "fs:/", 4) == 0)
+	{
+		return syscalls_stat(devices.fs, filename + 3, st);
+	}
+	errno = ENOENT;
+	return -1;
 }
