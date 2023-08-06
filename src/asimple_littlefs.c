@@ -49,7 +49,7 @@ void asimple_littlefs_init(struct asimple_littlefs *fs, struct flash *flash)
 		.read_size = 1,
 		.prog_size =  256,
 		.block_size = 4096,
-		.block_count = 4096,
+		.block_count = 512,
 		.cache_size = 256,
 		.lookahead_size = 8192,
 		.block_cycles = 250,
