@@ -8,6 +8,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef char cli_line_buffer[32];
 
 struct ring_buffer
@@ -15,12 +19,15 @@ struct ring_buffer
 	bool empty;
 	size_t end;
 	size_t start;
-	cli_line_buffer data[4];
+	cli_line_buffer *data;
 };
 
-void ring_buffer_initialize(struct ring_buffer *buf);
+void ring_buffer_init(struct ring_buffer *buf, size_t size);
+void ring_buffer_destroy(struct ring_buffer *buf);
+
 cli_line_buffer *ring_buffer_get_current(struct ring_buffer *buf);
 cli_line_buffer *ring_buffer_get(struct ring_buffer *buf, size_t index);
+
 void ring_buffer_advance(struct ring_buffer *buf);
 bool ring_buffer_empty(const struct ring_buffer *buf);
 size_t ring_buffer_in_use(struct ring_buffer *buf);
@@ -48,5 +55,9 @@ cli_line_buffer *cli_read_line(struct cli *cli);
  * @returns RETURNCODE_SUCCESS on success, anything else on error.
  */
 int read_line(char buf[], size_t size, bool echo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//CLI_H_
