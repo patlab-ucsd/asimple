@@ -14,7 +14,7 @@
  * - Use the high-freq clock/2 as a clock
  * - Trigger on a rising edge of whatever enables it
  * - Trigger by software only
- * - Internal 1.5V reference
+ * - Internal 2.0V reference
  * - Low power CLKMODE (turns clock off between samples)
  * - Low power mode (disables ADC between samples, has 50uS latency)
  * - Use Timer3 to keep sampling automatically after initial trigger
@@ -23,7 +23,7 @@ static const am_hal_adc_config_t adc_config = {
 	.eClock = AM_HAL_ADC_CLKSEL_HFRC_DIV2,
 	.ePolarity = AM_HAL_ADC_TRIGPOL_RISING,
 	.eTrigger = AM_HAL_ADC_TRIGSEL_SOFTWARE,
-	.eReference = AM_HAL_ADC_REFSEL_INT_1P5,
+	.eReference = AM_HAL_ADC_REFSEL_INT_2P0,
 	.eClockMode = AM_HAL_ADC_CLKMODE_LOW_POWER,
 	.ePowerMode = AM_HAL_ADC_LPMODE1,
 	.eRepeat = AM_HAL_ADC_SINGLE_SCAN
@@ -163,9 +163,6 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 	};
 
 	// Unused slots
-	am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
-	am_hal_adc_configure_slot(adc->handle, 1, &slot_config);
-	am_hal_adc_configure_slot(adc->handle, 2, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 3, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 4, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 5, &slot_config);
@@ -179,7 +176,6 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 
 	// Configure the input slot
 	slot_config.ePrecisionMode = AM_HAL_ADC_SLOT_14BIT;
-	// am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
 
 	// Configure the slots for the pins given
 	for(size_t i = 0; i < size; i++){
@@ -213,17 +209,19 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 		AM_HAL_ADC_INT_CNVCMP);
 }
 
-bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t *pins, size_t size)
+bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t pins[], size_t size)
 {
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) < adc->slots_configured)
 		return false;
 
-	for(size_t i = 0; i < size; i++){
+	for(size_t i = 0; i < 3; i++){
 		uint32_t samples = 1;
 		am_hal_adc_sample_t slot = {0};
 		am_hal_adc_samples_read(adc->handle, true, NULL, &samples, &slot);
 
-		for(size_t j = 0; j < size; j++){
+		// we got a slot-- is it for a pin we care about?
+		for (size_t j = 0; j < size; ++j)
+		{
 			// Determine which slot it came from
 			if ((slot.ui32Slot == 0 && pins[j] == 16) ||
 				(slot.ui32Slot == 1 && pins[j] == 29) ||
@@ -232,6 +230,7 @@ bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t *pins, size_t si
 				// The returned ADC sample is from pin 16, 29, or 11
 				// and the user requested that pin
 				sample[j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
+				break;
 			}
 		}
 	}

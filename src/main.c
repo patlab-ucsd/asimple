@@ -137,11 +137,11 @@ int main(void)
 		{
 			// The math here is straight forward: we've asked the ADC to give
 			// us data in 14 bits (max value of 2^14 -1). We also specified the
-			// reference voltage to be 1.5V. A reading of 1.5V would be
+			// reference voltage to be 2.0V. A reading of 2.0V would be
 			// translated to the maximum value of 2^14-1. So we divide the
 			// value from the ADC by this maximum, and multiply it by the
 			// reference, which then gives us the actual voltage measured.
-			const double reference = 1.5;
+			const double reference = 2.0;
 			double voltage = data[0] * reference / ((1 << 14) - 1);
 
 			double temperature = 5.506 - sqrt((-5.506)*(-5.506) + 4 * 0.00176 * (870.6 - voltage*1000));

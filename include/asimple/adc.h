@@ -19,9 +19,14 @@ struct adc
  * Initialization involves setting up timer 3 to trigger an interrupt every 1/8
  * of a second, and configuring slot 0 to get 14 bits of data from pin 16.
  *
+ * This function allows initializing the following pins only:
+ *  16, 29, 11
+ *
  * @param[in,out] adc Pointer to the ADC object to initialize.
+ * @param[in] pins Array of pin numbers to initialize.
+ * @param[in] size Size of pin array.
  */
-void adc_init(struct adc *adc, uint8_t *pins, size_t size);
+void adc_init(struct adc *adc, uint8_t pins[], size_t size);
 
 /** Get a sample from the ADC. The sample and pins arrays have to be the same size.
  *
@@ -32,12 +37,11 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size);
  *
  * @returns True if there was data in the queue to extract, false otherwise.
  */
-bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t *pins, size_t size);
+bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t pins[], size_t size);
 
-/** Trigger the ADC to start collecting data.
+/** Trigger the ADC to collect a sample.
  *
- * Once this is called, the ADC will continue to run based on the configuration
- * of timer 3.
+ * This triggers the ADC to collect a single sample.
  */
 void adc_trigger(struct adc *adc);
 
