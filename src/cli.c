@@ -16,6 +16,11 @@ void cli_init(struct cli *cli)
 	ring_buffer_init(&cli->history, ring_size);
 }
 
+void cli_destroy(struct cli *cli)
+{
+	ring_buffer_destroy(&cli->history);
+}
+
 int read_line(char buf[], size_t size, bool echo)
 {
 	int c;

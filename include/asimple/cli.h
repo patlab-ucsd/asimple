@@ -38,7 +38,8 @@ struct cli
 	struct ring_buffer history;
 };
 
-void cli_initialize(struct cli *cli);
+void cli_init(struct cli *cli);
+void cli_destroy(struct cli *cli);
 cli_line_buffer *cli_read_line(struct cli *cli);
 
 /** Read a line from the console.
