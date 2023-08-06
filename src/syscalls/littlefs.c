@@ -43,14 +43,13 @@ int littlefs_open_(void *context, const char *name, int flags, int mode)
 	}
 
 	int lfs_flags = 0;
-	if (O_RDONLY & flags)
+	// Apparently O_RDONLY is defined as 0
+	if (O_RDONLY == flags)
 		lfs_flags |= LFS_O_RDONLY;
-	if (O_WRONLY & flags)
+	else if (O_WRONLY & flags)
 		lfs_flags |= LFS_O_WRONLY;
-	if (O_RDWR & flags)
+	else if (O_RDWR & flags)
 		lfs_flags |= LFS_O_RDWR;
-	if (O_WRONLY & flags)
-		lfs_flags |= LFS_O_WRONLY;
 	if (O_EXCL & flags)
 		lfs_flags |= LFS_O_EXCL;
 	if (O_TRUNC & flags)
