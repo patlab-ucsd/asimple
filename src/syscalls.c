@@ -91,7 +91,7 @@ static int syscalls_fstat(void *sys, int fd, struct stat *st)
 	return base->fstat(base, fd, st);
 }
 
-static int syscalls_stat(void *sys, int fd, struct stat *st)
+static int syscalls_stat(void *sys, char *path, struct stat *st)
 {
 	struct syscalls_base *base = sys;
 	if (!base || !base->stat)
@@ -99,7 +99,7 @@ static int syscalls_stat(void *sys, int fd, struct stat *st)
 		errno = ENOENT;
 		return -1;
 	}
-	return base->stat(base, fd, st);
+	return base->stat(base, path, st);
 }
 
 struct syscalls_devices
@@ -276,7 +276,7 @@ int _fstat(int file, struct stat *st)
 }
 
 __attribute__((used))
-int _stat (const char *filename, struct stat *st)
+int _stat(char *filename, struct stat *st)
 {
 	if (devices.fs && strncmp(filename, "fs:/", 4) == 0)
 	{
