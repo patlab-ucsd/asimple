@@ -70,7 +70,7 @@ int read_line(char buf[], size_t size, bool echo)
 cli_line_buffer* cli_read_line(struct cli *cli)
 {
 	cli_line_buffer *buf = ring_buffer_get(&cli->history, ring_size - 1);
-	int result = read_line((char*)buf, ring_size, cli->echo);
+	int result = read_line((char*)buf, sizeof(*buf)/sizeof((*buf)[0]), cli->echo);
 	if (result == 0)
 	{
 		ring_buffer_advance(&cli->history);
