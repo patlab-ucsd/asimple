@@ -217,7 +217,7 @@ bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t *pins, size_t si
 {
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) < adc->slots_configured)
 		return false;
-	
+
 	for(size_t i = 0; i < size; i++){
 		uint32_t samples = 1;
 		am_hal_adc_sample_t slot = {0};
@@ -225,7 +225,7 @@ bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t *pins, size_t si
 
 		for(size_t j = 0; j < size; j++){
 			// Determine which slot it came from
-			if ((slot.ui32Slot == 0 && pins[j] == 16) || 
+			if ((slot.ui32Slot == 0 && pins[j] == 16) ||
 				(slot.ui32Slot == 1 && pins[j] == 29) ||
 				(slot.ui32Slot == 2 && pins[j] == 11))
 			{
