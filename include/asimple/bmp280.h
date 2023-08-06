@@ -11,6 +11,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Structure representing the BMP280 sensor */
 struct bmp280
 {
@@ -82,5 +86,9 @@ double bmp280_compensate_T_double(struct bmp280 *bmp280, uint32_t raw_temp);
  * @returns The pressure in pascals as a double.
 */
 double bmp280_compensate_P_double(struct bmp280 *bmp280, uint32_t raw_press, uint32_t raw_temp);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//BMP280_H_

@@ -8,6 +8,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** UART structure. */
 struct uart
 {
@@ -81,5 +85,9 @@ void uart_set_baud_rate(struct uart *uart, unsigned int baud_rate);
  * @param[in] uart UART instance to block on.
  */
 void uart_sync(struct uart *uart);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//UART_H_

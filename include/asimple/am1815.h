@@ -9,6 +9,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Structure representing the AM1815 RTC */
 struct am1815
 {
@@ -101,5 +105,9 @@ uint8_t am1815_read_timer(struct am1815 *rtc);
  * be different from the timer parameter because of the RTC's limitations.)
 */
 double am1815_write_timer(struct am1815 *rtc, double timer);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//AM1815_H_

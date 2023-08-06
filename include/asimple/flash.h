@@ -11,6 +11,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Structure representing the flash chip */
 struct flash
 {
@@ -87,5 +91,9 @@ uint32_t flash_read_id(struct flash *flash);
  * @param[in] flash Flash to query status register from.
  */
 void flash_wait_busy(struct flash *flash);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//FLASH_H_

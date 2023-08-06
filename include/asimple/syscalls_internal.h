@@ -12,6 +12,10 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Base polymorphic class for syscall implementations.
  *
  * This holds onto function pointers for the various system calls devices can
@@ -40,5 +44,9 @@ void syscalls_register_stderr(void *device);
 void syscalls_register_fs(void *device);
 
 ///}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//SYSCALLS__INTERNAL_H_

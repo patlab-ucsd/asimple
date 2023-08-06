@@ -8,6 +8,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** GPIO struct. */
 struct gpio
 {
@@ -46,5 +50,9 @@ void gpio_set(struct gpio *gpio, bool state);
  * @Returns True if the pin reads high, false otherwise.
  */
 bool gpio_read(struct gpio *gpio);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//GPIO_H_

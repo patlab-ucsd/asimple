@@ -12,6 +12,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Radio registers, from the Semtech SX1276 datasheet
 #define LORA_FIFO 0x00u
 #define LORA_OPMODE 0x01u
@@ -341,5 +345,9 @@ void lora_set_lna(struct lora *lora, enum lora_lna_gain gain, bool high_current)
  *  RFO_HF pins are used for output.
  */
 bool lora_set_transmit_level(struct lora *lora, int8_t dBm, bool high_power);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//LORA_H_

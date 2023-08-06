@@ -5,10 +5,12 @@
 #ifndef SPI_H_
 #define SPI_H_
 
-#include <am_bsp.h>
-
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Structure holding SPI bus information and state. */
 struct spi_bus
@@ -252,5 +254,9 @@ void spi_device_readwrite(
  * @param[in] size Number of bytes to clock.
  */
 void spi_device_toggle(struct spi_device *device, uint32_t size);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//SPI_H_

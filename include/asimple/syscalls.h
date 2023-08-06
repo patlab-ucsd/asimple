@@ -9,6 +9,10 @@
 #include <am1815.h>
 #include <asimple_littlefs.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Links the given RTC object with the time syscalls.
  *
  * gettimeofday uses the am1815 to get the time. This function informs the
@@ -35,5 +39,9 @@ void syscalls_uart_init(struct uart *uart);
  * @post stdio functions like printf should work.
  */
 void syscalls_littlefs_init(struct asimple_littlefs *fs);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//SYSCALLS_H_

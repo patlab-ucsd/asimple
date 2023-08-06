@@ -8,6 +8,10 @@
 #include <flash.h>
 #include <lfs.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct asimple_littlefs
 {
 	struct flash *flash;
@@ -19,5 +23,9 @@ void asimple_littlefs_init(struct asimple_littlefs *fs, struct flash *flash);
 int asimple_littlefs_format(struct asimple_littlefs *fs);
 int asimple_littlefs_mount(struct asimple_littlefs *fs);
 int asimple_littlefs_unmount(struct asimple_littlefs *fs);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//ASIMPLE_LITTLEFS_H_

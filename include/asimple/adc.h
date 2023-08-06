@@ -7,6 +7,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** ADC structure. */
 struct adc
 {
@@ -44,5 +48,9 @@ bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t pins[], size_t s
  * This triggers the ADC to collect a single sample.
  */
 void adc_trigger(struct adc *adc);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//ADC_H_

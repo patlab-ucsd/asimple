@@ -7,10 +7,13 @@
 #ifndef PDM_H_
 #define PDM_H_
 
-#include "am_bsp.h"
-#include "am_util.h"
 #include <uart.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define PDM_SIZE                4096
 #define PDM_BYTES               (PDM_SIZE * 2)
@@ -77,5 +80,9 @@ void pcm_print(struct uart *uart, uint32_t* g_ui32PDMDataBuffer);
  * @return g_bPDMDataReady
 */
 bool isPDMDataReady(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//PDM_H_

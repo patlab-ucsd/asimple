@@ -5,10 +5,12 @@
 #ifndef SYSTICK_H_
 #define SYSTICK_H_
 
-#include <am_bsp.h>
-
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Returns whether or not the systick subsystem is running.
  *
@@ -52,5 +54,9 @@ uint64_t systick_jiffies(void);
  * @returns The time since the timer was initialized and started.
  */
 struct timespec systick_time(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif//SYSTICK_H_
