@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
+/// @file
 
 #ifndef SYSCALLS_INTERNAL_H_
 #define SYSCALLS_INTERNAL_H_

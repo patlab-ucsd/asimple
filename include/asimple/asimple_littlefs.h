@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
+/// @file
 
 #ifndef ASIMPLE_LITTLEFS_H_
 #define ASIMPLE_LITTLEFS_H_

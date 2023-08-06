@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
+/// @file
 
 #ifndef CLI_H_
 #define CLI_H_

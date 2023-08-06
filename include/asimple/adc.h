@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright: Gabriel Marcano, 2023
+/// @file
 
 #ifndef ADC_H_
 #define ADC_H_
