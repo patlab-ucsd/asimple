@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
+#include <stdlib.h>
 
 uint8_t am1815_read_register(struct am1815 *rtc, uint8_t addr)
 {
@@ -61,6 +62,22 @@ struct timeval am1815_read_time(struct am1815 *rtc)
 		.tv_usec = from_bcd(data[0]) * 10000,
 	};
 	return result;
+}
+
+void am1815_read_bulk(struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t size)
+{
+	uint32_t *buffer = malloc(((size + 3)/4) * 4);
+	spi_device_cmd_read(rtc->spi, addr, buffer, size);
+	memcpy(data, buffer, size);
+	free(buffer);
+}
+
+void am1815_write_bulk(struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size)
+{
+	uint32_t *buffer = malloc(((size + 3)/4) * 4);
+	memcpy(buffer, data, size);
+	spi_device_cmd_write(rtc->spi, addr, buffer, size);
+	free(buffer);
 }
 
 struct timeval am1815_read_alarm(struct am1815 *rtc)

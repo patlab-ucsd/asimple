@@ -8,6 +8,7 @@
 #include <spi.h>
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +44,24 @@ uint8_t am1815_read_register(struct am1815 *rtc, uint8_t addr);
  * @param[in] data Data to write to the register.
  */
 void am1815_write_register(struct am1815 *rtc, uint8_t addr, uint8_t data);
+
+/** Reads a series of registers in sequence.
+ *
+ * @param[in,out] rtc RTC to read from.
+ * @param[in] addr Register address to start reading from.
+ * @param[out] data Output buffer to save incoming reads to.
+ * @param[in] size Size of output buffer, and how much to read.
+ */
+void am1815_read_bulk(struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t size);
+
+/** Writes a series of registers in sequence.
+ *
+ * @param[in,out] rtc RTC to read from.
+ * @param[in] addr Register address to start writing to.
+ * @param[out] data Output buffer with data to write to the RTC.
+ * @param[in] size Size of input buffer, and how much to write.
+ */
+void am1815_write_bulk(struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size);
 
 /** Set RPT bits in Countdown Timer Control register to control how often the alarm interrupt repeats.
  * 0 means disable alarm, 1 means once per year, 2 means once per month, 3 means once per week,
