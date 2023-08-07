@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <assert.h>
 
 static const int ring_size = 4;
 
