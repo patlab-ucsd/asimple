@@ -104,6 +104,20 @@ void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime)
     am1815_write_register(rtc, 0xE, to_bcd((uint8_t)date.tm_wday));
 }
 
+// Set RPT bits in Countdown Timer Control register to control how often the alarm interrupt repeats.
+bool am1815_repeat_alarm(struct am1815 *rtc, int repeat)
+{
+	if(repeat < 0 || repeat > 7){
+		return false;
+	}
+    uint8_t timerControl = am1815_read_register(rtc, 0x18);
+    timerControl = timerControl & ~(0b00011100);
+    uint8_t timerMask = repeat << 2;
+    uint8_t timerResult = timerControl | timerMask;
+    am1815_write_register(rtc, 0x18, timerResult);
+	return true;
+}
+
 void am1815_enable_trickle(struct am1815 *rtc)
 {
 	am1815_write_register(rtc, 0x1F, 0x9D);

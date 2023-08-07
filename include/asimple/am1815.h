@@ -44,6 +44,17 @@ uint8_t am1815_read_register(struct am1815 *rtc, uint8_t addr);
  */
 void am1815_write_register(struct am1815 *rtc, uint8_t addr, uint8_t data);
 
+/** Set RPT bits in Countdown Timer Control register to control how often the alarm interrupt repeats.
+ * 0 means disable alarm, 1 means once per year, 2 means once per month, 3 means once per week,
+ * 4 means once per day, 5 means once per hour, 6 means once per minute, 7 means once per second.
+ * 
+ * @param[in,out] rtc RTC to set the repeat function.
+ * @param[in] repeat number to decide how often the alarm repeats
+ * 
+ * @returns true if successful and false if unsuccessful (repeat out of range)
+ */
+bool am1815_repeat_alarm(struct am1815 *rtc, int repeat);
+
 /** Enables the trickle charging of the backup battery on the RTC.
  *
  * FIXME what are the settings?
