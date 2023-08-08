@@ -68,7 +68,7 @@ void am1815_read_bulk(struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t si
 
 void am1815_write_bulk(struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size)
 {
-	spi_device_cmd_write(rtc->spi, addr, data, size);
+	spi_device_cmd_write(rtc->spi, 0x80 | addr, data, size);
 }
 
 struct timeval am1815_read_alarm(struct am1815 *rtc)
@@ -229,4 +229,32 @@ void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width p
 	uint8_t outMask = 0b00000011;
 	uint8_t outResult = out | outMask;
 	am1815_write_register(rtc, 0x11, outResult);
+}
+
+void am1815_write_time(struct am1815 *rtc, const struct timeval *time)
+{
+	struct tm date;
+    gmtime_r(&(time->tv_sec), &date);
+    uint8_t hundredths = time->tv_usec / 10000;
+
+	uint8_t regs[8];
+	am1815_read_bulk(rtc, 0x0, regs, 8);
+
+	regs[0] = to_bcd(hundredths);
+	regs[1] &= 0x80;
+	regs[2] &= 0x80;
+	regs[3] &= 0xC0;
+	regs[4] &= 0xC0;
+	regs[5] &= 0xE0;
+	regs[7] &= 0xF8;
+
+	regs[1] |= to_bcd(date.tm_sec);
+	regs[2] |= to_bcd(date.tm_min);
+	regs[3] |= to_bcd(date.tm_hour);
+	regs[4] |= to_bcd(date.tm_mday);
+	regs[5] |= to_bcd(date.tm_mon) + 1;
+	regs[6] |= to_bcd(date.tm_wday);
+	regs[7] |= to_bcd((date.tm_year + 1900) % 1000);
+
+	am1815_write_bulk(rtc, 0x0, regs, 8);
 }

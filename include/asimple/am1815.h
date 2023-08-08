@@ -105,6 +105,12 @@ void am1815_disable_trickle(struct am1815 *rtc);
  */
 struct timeval am1815_read_time(struct am1815 *rtc);
 
+/** Writes the time to the RTC.
+ *
+ * @param[in] rtc RTC to write the time to.
+ */
+void am1815_write_time(struct am1815 *rtc, const struct timeval *time);
+
 /** Reads the alarm time on the RTC.
  *
  * @param[in] rtc RTC to read the time of.
