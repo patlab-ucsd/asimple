@@ -242,6 +242,15 @@ void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width p
 	am1815_write_register(rtc, 0x11, outResult);
 }
 
+void am1815_disable_alarm_interrupt(struct am1815 *rtc)
+{
+	// Configure AIRQ (alarm) interrupt
+	// IM (level/pulse) AIE (enables interrupt) 0x12 intmask
+	uint8_t alarm = am1815_read_register(rtc, 0x12);
+	alarm = alarm & ~(0b00000100);
+	am1815_write_register(rtc, 0x12, alarm);
+}
+
 void am1815_write_time(struct am1815 *rtc, const struct timeval *time)
 {
 	struct tm date;

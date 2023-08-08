@@ -157,6 +157,13 @@ double am1815_write_timer(struct am1815 *rtc, double timer);
  */
 void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width pulse);
 
+/** Disable the alarm interrupt and output to FOUT.
+ *
+ * @param[in,out] rtc RTC to disable alarm on.
+ */
+void am1815_disable_alarm_interrupt(struct am1815 *rtc);
+
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
