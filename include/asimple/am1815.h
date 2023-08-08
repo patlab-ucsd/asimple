@@ -20,6 +20,14 @@ struct am1815
 	struct spi_device *spi;
 };
 
+enum am1815_pulse_width
+{
+	AM1815_LEVEL = 0,
+	AM1815_SHORTEST = 1,
+	AM1815_1DIV64 = 2,
+	AM1815_1DIV4 = 3,
+};
+
 /** Initializes the RTC structure.
  *
  * @param[out] rtc RTC object to initialize
@@ -135,6 +143,13 @@ uint8_t am1815_read_timer(struct am1815 *rtc);
  * be different from the timer parameter because of the RTC's limitations.)
 */
 double am1815_write_timer(struct am1815 *rtc, double timer);
+
+/** Enable the alarm interrupt and output to FOUT.
+ *
+ * @param[in,out] rtc RTC to enable alarm on.
+ * @param[in] pulse Pulse to set for alarm.
+ */
+void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width pulse);
 
 #ifdef __cplusplus
 } // extern "C"

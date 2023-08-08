@@ -208,3 +208,25 @@ double am1815_write_timer(struct am1815 *rtc, double timer)
 
 	return finalTimer;
 }
+
+void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width pulse)
+{
+	// Configure AIRQ (alarm) interrupt
+	// IM (level/pulse) AIE (enables interrupt) 0x12 intmask
+	uint8_t alarm = am1815_read_register(rtc, 0x12);
+	alarm = alarm & ~(0b01100100);
+
+	uint8_t alarmMask = ((uint8_t)pulse) << 5;
+
+	// enables the alarm
+	alarmMask |= 0b00000100;
+
+	uint8_t alarmResult = alarm | alarmMask;
+	am1815_write_register(rtc, 0x12, alarmResult);
+
+	// Set Control2 register bits so that FOUT/nIRQ pin outputs nAIRQ
+	uint8_t out = am1815_read_register(rtc, 0x11);
+	uint8_t outMask = 0b00000011;
+	uint8_t outResult = out | outMask;
+	am1815_write_register(rtc, 0x11, outResult);
+}
