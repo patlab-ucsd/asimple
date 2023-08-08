@@ -9,15 +9,14 @@
 
 uint8_t am1815_read_register(struct am1815 *rtc, uint8_t addr)
 {
-	uint32_t buffer;
+	uint8_t buffer;
 	spi_device_cmd_read(rtc->spi, addr, &buffer, 1);
-	return (uint8_t)buffer;
+	return buffer;
 }
 
 void am1815_write_register(struct am1815 *rtc, uint8_t addr, uint8_t data)
 {
-	uint32_t buffer = data;
-	spi_device_cmd_write(rtc->spi, 0x80 | addr, &buffer, 1);
+	spi_device_cmd_write(rtc->spi, 0x80 | addr, &data, 1);
 }
 
 static uint8_t from_bcd(uint8_t bcd)
@@ -40,10 +39,8 @@ static uint8_t to_bcd(uint8_t value)
 
 struct timeval am1815_read_time(struct am1815 *rtc)
 {
-	uint32_t buffer[2];
-	uint8_t *data = (uint8_t*)buffer;
-	spi_device_cmd_read(rtc->spi, 0x0, buffer, 8);
-	memcpy(data, buffer, 8);
+	uint8_t data[8];
+	spi_device_cmd_read(rtc->spi, 0x0, data, 8);
 
 	struct tm date = {
 		.tm_year = from_bcd(data[6]) + 100,
@@ -66,26 +63,18 @@ struct timeval am1815_read_time(struct am1815 *rtc)
 
 void am1815_read_bulk(struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t size)
 {
-	uint32_t *buffer = malloc(((size + 3)/4) * 4);
-	spi_device_cmd_read(rtc->spi, addr, buffer, size);
-	memcpy(data, buffer, size);
-	free(buffer);
+	spi_device_cmd_read(rtc->spi, addr, data, size);
 }
 
 void am1815_write_bulk(struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size)
 {
-	uint32_t *buffer = malloc(((size + 3)/4) * 4);
-	memcpy(buffer, data, size);
-	spi_device_cmd_write(rtc->spi, addr, buffer, size);
-	free(buffer);
+	spi_device_cmd_write(rtc->spi, addr, data, size);
 }
 
 struct timeval am1815_read_alarm(struct am1815 *rtc)
 {
-	uint32_t buffer[2];
-	uint8_t *data = (uint8_t*)buffer;
-	spi_device_cmd_read(rtc->spi, 0x8, buffer, 7);
-	memcpy(data, buffer, 7);
+	uint8_t data[7];
+	spi_device_cmd_read(rtc->spi, 0x8, data, 7);
 
 	struct tm date = {
         .tm_year = 0,
@@ -155,7 +144,7 @@ void am1815_init(struct am1815 *rtc, struct spi_device *device)
 
 uint8_t am1815_read_timer(struct am1815 *rtc)
 {
-	uint32_t buffer;
+	uint8_t buffer;
 	spi_device_cmd_read(rtc->spi, 0x19, &buffer, 1);
     return (uint8_t)buffer;;
 }

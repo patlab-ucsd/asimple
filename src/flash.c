@@ -21,18 +21,18 @@ void flash_init(struct flash *flash, struct spi_device *device)
 
 uint8_t flash_read_status_register(struct flash *flash)
 {
-	uint32_t writeBuffer = 0x05;
+	uint8_t writeBuffer = 0x05;
 	spi_device_write_continue(flash->spi, &writeBuffer, 1);
-	uint32_t readBuffer = 0;
+	uint8_t readBuffer = 0;
 	spi_device_read(flash->spi, &readBuffer, 1);
 	return (uint8_t)readBuffer;
 }
 
 void flash_wait_busy(struct flash *flash)
 {
-	uint32_t writeBuffer = 0x05;
+	uint8_t writeBuffer = 0x05;
 	spi_device_write_continue(flash->spi, &writeBuffer, 1);
-	uint32_t readBuffer = 0;
+	uint8_t readBuffer = 0;
 	do {
 		spi_device_read_continue(flash->spi, &readBuffer, 1);
 	} while (readBuffer & 0x01);
@@ -44,28 +44,23 @@ void flash_wait_busy(struct flash *flash)
 
 void flash_write_enable(struct flash *flash)
 {
-	uint32_t writeBuffer = 0x06;
+	uint8_t writeBuffer = 0x06;
 	spi_device_write(flash->spi, &writeBuffer, 1);
 }
 
 void flash_read_data(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size)
 {
 	// Write command as least significant bit
-	uint32_t toWrite = 0;
-	uint32_t* tmpPtr = &toWrite;
-	uint8_t* tmp = (uint8_t*) tmpPtr;
-	tmp[0] = 0x03;
-	tmp[1] = addr >> 16;
-	tmp[2] = addr >> 8;
-	tmp[3] = addr;
+	uint8_t toWrite[] = {
+		0x03,
+		addr >> 16,
+		addr >> 8,
+		addr,
+	};
+	static_assert(sizeof(toWrite) == 4, "guessed array size wrong");
 
-	spi_device_write_continue(flash->spi, &toWrite, 4);
-
-	uint32_t *data = malloc(((size+3)/4) * 4);
-	spi_device_read(flash->spi, data, size);
-	memcpy(buffer, data, size);
-	free(data);
-	data = NULL;
+	spi_device_write_continue(flash->spi, toWrite, 4);
+	spi_device_read(flash->spi, buffer, size);
 }
 
 uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *buffer, uint32_t size)
@@ -83,21 +78,16 @@ uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *bu
 	}
 
 	// Write command as least significant bit
-	uint32_t toWrite = 0;
-	uint32_t* tmpPtr = &toWrite;
-	uint8_t* tmp = (uint8_t*) tmpPtr;
-	tmp[0] = 0x02;
-	tmp[1] = addr >> 16;
-	tmp[2] = addr >> 8;
-	tmp[3] = addr;
-	spi_device_write_continue(flash->spi, &toWrite, 4);
+	uint8_t toWrite[4] = {
+		0x02,
+		addr >> 16,
+		addr >> 8,
+		addr,
+	};
+	spi_device_write_continue(flash->spi, toWrite, 4);
 
 	// Write the data
-	uint32_t *data = malloc(((size+3)/4) * 4);
-	memcpy(data, buffer, size);
-	spi_device_write(flash->spi, data, size);
-	free(data);
-	data = NULL;
+	spi_device_write(flash->spi, buffer, size);
 	return 1;
 }
 
@@ -116,22 +106,21 @@ uint8_t flash_sector_erase(struct flash *flash, uint32_t addr)
 	}
 
 	// Write command as least significant bit
-	uint32_t toWrite = 0;
-	uint32_t* tmpPtr = &toWrite;
-	uint8_t* tmp = (uint8_t*) tmpPtr;
-	tmp[0] = 0x20;
-	tmp[1] = addr >> 16;
-	tmp[2] = addr >> 8;
-	tmp[3] = addr;
-	spi_device_write(flash->spi, &toWrite, 4);
+	uint8_t toWrite[4] = {
+		0x20,
+		addr >> 16,
+		addr >> 8,
+		addr,
+	};
+	spi_device_write(flash->spi, toWrite, 4);
 	return 1;
 }
 
 uint32_t flash_read_id(struct flash *flash)
 {
-	uint32_t writeBuffer = 0x9F;
+	uint8_t writeBuffer = 0x9F;
 	spi_device_write_continue(flash->spi, &writeBuffer, 1);
-	uint32_t readBuffer = 0;
+	uint8_t readBuffer = 0;
 	spi_device_read(flash->spi, &readBuffer, 3);
 	return readBuffer;
 }

@@ -150,7 +150,7 @@ void spi_device_set_clock(struct spi_device *device, uint32_t clock);
 void spi_device_cmd_read(
 	struct spi_device *device,
 	uint8_t command,
-	uint32_t *buffer,
+	uint8_t *buffer,
 	uint32_t size);
 
 /** Writes data (blocking) to the SPI device, sending a command byte
@@ -171,7 +171,7 @@ void spi_device_cmd_read(
 void spi_device_cmd_write(
 	struct spi_device *device,
 	uint8_t command,
-	const uint32_t *buffer,
+	const uint8_t *buffer,
 	uint32_t size);
 
 /** Reads data (blocking) from the SPI device.
@@ -185,7 +185,7 @@ void spi_device_cmd_write(
  * @param[in] size Size of the buffer.
  */
 void spi_device_read(
-	struct spi_device *device, uint32_t *buffer, uint32_t size);
+	struct spi_device *device, uint8_t *buffer, uint32_t size);
 
 /** Writes data (blocking) to the SPI device.
  *
@@ -198,7 +198,7 @@ void spi_device_read(
  * @param[in] size Size of the buffer.
  */
 void spi_device_write(
-	struct spi_device *device, const uint32_t *buffer, uint32_t size);
+	struct spi_device *device, const uint8_t *buffer, uint32_t size);
 
 /** Reads data (blocking) to the SPI device, and leave CS active (low).
  *
@@ -211,7 +211,7 @@ void spi_device_write(
  * @param[in] size Size of the buffer.
  */
 void spi_device_read_continue(
-	struct spi_device *device, uint32_t *buffer, uint32_t size);
+	struct spi_device *device, uint8_t *buffer, uint32_t size);
 
 /** Writes data (blocking) to the SPI device, and leaves CS active (low).
  *
@@ -224,7 +224,7 @@ void spi_device_read_continue(
  * @param[in] size Size of the buffer.
  */
 void spi_device_write_continue(
-	struct spi_device *device, const uint32_t *buffer, uint32_t size);
+	struct spi_device *device, const uint8_t *buffer, uint32_t size);
 
 /** Write and read data to/from the SPI device simultaneously.
  *
@@ -240,8 +240,8 @@ void spi_device_write_continue(
 void spi_device_readwrite(
 	struct spi_device *device,
 	uint32_t command,
-	uint32_t *rx_buffer,
-	const uint32_t *tx_buffer,
+	uint8_t *rx_buffer,
+	const uint8_t *tx_buffer,
 	uint32_t size);
 
 /** Toggles the SPI clock while sending 0xFF and keeping CS logical false

@@ -16,14 +16,14 @@
 
 static uint8_t read_register(struct spi_device *device, uint8_t address)
 {
-	uint32_t rx_buffer;
+	uint8_t rx_buffer;
 	spi_device_cmd_read(device, address, &rx_buffer, 1);
 	return rx_buffer;
 }
 
 static void write_register(struct spi_device *device, uint8_t address, uint8_t data)
 {
-	uint32_t tx_buffer = data;
+	uint8_t tx_buffer = data;
 	spi_device_cmd_write(device, address | 0x80, &tx_buffer, 1);
 }
 

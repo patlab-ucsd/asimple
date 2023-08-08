@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 
 // Configuration structure for the IO Master.
 // FIXME I don't like why this isn't const...
@@ -311,15 +312,16 @@ bool spi_bus_enable(struct spi_bus *bus)
 }
 
 void spi_device_cmd_read(
-	struct spi_device *device, uint8_t command, uint32_t *buffer, uint32_t size)
+	struct spi_device *device, uint8_t command, uint8_t *buffer, uint32_t size)
 {
+	uint32_t *buf = malloc((size + 3)/4 * 4);
 	am_hal_iom_transfer_t transaction =
 	{
 		.ui32InstrLen = 1,
 		.ui32Instr = command,
 		.eDirection = AM_HAL_IOM_RX,
 		.ui32NumBytes = size,
-		.pui32RxBuffer = buffer,
+		.pui32RxBuffer = buf,
 		.bContinue = false,
 		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
@@ -329,19 +331,22 @@ void spi_device_cmd_read(
 	};
 	spi_device_update_clock(device);
 	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
+	memcpy(buffer, buf, size);
+	free(buf);
 }
 
 void spi_device_cmd_write(
-	struct spi_device *device, uint8_t command, const uint32_t *buffer, uint32_t size)
+	struct spi_device *device, uint8_t command, const uint8_t *buffer, uint32_t size)
 {
+	uint32_t *buf = malloc(((size + 3) / 4) * 4);
+	memcpy(buf, buffer, size);
 	am_hal_iom_transfer_t transaction =
 	{
 		.ui32InstrLen	= 1,
 		.ui32Instr	   = command,
 		.eDirection	  = AM_HAL_IOM_TX,
 		.ui32NumBytes	= size,
-		// FIXME I really don't like how I need to strip const here...
-		.pui32TxBuffer   = (uint32_t*)buffer,
+		.pui32TxBuffer   = buf,
 		.bContinue	   = false,
 		.ui8RepeatCount  = 0,
 		.ui32PauseCondition = 0,
@@ -351,17 +356,19 @@ void spi_device_cmd_write(
 	};
 	spi_device_update_clock(device);
 	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
+	free(buf);
 }
 
 void spi_device_read(
-	struct spi_device *device, uint32_t *buffer, uint32_t size)
+	struct spi_device *device, uint8_t *buffer, uint32_t size)
 {
+	uint32_t *buf = malloc(((size + 3) / 4) * 4);
 	am_hal_iom_transfer_t transaction =
 	{
 		.ui32InstrLen = 0,
 		.eDirection = AM_HAL_IOM_RX,
 		.ui32NumBytes = size,
-		.pui32RxBuffer = buffer,
+		.pui32RxBuffer = buf,
 		.bContinue = false,
 		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
@@ -371,18 +378,21 @@ void spi_device_read(
 	};
 	spi_device_update_clock(device);
 	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
+	memcpy(buffer, buf, size);
+	free(buf);
 }
 
 void spi_device_write(
-	struct spi_device *device, const uint32_t *buffer, uint32_t size)
+	struct spi_device *device, const uint8_t *buffer, uint32_t size)
 {
+	uint32_t *buf = malloc(((size + 3) / 4) * 4);
+	memcpy(buf, buffer, size);
 	am_hal_iom_transfer_t transaction =
 	{
 		.ui32InstrLen	= 0,
 		.eDirection	  = AM_HAL_IOM_TX,
 		.ui32NumBytes	= size,
-		// FIXME I really don't like how I need to strip const here...
-		.pui32TxBuffer   = (uint32_t*)buffer,
+		.pui32TxBuffer   = buf,
 		.bContinue	   = false,
 		.ui8RepeatCount  = 0,
 		.ui32PauseCondition = 0,
@@ -392,17 +402,19 @@ void spi_device_write(
 	};
 	spi_device_update_clock(device);
 	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
+	free(buf);
 }
 
 void spi_device_read_continue(
-	struct spi_device *device, uint32_t *buffer, uint32_t size)
+	struct spi_device *device, uint8_t *buffer, uint32_t size)
 {
+	uint32_t *buf = malloc(((size + 3) / 4) * 4);
 	am_hal_iom_transfer_t transaction =
 	{
 		.ui32InstrLen = 0,
 		.eDirection = AM_HAL_IOM_RX,
 		.ui32NumBytes = size,
-		.pui32RxBuffer = buffer,
+		.pui32RxBuffer = buf,
 		.bContinue = true,
 		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
@@ -412,18 +424,21 @@ void spi_device_read_continue(
 	};
 	spi_device_update_clock(device);
 	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
+	memcpy(buffer, buf, size);
+	free(buf);
 }
 
 void spi_device_write_continue(
-	struct spi_device *device, const uint32_t *buffer, uint32_t size)
+	struct spi_device *device, const uint8_t *buffer, uint32_t size)
 {
+	uint32_t *buf = malloc(((size + 3)/4) * 4);
+	memcpy(buf, buffer, size);
 	am_hal_iom_transfer_t transaction =
 	{
 		.ui32InstrLen	= 0,
 		.eDirection	  = AM_HAL_IOM_TX,
 		.ui32NumBytes	= size,
-		// FIXME I really don't like how I need to strip const here...
-		.pui32TxBuffer   = (uint32_t*)buffer,
+		.pui32TxBuffer   = buf,
 		.bContinue	   = true,
 		.ui8RepeatCount  = 0,
 		.ui32PauseCondition = 0,
@@ -433,15 +448,19 @@ void spi_device_write_continue(
 	};
 	spi_device_update_clock(device);
 	am_hal_iom_blocking_transfer(device->parent->handle, &transaction);
+	free(buf);
 }
 
 void spi_device_readwrite(
 	struct spi_device *device,
 	uint32_t command,
-	uint32_t *rx_buffer,
-	const uint32_t *tx_buffer,
+	uint8_t *rx_buffer,
+	const uint8_t *tx_buffer,
 	uint32_t size)
 {
+	uint32_t *bufr = malloc(((size + 3)/4) * 4);
+	uint32_t *bufw = malloc(((size + 3)/4) * 4);
+	memcpy(bufw, tx_buffer, size);
 	am_hal_iom_transfer_t transaction =
 	{
 		.ui32InstrLen	= 1,
@@ -449,8 +468,8 @@ void spi_device_readwrite(
 		.eDirection	  = AM_HAL_IOM_FULLDUPLEX,
 		.ui32NumBytes	= size,
 		// FIXME I really don't like how I need to strip const here...
-		.pui32TxBuffer   = (uint32_t*)tx_buffer,
-		.pui32RxBuffer = rx_buffer,
+		.pui32TxBuffer   = bufw,
+		.pui32RxBuffer = bufr,
 		.bContinue	   = false,
 		.ui8RepeatCount  = 0,
 		.ui32PauseCondition = 0,
@@ -460,6 +479,9 @@ void spi_device_readwrite(
 	};
 	spi_device_update_clock(device);
 	am_hal_iom_spi_blocking_fullduplex(device->parent->handle, &transaction);
+	memcpy(rx_buffer, bufr, size);
+	free(bufr);
+	free(bufw);
 }
 
 void spi_device_toggle(struct spi_device *device, uint32_t size)
@@ -469,11 +491,13 @@ void spi_device_toggle(struct spi_device *device, uint32_t size)
 	// lines, keep it high ourselves, then clock size number of bytes
 	struct gpio cs;
 	gpio_init(&cs, get_pin(device->parent->iom_module, device->chip_select), GPIO_MODE_OUTPUT, 1);
-	uint32_t data = 0xFFFFFFFFu;
+	uint8_t data[4] = {
+		0xFFu, 0xFFu, 0xFFu, 0xFFu
+	};
 	spi_device_update_clock(device);
 	for (; size > 4; size -= 4)
-		spi_device_write(device, &data, 4);
-	spi_device_write(device, &data, size);
+		spi_device_write(device, data, 4);
+	spi_device_write(device, data, size);
 	// Restore pin assignments
 	am_bsp_iom_pins_enable(device->parent->iom_module, AM_HAL_IOM_SPI_MODE);
 }

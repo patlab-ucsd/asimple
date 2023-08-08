@@ -46,7 +46,7 @@ uint8_t bmp280_read_id(struct bmp280 *bmp280);
  * @param[out] buffer Buffer that registers from the BMP280 sensor will be written into.
  * @param[in] size Number of bytes to read, starting at addr.
 */
-void bmp280_read_register(struct bmp280 *bmp280, uint32_t addr, uint32_t *buffer, uint32_t size);
+void bmp280_read_register(struct bmp280 *bmp280, uint8_t addr, uint8_t *buffer, uint32_t size);
 
 /**
  * Gets the raw temperature value from the temperature registers of the BMP280 sensor.
