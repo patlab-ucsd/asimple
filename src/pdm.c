@@ -61,7 +61,6 @@ void pdm_init(struct pdm *pdm)
 
     // Start the data transfer
     am_hal_pdm_enable(pdm->PDMHandle);
-    am_util_delay_ms(100);
     am_hal_pdm_fifo_flush(pdm->PDMHandle);
 }
 
