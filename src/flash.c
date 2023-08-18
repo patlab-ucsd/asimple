@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 void flash_init(struct flash *flash, struct spi_device *device)
 {
