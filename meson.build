@@ -48,6 +48,7 @@ foreach board : boards
     'src/syscalls/littlefs.c',
     'src/systick.c',
     'src/cli.c',
+    'src/sd_card.c',
   ])
 
   includes = include_directories([
@@ -80,6 +81,8 @@ sources = files([
 # Find libm...
 cc = meson.get_compiler('c', native: false)
 m_dep = cc.find_library('m', required : false)
+
+ambiq_lib = dependency(boards[0]['dependency'])
 
 exe = executable(meson.project_name(),
   sources,
