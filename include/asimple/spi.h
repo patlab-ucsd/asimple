@@ -237,12 +237,46 @@ void spi_device_write_continue(
  * @param[out] tx_buffer Pointer to buffer to hold incoming data.
  * @param[in] size Size of the buffers, should be the same for both.
  */
-void spi_device_readwrite(
+void spi_device_cmd_readwrite(
 	struct spi_device *device,
 	uint32_t command,
 	uint8_t *rx_buffer,
 	const uint8_t *tx_buffer,
 	uint32_t size);
+
+/** Write and read data to/from the SPI device simultaneously.
+ *
+ * This function will block until all of the wrte buffer is sent and an equal
+ * number of bytes received in the read buffer. It does not set CS to inactive
+ * on completion.
+ *
+ * @param[in,out] device Pointer to the spi device to use.
+ * @param[in] rx_buffer Pointer to buffer with outgoing data.
+ * @param[out] tx_buffer Pointer to buffer to hold incoming data.
+ * @param[in] size Size of the buffers, should be the same for both.
+ */
+void spi_device_readwrite_continue(
+	struct spi_device *device,
+	uint8_t *rx_buffer,
+	const uint8_t *tx_buffer,
+	uint32_t size);
+
+/** Forces MOSI to the given logic level.
+ *
+ * This is mostly used for SD card functionality, to force the MOSI level high
+ * while reading as apparently the cards malfunction if MOSI isn't high-- the
+ * cards likely interpret something as a command.
+ *
+ * @param[in,out] device Pointer to the spi device to use.
+ * @[aram[in] level Voltage level to set MOSI to (not logic level).
+ */
+void spi_device_hold_mosi(struct spi_device *device, bool level);
+
+/** Returns MOSI to its normal SPI operation.
+ *
+ * @param[in,out] device Pointer to the spi device to use.
+ */
+void spi_device_release_mosi(struct spi_device *device);
 
 /** Toggles the SPI clock while sending 0xFF and keeping CS logical false
  *  (high).

@@ -150,89 +150,91 @@ static int convert_chip_select(uint8_t module, enum spi_chip_select cs)
 	}
 }
 
-static int get_pin(uint32_t module, enum spi_chip_select chip_select)
+struct iom_pin
 {
-	switch (module)
+	int pin;
+	const am_hal_gpio_pincfg_t *config;
+};
+
+struct iom_pins
+{
+	struct iom_pin clk;
+	struct iom_pin miso;
+	struct iom_pin mosi;
+	struct iom_pin cs[4];
+};
+
+struct iom_pins iom_pins[4] =
+{
 	{
-	default:
-	case 0:
-		switch (chip_select)
-		{
+		.clk = { AM_BSP_GPIO_IOM0_SCK, &g_AM_BSP_GPIO_IOM0_SCK },
+		.miso = { AM_BSP_GPIO_IOM0_MISO, &g_AM_BSP_GPIO_IOM0_MISO },
+		.mosi = { AM_BSP_GPIO_IOM0_MOSI, &g_AM_BSP_GPIO_IOM0_MOSI },
+		.cs = {
+			{AM_BSP_GPIO_IOM0_CS, &g_AM_BSP_GPIO_IOM0_CS},
 #ifdef AM_BSP_GPIO_IOM0_CS1
-		case SPI_CS_1:
-			return AM_BSP_GPIO_IOM0_CS1;
-#endif//AM_BSP_GPIO_IOM0_CS1
+			{AM_BSP_GPIO_IOM0_CS1, &g_AM_BSP_GPIO_IOM0_CS1},
+#endif
 #ifdef AM_BSP_GPIO_IOM0_CS2
-		case SPI_CS_2:
-			return AM_BSP_GPIO_IOM0_CS2;
-#endif//AM_BSP_GPIO_IOM0_CS2
+			{AM_BSP_GPIO_IOM0_CS2, &g_AM_BSP_GPIO_IOM0_CS2},
+#endif
 #ifdef AM_BSP_GPIO_IOM0_CS3
-		case SPI_CS_3:
-			return AM_BSP_GPIO_IOM0_CS3;
-#endif//AM_BSP_GPIO_IOM0_CS
-		case SPI_CS_0:
-		default:
-			return AM_BSP_GPIO_IOM0_CS;
-		}
-	case 1:
-		switch (chip_select)
-		{
+			{AM_BSP_GPIO_IOM0_CS3, &g_AM_BSP_GPIO_IOM0_CS3},
+#endif
+		},
+	},
+	{
+		.clk = { AM_BSP_GPIO_IOM1_SCK, &g_AM_BSP_GPIO_IOM1_SCK },
+		.miso = { AM_BSP_GPIO_IOM1_MISO, &g_AM_BSP_GPIO_IOM1_MISO },
+		.mosi = { AM_BSP_GPIO_IOM1_MOSI, &g_AM_BSP_GPIO_IOM1_MOSI },
+		.cs = {
+			{AM_BSP_GPIO_IOM1_CS, &g_AM_BSP_GPIO_IOM1_CS},
 #ifdef AM_BSP_GPIO_IOM1_CS1
-		case SPI_CS_1:
-			return AM_BSP_GPIO_IOM1_CS1;
-#endif//AM_BSP_GPIO_IOM1_CS1
+			{AM_BSP_GPIO_IOM1_CS1, &g_AM_BSP_GPIO_IOM1_CS1},
+#endif
 #ifdef AM_BSP_GPIO_IOM1_CS2
-		case SPI_CS_2:
-			return AM_BSP_GPIO_IOM1_CS2;
-#endif//AM_BSP_GPIO_IOM1_CS2
+			{AM_BSP_GPIO_IOM1_CS2, &g_AM_BSP_GPIO_IOM1_CS2},
+#endif
 #ifdef AM_BSP_GPIO_IOM1_CS3
-		case SPI_CS_3:
-			return AM_BSP_GPIO_IOM1_CS3;
-#endif//AM_BSP_GPIO_IOM1_CS
-		case SPI_CS_0:
-		default:
-			return AM_BSP_GPIO_IOM1_CS;
-		}
-	case 2:
-		switch (chip_select)
-		{
+			{AM_BSP_GPIO_IOM1_CS3, &g_AM_BSP_GPIO_IOM1_CS3},
+#endif
+		},
+	},
+	{
+		.clk = { AM_BSP_GPIO_IOM2_SCK, &g_AM_BSP_GPIO_IOM2_SCK },
+		.miso = { AM_BSP_GPIO_IOM2_MISO, &g_AM_BSP_GPIO_IOM2_MISO },
+		.mosi = { AM_BSP_GPIO_IOM2_MOSI, &g_AM_BSP_GPIO_IOM2_MOSI },
+		.cs = {
+			{AM_BSP_GPIO_IOM2_CS, &g_AM_BSP_GPIO_IOM2_CS},
 #ifdef AM_BSP_GPIO_IOM2_CS1
-		case SPI_CS_1:
-			return AM_BSP_GPIO_IOM2_CS1;
-#endif//AM_BSP_GPIO_IOM2_CS1
+			{AM_BSP_GPIO_IOM2_CS1, &g_AM_BSP_GPIO_IOM2_CS1},
+#endif
 #ifdef AM_BSP_GPIO_IOM2_CS2
-		case SPI_CS_2:
-			return AM_BSP_GPIO_IOM2_CS2;
-#endif//AM_BSP_GPIO_IOM2_CS2
+			{AM_BSP_GPIO_IOM2_CS2, &g_AM_BSP_GPIO_IOM2_CS2},
+#endif
 #ifdef AM_BSP_GPIO_IOM2_CS3
-		case SPI_CS_3:
-			return AM_BSP_GPIO_IOM2_CS3;
-#endif//AM_BSP_GPIO_IOM2_CS
-		case SPI_CS_0:
-		default:
-			return AM_BSP_GPIO_IOM2_CS;
-		}
-	case 3:
-		switch (chip_select)
-		{
+			{AM_BSP_GPIO_IOM2_CS3, &g_AM_BSP_GPIO_IOM2_CS3},
+#endif
+		},
+	},
+	{
+		.clk = { AM_BSP_GPIO_IOM3_SCK, &g_AM_BSP_GPIO_IOM3_SCK },
+		.miso = { AM_BSP_GPIO_IOM3_MISO, &g_AM_BSP_GPIO_IOM3_MISO },
+		.mosi = { AM_BSP_GPIO_IOM3_MOSI, &g_AM_BSP_GPIO_IOM3_MOSI },
+		.cs = {
+			{AM_BSP_GPIO_IOM3_CS, &g_AM_BSP_GPIO_IOM3_CS},
 #ifdef AM_BSP_GPIO_IOM3_CS1
-		case SPI_CS_1:
-			return AM_BSP_GPIO_IOM3_CS1;
-#endif//AM_BSP_GPIO_IOM3_CS1
+			{AM_BSP_GPIO_IOM3_CS1, &g_AM_BSP_GPIO_IOM3_CS1},
+#endif
 #ifdef AM_BSP_GPIO_IOM3_CS2
-		case SPI_CS_2:
-			return AM_BSP_GPIO_IOM3_CS2;
-#endif//AM_BSP_GPIO_IOM3_CS2
+			{AM_BSP_GPIO_IOM3_CS2, &g_AM_BSP_GPIO_IOM3_CS2},
+#endif
 #ifdef AM_BSP_GPIO_IOM3_CS3
-		case SPI_CS_3:
-			return AM_BSP_GPIO_IOM3_CS3;
-#endif//AM_BSP_GPIO_IOM3_CS
-		case SPI_CS_0:
-		default:
-			return AM_BSP_GPIO_IOM3_CS;
-		}
-	}
-}
+			{AM_BSP_GPIO_IOM3_CS3, &g_AM_BSP_GPIO_IOM3_CS3},
+#endif
+		},
+	},
+};
 
 void spi_bus_init(struct spi_bus *bus, uint32_t iomModule)
 {
@@ -484,13 +486,47 @@ void spi_device_readwrite(
 	free(bufw);
 }
 
+void spi_device_readwrite_continue(
+	struct spi_device *device,
+	uint8_t *rx_buffer,
+	const uint8_t *tx_buffer,
+	uint32_t size)
+{
+	uint32_t *bufr = malloc(((size + 3)/4) * 4);
+	uint32_t *bufw = malloc(((size + 3)/4) * 4);
+	memcpy(bufw, tx_buffer, size);
+	am_hal_iom_transfer_t transaction =
+	{
+		.ui32InstrLen	= 0,
+		.ui32Instr	   = 0,
+		.eDirection	  = AM_HAL_IOM_FULLDUPLEX,
+		.ui32NumBytes	= size,
+		// FIXME I really don't like how I need to strip const here...
+		.pui32TxBuffer   = bufw,
+		.pui32RxBuffer = bufr,
+		.bContinue	   = true,
+		.ui8RepeatCount  = 0,
+		.ui32PauseCondition = 0,
+		.ui32StatusSetClr = 0,
+
+		.uPeerInfo.ui32SpiChipSelect = device->chip_select,
+	};
+	spi_device_update_clock(device);
+	am_hal_iom_spi_blocking_fullduplex(device->parent->handle, &transaction);
+	memcpy(rx_buffer, bufr, size);
+	free(bufr);
+	free(bufw);
+}
+
 void spi_device_toggle(struct spi_device *device, uint32_t size)
 {
 	// We need this for SD card support
 	// and this is cursed-- we need to take over the SPI pins for the nCS
 	// lines, keep it high ourselves, then clock size number of bytes
 	struct gpio cs;
-	gpio_init(&cs, get_pin(device->parent->iom_module, device->chip_select), GPIO_MODE_OUTPUT, 1);
+	const struct iom_pin *cs_pin =
+		&iom_pins[device->parent->iom_module].cs[device->chip_select];
+	gpio_init(&cs, cs_pin->pin, GPIO_MODE_OUTPUT, 1);
 	uint8_t data[4] = {
 		0xFFu, 0xFFu, 0xFFu, 0xFFu
 	};
@@ -499,5 +535,18 @@ void spi_device_toggle(struct spi_device *device, uint32_t size)
 		spi_device_write(device, data, 4);
 	spi_device_write(device, data, size);
 	// Restore pin assignments
-	am_bsp_iom_pins_enable(device->parent->iom_module, AM_HAL_IOM_SPI_MODE);
+	am_hal_gpio_pinconfig(cs_pin->pin, *cs_pin->config);
+}
+
+void spi_device_hold_mosi(struct spi_device *device, bool level)
+{
+	struct gpio mosi;
+	int pin = iom_pins[device->parent->iom_module].mosi.pin;
+	gpio_init(&mosi, pin, GPIO_MODE_OUTPUT, level);
+}
+
+void spi_device_release_mosi(struct spi_device *device)
+{
+	const struct iom_pin *pin = &iom_pins[device->parent->iom_module].mosi;
+	am_hal_gpio_pinconfig(pin->pin, *pin->config);
 }
