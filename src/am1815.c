@@ -77,7 +77,7 @@ struct timeval am1815_read_alarm(struct am1815 *rtc)
 	spi_device_cmd_read(rtc->spi, 0x8, data, 7);
 
 	struct tm date = {
-        .tm_year = 0,
+		.tm_year = 0,
 		.tm_mon = from_bcd(data[5] & 0x1F) - 1,
 		.tm_mday = from_bcd(data[4] & 0x3F),
 		.tm_hour = from_bcd(data[3] & 0x3F),
@@ -97,9 +97,9 @@ struct timeval am1815_read_alarm(struct am1815 *rtc)
 
 void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime)
 {
-    struct tm date;
-    gmtime_r(&(atime->tv_sec), &date);
-    uint8_t hundredths = atime->tv_usec / 10000;
+	struct tm date;
+	gmtime_r(&(atime->tv_sec), &date);
+	uint8_t hundredths = atime->tv_usec / 10000;
 
 	uint8_t regs[7];
 	am1815_read_bulk(rtc, 0x08, regs, 7);
@@ -127,11 +127,11 @@ bool am1815_repeat_alarm(struct am1815 *rtc, int repeat)
 	if(repeat < 0 || repeat > 7){
 		return false;
 	}
-    uint8_t timerControl = am1815_read_register(rtc, 0x18);
-    timerControl = timerControl & ~(0b00011100);
-    uint8_t timerMask = repeat << 2;
-    uint8_t timerResult = timerControl | timerMask;
-    am1815_write_register(rtc, 0x18, timerResult);
+	uint8_t timerControl = am1815_read_register(rtc, 0x18);
+	timerControl = timerControl & ~(0b00011100);
+	uint8_t timerMask = repeat << 2;
+	uint8_t timerResult = timerControl | timerMask;
+	am1815_write_register(rtc, 0x18, timerResult);
 	return true;
 }
 
@@ -157,27 +157,27 @@ uint8_t am1815_read_timer(struct am1815 *rtc)
 {
 	uint8_t buffer;
 	spi_device_cmd_read(rtc->spi, 0x19, &buffer, 1);
-    return (uint8_t)buffer;;
+	return (uint8_t)buffer;;
 }
 
 static double find_timer(double timer)
 {
-    if(timer <= 0.0625){
-        timer = ((int)(timer * 4096))/4096.0;
+	if(timer <= 0.0625){
+		timer = ((int)(timer * 4096))/4096.0;
 	}
-    else if(timer <= 4){
-        timer = ((int)(timer * 64))/64.0;
+	else if(timer <= 4){
+		timer = ((int)(timer * 64))/64.0;
 	}
-    else if(timer <= 256){
-        timer = (int)timer;
+	else if(timer <= 256){
+		timer = (int)timer;
 	}
-    else if(timer <= 15360){
-        timer = ((int)(timer/60)) * 60;
+	else if(timer <= 15360){
+		timer = ((int)(timer/60)) * 60;
 	}
-    else{
-        timer = 15360;
+	else{
+		timer = 15360;
 	}
-    return timer;
+	return timer;
 }
 
 double am1815_write_timer(struct am1815 *rtc, double timer)
@@ -189,28 +189,28 @@ double am1815_write_timer(struct am1815 *rtc, double timer)
 	}
 
 	// TE (enables countdown timer)
-    // Sets the Countdown Timer Frequency and the Timer Initial Value
-    uint8_t countdowntimer = am1815_read_register(rtc, 0x18);
-    // clear TE first
+	// Sets the Countdown Timer Frequency and the Timer Initial Value
+	uint8_t countdowntimer = am1815_read_register(rtc, 0x18);
+	// clear TE first
 	am1815_write_register(rtc, 0x18, countdowntimer & ~0b10000000);
-    uint8_t RPT = countdowntimer & 0b00011100;
-    uint8_t timerResult = 0b10100000 + RPT;
-    uint32_t timerinitial = 0;
-    if(finalTimer <= 0.0625){
-        timerResult += 0b00;
-        timerinitial = ((int)(finalTimer * 4096)) - 1;
+	uint8_t RPT = countdowntimer & 0b00011100;
+	uint8_t timerResult = 0b10100000 + RPT;
+	uint32_t timerinitial = 0;
+	if(finalTimer <= 0.0625){
+		timerResult += 0b00;
+		timerinitial = ((int)(finalTimer * 4096)) - 1;
 	}
-    else if(finalTimer <= 4){
-        timerResult += 0b01;
-        timerinitial = ((int)(finalTimer * 64)) - 1;
+	else if(finalTimer <= 4){
+		timerResult += 0b01;
+		timerinitial = ((int)(finalTimer * 64)) - 1;
 	}
-    else if(finalTimer <= 256){
-        timerResult += 0b10;
-        timerinitial = ((int)timer) - 1;
+	else if(finalTimer <= 256){
+		timerResult += 0b10;
+		timerinitial = ((int)timer) - 1;
 	}
-    else{
-        timerResult += 0b11;
-        timerinitial = ((int)(finalTimer * (1/60))) - 1;
+	else{
+		timerResult += 0b11;
+		timerinitial = ((int)(finalTimer * (1/60))) - 1;
 	}
 
 	am1815_write_register(rtc, 0x19, timerinitial);
@@ -254,8 +254,8 @@ void am1815_disable_alarm_interrupt(struct am1815 *rtc)
 void am1815_write_time(struct am1815 *rtc, const struct timeval *time)
 {
 	struct tm date;
-    gmtime_r(&(time->tv_sec), &date);
-    uint8_t hundredths = time->tv_usec / 10000;
+	gmtime_r(&(time->tv_sec), &date);
+	uint8_t hundredths = time->tv_usec / 10000;
 
 	uint8_t regs[8];
 	am1815_read_bulk(rtc, 0x0, regs, 8);

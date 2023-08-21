@@ -90,17 +90,17 @@ static void adc_timer_init(void)
 // Configure the pins on the redboard
 static const am_hal_gpio_pincfg_t g_AM_PIN_16_ADCSE0 =
 {
-    .uFuncSel       = AM_HAL_PIN_16_ADCSE0,
+	.uFuncSel = AM_HAL_PIN_16_ADCSE0,
 };
 
 static const am_hal_gpio_pincfg_t g_AM_PIN_29_ADCSE1 =
 {
-    .uFuncSel       = AM_HAL_PIN_29_ADCSE1,
+	.uFuncSel = AM_HAL_PIN_29_ADCSE1,
 };
 
 static const am_hal_gpio_pincfg_t g_AM_PIN_11_ADCSE2 =
 {
-    .uFuncSel       = AM_HAL_PIN_11_ADCSE2,
+	.uFuncSel = AM_HAL_PIN_11_ADCSE2,
 };
 
 void adc_init(struct adc *adc, uint8_t *pins, size_t size)
@@ -158,7 +158,7 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 		.bEnabled       = false,
 		.bWindowCompare = false,
 		.eChannel       = AM_HAL_ADC_SLOT_CHSEL_SE0,
-		.eMeasToAvg	    = AM_HAL_ADC_SLOT_AVG_1,
+		.eMeasToAvg     = AM_HAL_ADC_SLOT_AVG_1,
 		.ePrecisionMode = AM_HAL_ADC_SLOT_14BIT,
 	};
 
