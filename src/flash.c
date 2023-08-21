@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright: Gabriel Marcano, 2023
-// Copyright: Kristin Ebuengan, 2023
-// Copyright: Melody Gill, 2023
+// SPDX-FileCopyrightText: Gabriel Marcano, 2023
+// SPDX-FileCopyrightText: Kristin Ebuengan, 2023
+// SPDX-FileCopyrightText: Melody Gill, 2023
 
 #include <flash.h>
 #include <spi.h>

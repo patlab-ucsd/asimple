@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright: Gabriel Marcano, 2023
+// SPDX-FileCopyrightText: Gabriel Marcano, 2023
 
 #include <lora.h>
 #include <spi.h>
