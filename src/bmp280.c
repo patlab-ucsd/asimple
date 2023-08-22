@@ -12,9 +12,57 @@
 
 #include <stdint.h>
 
-void bmp280_init(struct bmp280 *sensor, struct spi_device *device)
+void bmp280_init(struct bmp280 *bmp280, struct spi_device *device)
 {
-	sensor->spi = device;
+	bmp280->spi = device;
+
+	uint8_t dig_T1_buf[2];
+	bmp280_read_register(bmp280, 0x88, dig_T1_buf, 2);		//0x88 is lsb and 0x89 is msb
+	bmp280->dig_T1 = bmp280_unsigned_short_from_buffer(dig_T1_buf);
+
+	uint8_t dig_T2_buf[2];
+	bmp280_read_register(bmp280, 0x8A, dig_T2_buf, 2);		//0x8A is lsb and 0x8B is msb
+	bmp280->dig_T2 = bmp280_signed_short_from_buffer(dig_T2_buf);
+
+	uint8_t dig_T3_buf[2];
+	bmp280_read_register(bmp280, 0x8C, dig_T3_buf, 2);		//0x8C is lsb and 0x8D is msb
+	bmp280->dig_T3 = bmp280_signed_short_from_buffer(dig_T3_buf);
+
+	uint8_t dig_P1_buf[2];
+	bmp280_read_register(bmp280, 0x8E, dig_P1_buf, 2);		//0x8E is lsb and 0x8F is msb
+	bmp280->dig_P1 = bmp280_unsigned_short_from_buffer(dig_P1_buf);
+
+	uint8_t dig_P2_buf[2];
+	bmp280_read_register(bmp280, 0x90, dig_P2_buf, 2);		//0x90 is lsb and 0x91 is msb
+	bmp280->dig_P2 = bmp280_signed_short_from_buffer(dig_P2_buf);
+
+	uint8_t dig_P3_buf[2];
+	bmp280_read_register(bmp280, 0x92, dig_P3_buf, 2);		//0x92 is lsb and 0x93 is msb
+	bmp280->dig_P3 = bmp280_signed_short_from_buffer(dig_P3_buf);
+
+	uint8_t dig_P4_buf[2];
+	bmp280_read_register(bmp280, 0x94, dig_P4_buf, 2);		//0x94 is lsb and 0x95 is msb
+	bmp280->dig_P4 = bmp280_signed_short_from_buffer(dig_P4_buf);
+
+	uint8_t dig_P5_buf[2];
+	bmp280_read_register(bmp280, 0x96, dig_P5_buf, 2);		//0x96 is lsb and 0x97 is msb
+	bmp280->dig_P5 = bmp280_signed_short_from_buffer(dig_P5_buf);
+
+	uint8_t dig_P6_buf[2];
+	bmp280_read_register(bmp280, 0x98, dig_P6_buf, 2);		//0x98 is lsb and 0x99 is msb
+	bmp280->dig_P6 = bmp280_signed_short_from_buffer(dig_P6_buf);
+
+	uint8_t dig_P7_buf[2];
+	bmp280_read_register(bmp280, 0x9A, dig_P7_buf, 2);		//0x9A is lsb and 0x9B is msb
+	bmp280->dig_P7 = bmp280_signed_short_from_buffer(dig_P7_buf);
+
+	uint8_t dig_P8_buf[2];
+	bmp280_read_register(bmp280, 0x9C, dig_P8_buf, 2);		//0x9C is lsb and 0x9D is msb
+	bmp280->dig_P8 = bmp280_signed_short_from_buffer(dig_P8_buf);
+
+	uint8_t dig_P9_buf[2];
+	bmp280_read_register(bmp280, 0x9E, dig_P9_buf, 2);		//0x9E is lsb and 0x9F is msb
+	bmp280->dig_P9 = bmp280_signed_short_from_buffer(dig_P9_buf);
 }
 
 uint8_t bmp280_read_id(struct bmp280 *bmp280)
@@ -101,23 +149,11 @@ static int16_t bmp280_signed_short_from_buffer(uint8_t* buffer)
 
 static uint32_t bmp280_get_t_fine(struct bmp280 *bmp280, uint32_t raw_temp)
 {
-	uint8_t dig_T1_buf[2];
-	bmp280_read_register(bmp280, 0x88, dig_T1_buf, 2);		//0x88 is lsb and 0x89 is msb
-	uint16_t dig_T1 = bmp280_unsigned_short_from_buffer(dig_T1_buf);
-
-	uint8_t dig_T2_buf[2];
-	bmp280_read_register(bmp280, 0x8A, dig_T2_buf, 2);		//0x8A is lsb and 0x8B is msb
-	int16_t dig_T2 = bmp280_signed_short_from_buffer(dig_T2_buf);
-
-	uint8_t dig_T3_buf[2];
-	bmp280_read_register(bmp280, 0x8C, dig_T3_buf, 2);		//0x8C is lsb and 0x8D is msb
-	int16_t dig_T3 = bmp280_signed_short_from_buffer(dig_T3_buf);
-
 	uint32_t t_fine;
 	double var1, var2;
-	var1 = (((double)raw_temp)/16384.0 - ((double)dig_T1)/1024.0) * ((double)dig_T2);
-	var2 = ((((double)raw_temp)/131072.0 - ((double)dig_T1)/8192.0) *
-	(((double)raw_temp)/131072.0 - ((double) dig_T1)/8192.0)) * ((double)dig_T3);
+	var1 = (((double)raw_temp)/16384.0 - ((double)bmp280->dig_T1)/1024.0) * ((double)bmp280->dig_T2);
+	var2 = ((((double)raw_temp)/131072.0 - ((double)bmp280->dig_T1)/8192.0) *
+	(((double)raw_temp)/131072.0 - ((double)bmp280->dig_T1)/8192.0)) * ((double)bmp280->dig_T3);
 	t_fine = (uint32_t)(var1 + var2);
 	return t_fine;
 }
@@ -132,58 +168,21 @@ double bmp280_compensate_T_double(struct bmp280 *bmp280, uint32_t raw_temp)
 double bmp280_compensate_P_double(struct bmp280 *bmp280, uint32_t raw_press, uint32_t raw_temp)
 {
 	uint32_t t_fine = bmp280_get_t_fine(bmp280, raw_temp);
-
-	uint8_t dig_P1_buf[2];
-	bmp280_read_register(bmp280, 0x8E, dig_P1_buf, 2);		//0x8E is lsb and 0x8F is msb
-	uint16_t dig_P1 = bmp280_unsigned_short_from_buffer(dig_P1_buf);
-
-	uint8_t dig_P2_buf[2];
-	bmp280_read_register(bmp280, 0x90, dig_P2_buf, 2);		//0x90 is lsb and 0x91 is msb
-	int16_t dig_P2 = bmp280_signed_short_from_buffer(dig_P2_buf);
-
-	uint8_t dig_P3_buf[2];
-	bmp280_read_register(bmp280, 0x92, dig_P3_buf, 2);		//0x92 is lsb and 0x93 is msb
-	int16_t dig_P3 = bmp280_signed_short_from_buffer(dig_P3_buf);
-
-	uint8_t dig_P4_buf[2];
-	bmp280_read_register(bmp280, 0x94, dig_P4_buf, 2);		//0x94 is lsb and 0x95 is msb
-	int16_t dig_P4 = bmp280_signed_short_from_buffer(dig_P4_buf);
-
-	uint8_t dig_P5_buf[2];
-	bmp280_read_register(bmp280, 0x96, dig_P5_buf, 2);		//0x96 is lsb and 0x97 is msb
-	int16_t dig_P5 = bmp280_signed_short_from_buffer(dig_P5_buf);
-
-	uint8_t dig_P6_buf[2];
-	bmp280_read_register(bmp280, 0x98, dig_P6_buf, 2);		//0x98 is lsb and 0x99 is msb
-	int16_t dig_P6 = bmp280_signed_short_from_buffer(dig_P6_buf);
-
-	uint8_t dig_P7_buf[2];
-	bmp280_read_register(bmp280, 0x9A, dig_P7_buf, 2);		//0x9A is lsb and 0x9B is msb
-	int16_t dig_P7 = bmp280_signed_short_from_buffer(dig_P7_buf);
-
-	uint8_t dig_P8_buf[2];
-	bmp280_read_register(bmp280, 0x9C, dig_P8_buf, 2);		//0x9C is lsb and 0x9D is msb
-	int16_t dig_P8 = bmp280_signed_short_from_buffer(dig_P8_buf);
-
-	uint8_t dig_P9_buf[2];
-	bmp280_read_register(bmp280, 0x9E, dig_P9_buf, 2);		//0x9E is lsb and 0x9F is msb
-	int16_t dig_P9 = bmp280_signed_short_from_buffer(dig_P9_buf);
-
 	double var1, var2, p;
 	var1 = ((double)t_fine/2.0) - 64000.0;
-	var2 = var1 * var1 * ((double)dig_P6) / 32768.0;
-	var2 = var2 + var1 * ((double)dig_P5) * 2.0;
-	var2 = (var2/4.0)+(((double)dig_P4) * 65536.0);
-	var1 = (((double)dig_P3) * var1 * var1 / 524288.0 + ((double)dig_P2) * var1) / 524288.0;
-	var1 = (1.0 + var1 / 32768.0)*((double)dig_P1);
+	var2 = var1 * var1 * ((double)bmp280->dig_P6) / 32768.0;
+	var2 = var2 + var1 * ((double)bmp280->dig_P5) * 2.0;
+	var2 = (var2/4.0)+(((double)bmp280->dig_P4) * 65536.0);
+	var1 = (((double)bmp280->dig_P3) * var1 * var1 / 524288.0 + ((double)bmp280->dig_P2) * var1) / 524288.0;
+	var1 = (1.0 + var1 / 32768.0)*((double)bmp280->dig_P1);
 	if (var1 == 0.0)
 	{
 		return 0; // avoid exception caused by division by zero
 	}
 	p = 1048576.0 - (double)raw_press;
 	p = (p - (var2 / 4096.0)) * 6250.0 / var1;
-	var1 = ((double)dig_P9) * p * p / 2147483648.0;
-	var2 = p * ((double)dig_P8) / 32768.0;
-	p = p + (var1 + var2 + ((double)dig_P7)) / 16.0;
+	var1 = ((double)bmp280->dig_P9) * p * p / 2147483648.0;
+	var2 = p * ((double)bmp280->dig_P8) / 32768.0;
+	p = p + (var1 + var2 + ((double)bmp280->dig_P7)) / 16.0;
 	return p;
 }

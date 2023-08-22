@@ -19,6 +19,18 @@ extern "C" {
 struct bmp280
 {
 	struct spi_device *spi;
+	uint16_t dig_T1;
+	uint16_t dig_T2;
+	uint16_t dig_T3;
+	uint16_t dig_P1;
+	uint16_t dig_P2;
+	uint16_t dig_P3;
+	uint16_t dig_P4;
+	uint16_t dig_P5;
+	uint16_t dig_P6;
+	uint16_t dig_P7;
+	uint16_t dig_P8;
+	uint16_t dig_P9;
 };
 
 /** Initializes the BMP280 structure.
