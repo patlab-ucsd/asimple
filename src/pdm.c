@@ -59,11 +59,8 @@ void pdm_init(struct pdm *pdm)
 			| AM_HAL_PDM_INT_UNDFL
 			| AM_HAL_PDM_INT_OVF));
 
-	NVIC_EnableIRQ(PDM_IRQn);
-
-	// Start the data transfer
-	am_hal_pdm_enable(pdm->PDMHandle);
 	am_hal_pdm_fifo_flush(pdm->PDMHandle);
+	NVIC_EnableIRQ(PDM_IRQn);
 }
 
 uint32_t* pdm_get_buffer1(struct pdm *pdm)
