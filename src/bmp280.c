@@ -12,6 +12,35 @@
 
 #include <stdint.h>
 
+static uint16_t bmp280_unsigned_short_from_buffer(uint8_t* buffer)
+{
+	uint8_t msb = buffer[1];
+	uint8_t lsb = buffer[0];
+
+	uint16_t toReturn = (msb << 8) | (lsb & 0xff);
+	return toReturn;
+}
+
+static int16_t bmp280_signed_short_from_buffer(uint8_t* buffer)
+{
+	uint8_t msb = buffer[1];
+	uint8_t lsb = buffer[0];
+
+	int16_t toReturn = (msb << 8) | (lsb & 0xff);
+	return toReturn;
+}
+
+static uint32_t bmp280_get_t_fine(struct bmp280 *bmp280, uint32_t raw_temp)
+{
+	uint32_t t_fine;
+	double var1, var2;
+	var1 = (((double)raw_temp)/16384.0 - ((double)bmp280->dig_T1)/1024.0) * ((double)bmp280->dig_T2);
+	var2 = ((((double)raw_temp)/131072.0 - ((double)bmp280->dig_T1)/8192.0) *
+	(((double)raw_temp)/131072.0 - ((double)bmp280->dig_T1)/8192.0)) * ((double)bmp280->dig_T3);
+	t_fine = (uint32_t)(var1 + var2);
+	return t_fine;
+}
+
 void bmp280_init(struct bmp280 *bmp280, struct spi_device *device)
 {
 	bmp280->spi = device;
@@ -127,35 +156,6 @@ uint32_t bmp280_get_adc_pressure(struct bmp280 *bmp280)
 	uint32_t temp = ptr2[2] + (ptr2[1] << 8) + (ptr2[0] << 16);
 	temp = temp >> 4;
 	return temp;
-}
-
-static uint16_t bmp280_unsigned_short_from_buffer(uint8_t* buffer)
-{
-	uint8_t msb = buffer[1];
-	uint8_t lsb = buffer[0];
-
-	uint16_t toReturn = (msb << 8) | (lsb & 0xff);
-	return toReturn;
-}
-
-static int16_t bmp280_signed_short_from_buffer(uint8_t* buffer)
-{
-	uint8_t msb = buffer[1];
-	uint8_t lsb = buffer[0];
-
-	int16_t toReturn = (msb << 8) | (lsb & 0xff);
-	return toReturn;
-}
-
-static uint32_t bmp280_get_t_fine(struct bmp280 *bmp280, uint32_t raw_temp)
-{
-	uint32_t t_fine;
-	double var1, var2;
-	var1 = (((double)raw_temp)/16384.0 - ((double)bmp280->dig_T1)/1024.0) * ((double)bmp280->dig_T2);
-	var2 = ((((double)raw_temp)/131072.0 - ((double)bmp280->dig_T1)/8192.0) *
-	(((double)raw_temp)/131072.0 - ((double)bmp280->dig_T1)/8192.0)) * ((double)bmp280->dig_T3);
-	t_fine = (uint32_t)(var1 + var2);
-	return t_fine;
 }
 
 double bmp280_compensate_T_double(struct bmp280 *bmp280, uint32_t raw_temp)
