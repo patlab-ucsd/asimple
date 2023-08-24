@@ -10,6 +10,17 @@
 
 #include <uart.h>
 
+/** UART structure. */
+struct uart
+{
+	void *handle;
+	int instance;
+	// FIXME do we want the buffer size to be fixed?
+	uint8_t tx_buffer[1024];
+	// FIXME does RX work?
+	uint8_t rx_buffer[1024];
+};
+
 #define CHECK_ERRORS(x)               \
 	if ((x) != AM_HAL_STATUS_SUCCESS) \
 	{                                 \
@@ -28,7 +39,57 @@ static void error_handler(uint32_t error)
 	}
 }
 
-static struct uart* isr_uart_handle;
+static struct uart uarts[2];
+
+struct uart* uart_get_instance(enum uart_instance instance)
+{
+	struct uart* uart = uarts + (int)instance;
+	if (!uart->handle)
+	{
+		const am_hal_uart_config_t config =
+		{
+			// Standard UART settings: 115200-8-N-1
+			.ui32BaudRate = 115200,
+			.ui32DataBits = AM_HAL_UART_DATA_BITS_8,
+			.ui32Parity = AM_HAL_UART_PARITY_NONE,
+			.ui32StopBits = AM_HAL_UART_ONE_STOP_BIT,
+			.ui32FlowControl = AM_HAL_UART_FLOW_CTRL_NONE,
+
+			// Set TX and RX FIFOs to interrupt at half-full.
+			.ui32FifoLevels = (AM_HAL_UART_TX_FIFO_1_2 |
+							   AM_HAL_UART_RX_FIFO_1_2),
+
+			// Buffers
+			.pui8TxBuffer = uart->tx_buffer,
+			.ui32TxBufferSize = sizeof(uart->tx_buffer),
+			.pui8RxBuffer = uart->rx_buffer,
+			.ui32RxBufferSize = sizeof(uart->rx_buffer),
+		};
+		static_assert(sizeof(uart->tx_buffer) == 1024, "unexpected tx_buffer size");
+		static_assert(sizeof(uart->rx_buffer) == 1024, "unexpected rx_buffer size");
+
+		uart->instance = (int)instance;
+		CHECK_ERRORS(am_hal_uart_initialize((int)instance, &uart->handle));
+		CHECK_ERRORS(am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_WAKE, false));
+		CHECK_ERRORS(am_hal_uart_configure(uart->handle, &config));
+
+		am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
+		am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
+
+		NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + (int)instance));
+	}
+	return uart;
+}
+
+void uart_disable(struct uart *uart)
+{
+	NVIC_DisableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_HAL_GPIO_DISABLE);
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_HAL_GPIO_DISABLE);
+	am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+	am_hal_uart_deinitialize(uart->handle);
+	memset(uart, 0, sizeof(*uart));
+}
 
 size_t uart_write(struct uart *uart, const unsigned char *data, size_t size)
 {
@@ -46,18 +107,6 @@ size_t uart_write(struct uart *uart, const unsigned char *data, size_t size)
 	return written;
 }
 
-static void am_uart_write(char *string)
-{
-	size_t left = strlen(string);
-	while (left)
-	{
-		size_t written = uart_write(isr_uart_handle, ((uint8_t*)string), left);
-		string += written;
-		left -= written;
-	}
-	uart_sync(isr_uart_handle);
-}
-
 size_t uart_read(struct uart *uart, unsigned char *data, size_t size)
 {
 	uint32_t read = 0;
@@ -72,44 +121,6 @@ size_t uart_read(struct uart *uart, unsigned char *data, size_t size)
 
 	CHECK_ERRORS(am_hal_uart_transfer(uart->handle, &config));
 	return read;
-}
-
-void uart_init(struct uart *uart, enum uart_instance instance)
-{
-	const am_hal_uart_config_t config =
-	{
-		// Standard UART settings: 115200-8-N-1
-		.ui32BaudRate = 115200,
-		.ui32DataBits = AM_HAL_UART_DATA_BITS_8,
-		.ui32Parity = AM_HAL_UART_PARITY_NONE,
-		.ui32StopBits = AM_HAL_UART_ONE_STOP_BIT,
-		.ui32FlowControl = AM_HAL_UART_FLOW_CTRL_NONE,
-
-		// Set TX and RX FIFOs to interrupt at half-full.
-		.ui32FifoLevels = (AM_HAL_UART_TX_FIFO_1_2 |
-						   AM_HAL_UART_RX_FIFO_1_2),
-
-		// Buffers
-		.pui8TxBuffer = uart->tx_buffer,
-		.ui32TxBufferSize = sizeof(uart->tx_buffer),
-		.pui8RxBuffer = uart->rx_buffer,
-		.ui32RxBufferSize = sizeof(uart->rx_buffer),
-	};
-	static_assert(sizeof(uart->tx_buffer) == 1024, "unexpected tx_buffer size");
-	static_assert(sizeof(uart->rx_buffer) == 1024, "unexpected tx_buffer size");
-
-	uart->instance = (int)instance;
-	CHECK_ERRORS(am_hal_uart_initialize((int)instance, &uart->handle));
-	CHECK_ERRORS(am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_WAKE, false));
-	CHECK_ERRORS(am_hal_uart_configure(uart->handle, &config));
-
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
-
-	isr_uart_handle = uart;
-	am_util_stdio_printf_init(am_uart_write);
-
-	NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + (int)instance));
 }
 
 void uart_set_baud_rate(struct uart *uart, unsigned int baud_rate)
@@ -136,29 +147,28 @@ void uart_set_baud_rate(struct uart *uart, unsigned int baud_rate)
 	CHECK_ERRORS(am_hal_uart_configure(uart->handle, &config));
 }
 
-void uart_destroy(struct uart *uart)
-{
-	NVIC_DisableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));
-	am_util_stdio_printf_init(NULL);
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_HAL_GPIO_DISABLE);
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_HAL_GPIO_DISABLE);
-	am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
-	am_hal_uart_deinitialize(uart->handle);
-	memset(uart, 0, sizeof(*uart));
-}
-
 void uart_sync(struct uart *uart)
 {
 	am_hal_uart_tx_flush(uart->handle);
 }
 
+static void uart_isr_handler(struct uart *uart)
+{
+	uint32_t status;
+	am_hal_uart_interrupt_status_get(uart->handle, &status, true);
+	am_hal_uart_interrupt_clear(uart->handle, status);
+
+	uint32_t idle;
+	am_hal_uart_interrupt_service(uart->handle, status, &idle);
+}
+
 // This is a weak symbol, override
 void am_uart_isr(void)
 {
-	uint32_t status;
-	am_hal_uart_interrupt_status_get(isr_uart_handle->handle, &status, true);
-	am_hal_uart_interrupt_clear(isr_uart_handle->handle, status);
+	uart_isr_handler(uarts + 0);
+}
 
-	uint32_t idle;
-	am_hal_uart_interrupt_service(isr_uart_handle->handle, status, &idle);
+void am_uart1_isr(void)
+{
+	uart_isr_handler(uarts + 1);
 }

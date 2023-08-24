@@ -12,16 +12,8 @@
 extern "C" {
 #endif
 
-/** UART structure. */
-struct uart
-{
-	void *handle;
-	int instance;
-	// FIXME do we want the buffer size to be fixed?
-	uint8_t tx_buffer[1024];
-	// FIXME does RX work?
-	uint8_t rx_buffer[1024];
-};
+/** Declaration of opaque struct for UART handle. */
+struct uart;
 
 /** Represents the UART instance index.
  */
@@ -31,20 +23,24 @@ enum uart_instance
 	UART_INST1 = 1
 };
 
-/** Initializes the given UART structure and gives ownership of the specified
- *  instance to the structure.
+/** Gets the requested UART structure.
  *
- * @param[out] uart Pointer to uart structure to initialize.
+ * The first time this is called (from boot or after a disable) this
+ * initializes the hardware and allocates resources (in other words, lazy
+ * initialization).
+ *
  * @param[in] instance UART instance to assign to UART structure.
+ *
+ * @returns Opaque pointer to UART instance.
  */
-void uart_init(struct uart *uart, enum uart_instance instance);
+struct uart* uart_get_instance(enum uart_instance instance);
 
 /** Deinitializes the given UART structure, freeing resources held, including
  * the associated UART instance.
  *
  * @param[in] uart Pointer to uart structure to deinitialize.
  */
-void uart_destroy(struct uart *uart);
+void uart_disable(struct uart *uart);
 
 /** Sends the given buffer over UART.
  *
