@@ -18,20 +18,15 @@ extern "C" {
 #define PDM_SIZE                4096
 #define PDM_BYTES               (PDM_SIZE * 2)
 
-/** Structure representing the microphone */
-struct pdm
-{
-	uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
-    uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
-    void *PDMHandle;
-};
+/** Opaque structure representing the microphone */
+struct pdm;
 
 /**
- * PDM initialization.
+ * Get the PDM instance.
  *
- * @param[in] pdm PDM structure to initialize.
+ * @returns A pointer to the PDM instance.
 */
-void pdm_init(struct pdm *pdm);
+struct pdm* pdm_get_instance(void);
 
 /**
  * Get g_ui32PDMDataBuffer1 from the PDM struct.

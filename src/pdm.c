@@ -13,8 +13,16 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
+struct pdm
+{
+	uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
+    uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
+    void *PDMHandle;
+};
+
+static struct pdm pdm;
+
 static volatile bool g_bPDMDataReady = false;
-static struct pdm* isr_pdm_handle;
 
 am_hal_pdm_config_t g_sPdmConfig =
 {
@@ -36,31 +44,33 @@ am_hal_pdm_config_t g_sPdmConfig =
 	.bLRSwap = 0,
 };
 
-void pdm_init(struct pdm *pdm)
+struct pdm* pdm_get_instance(void)
 {
-	// Initialize, power-up, and configure the PDM.
-	am_hal_pdm_initialize(0, &pdm->PDMHandle);
-	am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_PDM_POWER_ON, false);
-	am_hal_pdm_configure(pdm->PDMHandle, &g_sPdmConfig);
-	am_hal_pdm_enable(pdm->PDMHandle);
+	if (!pdm.PDMHandle)
+	{
+		// Initialize, power-up, and configure the PDM.
+		am_hal_pdm_initialize(0, &pdm.PDMHandle);
+		am_hal_pdm_power_control(pdm.PDMHandle, AM_HAL_PDM_POWER_ON, false);
+		am_hal_pdm_configure(pdm.PDMHandle, &g_sPdmConfig);
+		am_hal_pdm_enable(pdm.PDMHandle);
 
-	// Configure the necessary pins.
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_BSP_GPIO_MIC_DATA);
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_BSP_GPIO_MIC_CLK);
+		// Configure the necessary pins.
+		am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_BSP_GPIO_MIC_DATA);
+		am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_BSP_GPIO_MIC_CLK);
 
-	isr_pdm_handle = pdm;
+		// Configure and enable PDM interrupts (set up to trigger on DMA
+		// completion).
+		am_hal_pdm_interrupt_enable(
+			pdm.PDMHandle,
+			(AM_HAL_PDM_INT_DERR
+				| AM_HAL_PDM_INT_DCMP
+				| AM_HAL_PDM_INT_UNDFL
+				| AM_HAL_PDM_INT_OVF));
 
-	// Configure and enable PDM interrupts (set up to trigger on DMA
-	// completion).
-	am_hal_pdm_interrupt_enable(
-		pdm->PDMHandle,
-		(AM_HAL_PDM_INT_DERR
-			| AM_HAL_PDM_INT_DCMP
-			| AM_HAL_PDM_INT_UNDFL
-			| AM_HAL_PDM_INT_OVF));
-
-	am_hal_pdm_fifo_flush(pdm->PDMHandle);
-	NVIC_EnableIRQ(PDM_IRQn);
+		am_hal_pdm_fifo_flush(pdm.PDMHandle);
+		NVIC_EnableIRQ(PDM_IRQn);
+	}
+	return &pdm;
 }
 
 uint32_t* pdm_get_buffer1(struct pdm *pdm)
@@ -98,8 +108,8 @@ void am_pdm0_isr(void)
 	uint32_t ui32Status;
 
 	// Read the interrupt status.
-	am_hal_pdm_interrupt_status_get(isr_pdm_handle->PDMHandle, &ui32Status, true);
-	am_hal_pdm_interrupt_clear(isr_pdm_handle->PDMHandle, ui32Status);
+	am_hal_pdm_interrupt_status_get(pdm.PDMHandle, &ui32Status, true);
+	am_hal_pdm_interrupt_clear(pdm.PDMHandle, ui32Status);
 
 	if (ui32Status & AM_HAL_PDM_INT_DCMP)
 	{
