@@ -116,10 +116,8 @@ int main(void)
 
 	struct gpio lora_power;
 	gpio_init(&lora_power, 10, GPIO_MODE_OUTPUT, false);
-	struct spi_bus spi_bus;
-	spi_bus_init(&spi_bus, 0);
-	struct spi_device device;
-	spi_bus_init_device(&spi_bus, &device, SPI_CS_0, 4000000u);
+	struct spi_bus *spi_bus = spi_bus_get_instance(SPI_BUS_0);
+	struct spi_device *device = spi_device_get_instance(spi_bus, SPI_CS_0, 4000000u);
 
 	struct lora lora;
 	//lora_receive_mode(&lora);
@@ -153,7 +151,7 @@ int main(void)
 			am_util_delay_ms(10);
 			// Only continue if we initialize
 			// FIXME what if we never initialize?
-			while(!lora_init(&lora, &device, 915000000, 42));
+			while(!lora_init(&lora, device, 915000000, 42));
 			lora_standby(&lora);
 			lora_set_spreading_factor(&lora, 7);
 			lora_set_coding_rate(&lora, 1);

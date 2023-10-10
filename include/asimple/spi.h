@@ -12,20 +12,18 @@
 extern "C" {
 #endif
 
-/** Structure holding SPI bus information and state. */
-struct spi_bus
-{
-	void *handle;
-	int iom_module;
-	unsigned current_clock;
-};
+/** Opaque structure holding SPI bus information and state. */
+struct spi_bus;
 
-/** Structure holding SPI information and state. */
-struct spi_device
+/** Opaque structure holding SPI information and state. */
+struct spi_device;
+
+// FIXME how many instances are there?
+enum spi_bus_instance
 {
-	struct spi_bus *parent;
-	int chip_select;
-	unsigned clock;
+	SPI_BUS_0,
+	SPI_BUS_1,
+	SPI_BUS_2
 };
 
 enum spi_chip_select
@@ -36,7 +34,7 @@ enum spi_chip_select
 	SPI_CS_3 = 3,
 };
 
-/** Initializes the given MIO module for SPI use.
+/** Gets an instance of the SPI bus.
  *
  * The SPI bus is configured to set all of its devices to SPI mode 0.
  *
@@ -57,19 +55,19 @@ enum spi_chip_select
  * On initialization, the hardware is set to sleep-- call spi_bus_enable to
  * turn on the hardware.
  *
- * @param[out] spi_bus Pointer to the spi bus structure to initialize.
- * @param[in] iom_module Index of the IOM module to use.
+ * @param[in] instance SPI bus instance to get.
+ * @returns A pointer to the requested instance.
  */
-void spi_bus_init(struct spi_bus *bus, uint32_t iom_module);
+struct spi_bus *spi_bus_get_instance(enum spi_bus_instance instance);
 
 /** Releases all resources of the given spi bus object.
  *
  * This de-initializes the MIO module, returning the GPIO pins to their prior
  * configuration. FIXME should we set them to a known state?
  *
- * Note, spi devices associated with this bus should be destroyed first!
+ * Note, spi devices associated with this bus should be deinitialized first!
  */
-void spi_bus_destroy(struct spi_bus *bus);
+void spi_bus_deinitialize(struct spi_bus *bus);
 
 /** Enables/wakes up the SPI bus module.
  *
@@ -89,7 +87,7 @@ bool spi_bus_enable(struct spi_bus *bus);
  */
 bool spi_bus_sleep(struct spi_bus *bus);
 
-/** Initializes a SPI device under the given bus.
+/** Gets a SPI device under the given bus.
  *
  * Which pin is used by the Apollo3 depends on the IOM in use.
  *
@@ -100,16 +98,16 @@ bool spi_bus_sleep(struct spi_bus *bus);
  *   SPI_CS_3 - pin 15
  *
  * @param[in,out] spi_bus SPI bus to get a device from.
- * @param[out] device SPI device to initialize.
  * @param[in] chip_select Chip select ID to use.
  * @param[in] clock The clock speed in Hz. The actual hardware has limitations
  *  on the speeds and the actual clock will be rounded down to the closes
  *  supported one.
+ *
+ * @returns A pointer to the SPI device.
  */
-void spi_bus_init_device(
+struct spi_device *spi_device_get_instance(
 	struct spi_bus *bus,
-	struct spi_device *device,
-	enum spi_chip_select chip_select,
+	enum spi_chip_select,
 	uint32_t clock);
 
 /** Releases all resources of the given spi device object.
@@ -117,9 +115,9 @@ void spi_bus_init_device(
  * This de-initializes the MIO module, returning the GPIO pins to their prior
  * configuration. FIXME should we set them to a known state?
  *
- * @param[in,out] device SPI device to destroy.
+ * @param[in,out] device SPI device to deinitialize.
  */
-void spi_device_destroy(struct spi_device *device);
+void spi_device_deinitialize(struct spi_device *device);
 
 /** Sets the SPI clock to the nearest supported value, rounding down.
  *

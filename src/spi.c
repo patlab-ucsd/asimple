@@ -12,6 +12,23 @@
 #include <string.h>
 #include <stdlib.h>
 
+struct spi_device
+{
+	struct spi_bus *parent;
+	int chip_select;
+	unsigned clock;
+};
+
+struct spi_bus
+{
+	void *handle;
+	int iom_module;
+	unsigned current_clock;
+	struct spi_device devices[4];
+};
+
+static struct spi_bus busses[3]; //FIXME how many busses do we have?
+
 // Configuration structure for the IO Master.
 // FIXME I don't like why this isn't const...
 static am_hal_iom_config_t spi_config =
@@ -236,26 +253,37 @@ struct iom_pins iom_pins[4] =
 	},
 };
 
-void spi_bus_init(struct spi_bus *bus, uint32_t iomModule)
+struct spi_bus *spi_bus_get_instance(enum spi_bus_instance instance)
 {
-	bus->iom_module = iomModule;
-	// This just initializes the handle-- no hardware function
-	am_hal_iom_initialize(iomModule, &bus->handle);
-	// ... and here we turn on the hardware so we can modify settings
-	am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_WAKE, false);
-	bus->current_clock = 2000000u;
-	spi_config.ui32ClockFreq = bus->current_clock;
-	am_hal_iom_configure(bus->handle, &spi_config);
-	am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
-	am_hal_iom_enable(bus->handle);
-	spi_bus_sleep(bus);
+	struct spi_bus *bus = busses + (int)instance;
+	if (!bus->handle)
+	{
+		bus->iom_module = (int)instance;
+		// This just initializes the handle-- no hardware function
+		am_hal_iom_initialize(bus->iom_module, &bus->handle);
+		// ... and here we turn on the hardware so we can modify settings
+		am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_WAKE, false);
+		bus->current_clock = 2000000u;
+		spi_config.ui32ClockFreq = bus->current_clock;
+		am_hal_iom_configure(bus->handle, &spi_config);
+		am_bsp_iom_pins_enable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
+		am_hal_iom_enable(bus->handle);
+		spi_bus_sleep(bus);
+	}
+	return bus;
 }
 
-void spi_bus_init_device(struct spi_bus *bus, struct spi_device *device, enum spi_chip_select chip_select, uint32_t clock)
+struct spi_device *spi_device_get_instance(
+	struct spi_bus *bus, enum spi_chip_select instance, uint32_t clock)
 {
-	device->parent = bus;
-	device->chip_select = convert_chip_select(bus->iom_module, chip_select);
-	device->clock = select_clock(clock);
+	struct spi_device *device = &bus->devices[(int)instance];
+	if (!device->parent)
+	{
+		device->parent = bus;
+		device->chip_select = convert_chip_select(bus->iom_module, instance);
+		device->clock = select_clock(clock);
+	}
+	return device;
 }
 
 static void spi_device_update_clock(struct spi_device *device)
@@ -273,7 +301,7 @@ void spi_device_set_clock(struct spi_device *device, uint32_t clock)
 	device->clock = select_clock(clock);
 }
 
-void spi_bus_destroy(struct spi_bus *bus)
+void spi_bus_deinitialize(struct spi_bus *bus)
 {
 	am_hal_iom_disable(bus->handle);
 	am_bsp_iom_pins_disable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
@@ -282,7 +310,7 @@ void spi_bus_destroy(struct spi_bus *bus)
 	memset(bus, 0, sizeof(*bus));
 }
 
-void spi_device_destroy(struct spi_device *device)
+void spi_device_deinitialize(struct spi_device *device)
 {
 	memset(device, 0, sizeof(*device));
 }
