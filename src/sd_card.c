@@ -10,6 +10,7 @@
 #include <string.h>
 
 #define SD_CARD_START_TOKEN 0xFEu
+#define SD_CARD_START_WRITE_TOKEN 0xFCu
 #define SD_CARD_STOP_WRITE_TOKEN 0xFDu
 
 static const uint8_t crc7_table[256] = {
@@ -37,7 +38,7 @@ static const uint8_t crc7_table[256] = {
 	0xc4, 0xd6, 0xe0, 0xf2
 };
 
-static uint8_t crc7_update(uint8_t *data, size_t size, uint8_t crc)
+static uint8_t crc7_update(const uint8_t *data, size_t size, uint8_t crc)
 {
 	for (size_t i = 0; i < size; ++i)
 	{
@@ -79,7 +80,7 @@ static const uint16_t crc16_table[256] = {
 	0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
 };
 
-static uint16_t crc16_update(uint8_t *data, size_t size, uint16_t crc)
+static uint16_t crc16_update(const uint8_t *data, size_t size, uint16_t crc)
 {
 	for (size_t i = 0; i < size; ++i)
 	{
@@ -116,6 +117,15 @@ static void read_spi_last(struct sd_card *sd_card, uint8_t *buffer, size_t size)
 	spi_device_hold_mosi(sd_card->spi, true);
 	spi_device_read(sd_card->spi, buffer, size);
 	spi_device_release_mosi(sd_card->spi);
+}
+
+static void padding_spi(struct sd_card *sd_card, size_t size)
+{
+	uint8_t buff;
+	while (size--)
+	{
+		read_spi(sd_card, &buff, 1);
+	}
 }
 
 static uint8_t get_R1(struct sd_card *sd_card)
@@ -358,6 +368,7 @@ uint8_t sd_card_read_blocks(
 		result = r1;
 		goto terminate;
 	}
+	read_spi(sd_card, &r1, 1); // Read 1 byte, required to send
 
 	for (uint8_t *pos = buffer; pos < buffer + blocks * 512; pos += 512)
 	{
@@ -399,4 +410,97 @@ terminate:
 	return result;
 }
 
+static void send_stop_and_wait(struct sd_card *sd_card)
+{
+	uint8_t token = SD_CARD_STOP_WRITE_TOKEN;
+	spi_device_write_continue(sd_card->spi, &token, 1);
+	// N_BR wait, at most 1 byte
+	padding_spi(sd_card, 1);
 
+	uint8_t busy = 0;
+	do
+	{
+		read_spi(sd_card, &busy, 1);
+	} while (busy == 0x00);
+}
+
+uint8_t sd_card_write_blocks(
+	struct sd_card *sd_card,
+	uint32_t block,
+	const uint8_t *buffer,
+	size_t blocks)
+{
+	if (blocks == 0)
+		return 0;
+
+	if (block + blocks - 1 > sd_card->blocks)
+		return 0xFFu;
+
+	uint8_t result;
+	// FIXME this only works for CCS=1 cards
+	begin_transaction(sd_card, blocks == 1 ? 24 : 25, block);
+	uint8_t r1 = get_R1(sd_card);
+	if (r1 != 0x00)
+	{
+		result = r1;
+		goto terminate;
+	}
+
+	const uint8_t token = blocks == 1 ? SD_CARD_START_TOKEN : SD_CARD_START_WRITE_TOKEN;
+
+	for (const uint8_t *pos = buffer; pos < buffer + blocks * 512; pos += 512)
+	{
+		// Spec requires N_WR, at least 1 byte of padding before we send data
+		// FIXME does a full BUSY 0xFF response count as N_WR?
+		padding_spi(sd_card, 1);
+
+		spi_device_write_continue(sd_card->spi, &token, 1);
+
+		spi_device_write_continue(sd_card->spi, pos, 512);
+		uint16_t crc16 = crc16_update(pos, 512, 0);
+		// Data is actually in big endian...
+		crc16 = crc16 >> 8 | crc16 << 8;
+		spi_device_write_continue(sd_card->spi, (uint8_t*)&crc16, 2);
+
+		uint8_t resp;
+		read_spi(sd_card, &resp, 1);
+		if ((resp & 0x11) != 0x01)
+		{
+			result = 0xFFu;
+			goto terminate;
+		}
+		if ((resp & 0x0E) != 0x04)
+		{
+			// FIXME we should figure out if we failed CRC or got anoter write error, and then go check CMD13
+			// Maybe we should also get the number of bytes transmitted using ACMD22
+			if (blocks != 1)
+			{
+				// Spec requires at least 1 byte of padding before we send stop
+				padding_spi(sd_card, 1);
+				send_stop_and_wait(sd_card);
+			}
+			result = 0xFFu;
+			goto terminate;
+		}
+
+		// Check for busy FIXME should there be a timeout?
+		// In theory, we can also deassert CS and go do something else while busy
+		uint8_t busy = 0;
+		do
+		{
+			read_spi(sd_card, &busy, 1);
+		} while (busy == 0x00);
+	}
+
+	if (blocks != 1)
+	{
+		// Spec requires at least 1 byte of padding before we send stop
+		padding_spi(sd_card, 1);
+		send_stop_and_wait(sd_card);
+	}
+	result = 0;
+
+terminate:
+	spi_device_toggle(sd_card->spi, 1);
+	return result;
+}

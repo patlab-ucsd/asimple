@@ -63,7 +63,7 @@ uint8_t sd_card_command_result(
 /** Reads the given number of blocks from the SD card.
  *
  * @param[in,out] sd_card SD card to read from.
- * @param[in] The block to read from the SD card.
+ * @param[in] block The blocks to number to read from.
  * @param[out] buffer Where to read the data to.
  * @param[in] blocks How many blocks to read.
  *
@@ -72,6 +72,23 @@ uint8_t sd_card_command_result(
  */
 uint8_t sd_card_read_blocks(
 	struct sd_card *sd_card, uint32_t block, uint8_t *buffer, size_t blocks);
+
+/** Writes the given number of blocks to the SD card.
+ *
+ * @param[in,out] sd_card SD card to write to.
+ * @param[in] block The block number to write to.
+ * @param[out] buffer The data to write to the SD card.
+ * @param[in] blocks How many blocks to write.
+ *
+ * @returns The R1 response from the SD card.
+ *
+ * FIXME On an error, we should check CMD13 to figure out what went wrong if possible.
+ */
+uint8_t sd_card_write_blocks(
+	struct sd_card *sd_card,
+	uint32_t block,
+	const uint8_t *buffer,
+	size_t blocks);
 
 /** Detects whether an SD card is plugged in or not.
  *
