@@ -137,6 +137,7 @@ void syscalls_register_fs(void *device)
 
 // Syscalls
 
+__attribute__ ((used))
 int _gettimeofday(struct timeval *ptimeval, void *ptimezone)
 {
 	(void)ptimezone;
@@ -158,6 +159,7 @@ int _gettimeofday(struct timeval *ptimeval, void *ptimezone)
 	return result;
 }
 
+__attribute__ ((used))
 int _open(const char *name, int flags, int mode)
 {
 	// FIXME check if mounted?
