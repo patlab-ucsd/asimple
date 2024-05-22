@@ -42,16 +42,6 @@ enum spi_chip_select
  * BSP header file for the AM_BSP_GPIO_IOM* defines, which describe which pins
  * are being used based on the module selected.
  *
- * For example, on the Redboard Artemis ATP, the pins used are as follows for
- * module 0:
- *   CS0  - 11
- *   CS1  - 17
- *   CS2  - 14
- *   CS3  - 15
- *   MISO - 6
- *   MOSI - 7
- *   SCK  - 5
- *
  * On initialization, the hardware is set to sleep-- call spi_bus_enable to
  * turn on the hardware.
  *
@@ -97,6 +87,10 @@ bool spi_bus_sleep(struct spi_bus *bus);
  *   SPI_CS_2 - pin 14
  *   SPI_CS_3 - pin 15
  *
+ * For IOM1:
+ *   SPI_CS_0 - pin 23
+ *   SPI_CS_2 - pin 18
+ *
  * @param[in,out] spi_bus SPI bus to get a device from.
  * @param[in] chip_select Chip select ID to use.
  * @param[in] clock The clock speed in Hz. The actual hardware has limitations
@@ -132,14 +126,6 @@ void spi_device_set_clock(struct spi_device *device, uint32_t clock);
  *
  * This function will block until the read buffer is filled.
  *
- * The buffer is a pointer to a uint32_t for two reasons: 1. the Ambiq SDK uses
- * this, and 2. the MIO FIFO can only be read 4 bytes at a time, and the
- * internal SDK implementation uses this as an optimization, to read 4 bytes at
- * once if there are that many bytes in the FIFO. By passing in a uint32_t
- * pointer, this should make it so that the buffer is aligned to uint32_t
- * standards, and that it's safe to write 4 bytes at once without running afoul
- * of C anti-aliasing rules.
- *
  * @param[in,out] device Pointer to the spi device structure to use.
  * @param[in] command Command byte to send first.
  * @param[out] buffer Pointer to buffer to hold incoming data.
@@ -158,9 +144,6 @@ void spi_device_cmd_read(
  *
  * This function will block until the write buffer is sent.
  *
- * See spi_device_read for an explanation as to why buffer is a uint32_t
- *  pointer.
- *
  * @param[in,out] device Pointer to the spi device to use.
  * @param[in] command Command byte to send first.
  * @param[in] buffer Pointer to buffer with outgoing data.
@@ -176,8 +159,6 @@ void spi_device_cmd_write(
  *
  * This sets the CS line to logical false (high) on completion.
  *
- * See spi_read for an explanation as to why buffer is a uint32_t pointer.
- *
  * @param[in,out] device Pointer to the spi device to use.
  * @param[in] buffer Pointer to buffer with outgoing data.
  * @param[in] size Size of the buffer.
@@ -188,8 +169,6 @@ void spi_device_read(
 /** Writes data (blocking) to the SPI device.
  *
  * This sets the CS line to logical false (high) on completion.
- *
- * See spi_read for an explanation as to why buffer is a uint32_t pointer.
  *
  * @param[in,out] device Pointer to the spi device to use.
  * @param[in] buffer Pointer to buffer with outgoing data.
@@ -202,8 +181,6 @@ void spi_device_write(
  *
  * This leaves the CS line as logical true (low) on completion.
  *
- * See spi_read for an explanation as to why buffer is a uint32_t pointer.
- *
  * @param[in,out] device Pointer to the spi device to use.
  * @param[in] buffer Pointer to buffer with outgoing data.
  * @param[in] size Size of the buffer.
@@ -214,8 +191,6 @@ void spi_device_read_continue(
 /** Writes data (blocking) to the SPI device, and leaves CS active (low).
  *
  * This sets the CS line to logical true (low) on completion.
- *
- * See spi_read for an explanation as to why buffer is a uint32_t pointer.
  *
  * @param[in,out] device Pointer to the spi device to use.
  * @param[in] buffer Pointer to buffer with outgoing data.
