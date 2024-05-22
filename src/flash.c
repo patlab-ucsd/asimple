@@ -121,7 +121,8 @@ uint32_t flash_read_id(struct flash *flash)
 {
 	uint8_t writeBuffer = 0x9F;
 	spi_device_write_continue(flash->spi, &writeBuffer, 1);
-	uint8_t readBuffer = 0;
-	spi_device_read(flash->spi, &readBuffer, 3);
-	return readBuffer;
+	uint8_t readBuffer[3] = {0};
+	spi_device_read(flash->spi, readBuffer, 3);
+	uint32_t result = readBuffer[0] << 16 | readBuffer[1] << 8 | readBuffer[2];
+	return result;
 }
