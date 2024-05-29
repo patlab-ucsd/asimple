@@ -20,17 +20,17 @@ struct bmp280
 {
 	struct spi_device *spi;
 	uint16_t dig_T1;
-	uint16_t dig_T2;
-	uint16_t dig_T3;
+	int16_t dig_T2;
+	int16_t dig_T3;
 	uint16_t dig_P1;
-	uint16_t dig_P2;
-	uint16_t dig_P3;
-	uint16_t dig_P4;
-	uint16_t dig_P5;
-	uint16_t dig_P6;
-	uint16_t dig_P7;
-	uint16_t dig_P8;
-	uint16_t dig_P9;
+	int16_t dig_P2;
+	int16_t dig_P3;
+	int16_t dig_P4;
+	int16_t dig_P5;
+	int16_t dig_P6;
+	int16_t dig_P7;
+	int16_t dig_P8;
+	int16_t dig_P9;
 };
 
 /** Initializes the BMP280 structure.
@@ -59,6 +59,16 @@ uint8_t bmp280_read_id(struct bmp280 *bmp280);
  * @param[in] size Number of bytes to read, starting at addr.
 */
 void bmp280_read_register(struct bmp280 *bmp280, uint8_t addr, uint8_t *buffer, uint32_t size);
+
+/**
+ * Writes to registers on the BMP280 sensor.
+ *
+ * @param[in] bmp280 BMP280 sensor to write to.
+ * @param[in] addr BMP280 sensor address to start writing to.
+ * @param[in] buffer Buffer with data to write.
+ * @param[in] size Number of bytes to write, starting at addr.
+*/
+void bmp280_write_register(struct bmp280 *bmp280, uint8_t addr, const uint8_t *buffer, uint32_t size);
 
 /**
  * Gets the raw temperature value from the temperature registers of the BMP280 sensor.

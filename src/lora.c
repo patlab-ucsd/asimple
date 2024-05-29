@@ -158,6 +158,9 @@ int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer
 
 	while (!gpio_read(&lora->dio0))
 	{
+		// We've configure GPIO read pins to always fire an interrupt when they
+		// transition from low to high, so we can safely drop to sleep mode
+		// here.
 		am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
 	}
 	lora_standby(lora);
@@ -222,10 +225,11 @@ int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t bu
 
 	lora_transmit_mode(lora);
 
-	//while (!(tx_irq = read_register(lora->device, LORA_IRQ_FLAGS) & 0x08))
 	while (!gpio_read(&lora->dio0))
 	{
-		// FIXME is there an interrupt way to wait while going to sleep?
+		// We've configure GPIO read pins to always fire an interrupt when they
+		// transition from low to high, so we can safely drop to sleep mode
+		// here.
 		am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
 	}
 	// Clear TxDone IRQ flag
