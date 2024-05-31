@@ -39,6 +39,7 @@ foreach board : boards
     'src/syscalls.c',
     'src/flash.c',
     'src/bmp280.c',
+    'src/bme280.c',
     'src/power_control.c',
     'src/pdm.c',
     'src/asimple_littlefs.c',
