@@ -103,7 +103,7 @@ static const am_hal_gpio_pincfg_t g_AM_PIN_11_ADCSE2 =
 	.uFuncSel = AM_HAL_PIN_11_ADCSE2,
 };
 
-void adc_init(struct adc *adc, uint8_t *pins, size_t size)
+void adc_init(struct adc *adc, const uint8_t *pins, size_t size)
 {
 	adc->slots_configured = size;
 
@@ -209,7 +209,7 @@ void adc_init(struct adc *adc, uint8_t *pins, size_t size)
 		AM_HAL_ADC_INT_CNVCMP);
 }
 
-bool adc_get_sample(struct adc *adc, uint32_t sample[], uint8_t pins[], size_t size)
+bool adc_get_sample(struct adc *adc, uint32_t sample[], const uint8_t pins[], size_t size)
 {
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) < adc->slots_configured)
 		return false;
