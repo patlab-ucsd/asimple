@@ -162,7 +162,10 @@ void adc_init(struct adc *adc, const uint8_t *pins, size_t size)
 		.ePrecisionMode = AM_HAL_ADC_SLOT_14BIT,
 	};
 
-	// Unused slots
+	// Set all slots as unused by default...
+	am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
+	am_hal_adc_configure_slot(adc->handle, 1, &slot_config);
+	am_hal_adc_configure_slot(adc->handle, 2, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 3, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 4, &slot_config);
 	am_hal_adc_configure_slot(adc->handle, 5, &slot_config);
@@ -214,7 +217,7 @@ bool adc_get_sample(struct adc *adc, uint32_t sample[], const uint8_t pins[], si
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) < adc->slots_configured)
 		return false;
 
-	for(size_t i = 0; i < 3; i++){
+	for(size_t i = 0; i < size; i++){
 		uint32_t samples = 1;
 		am_hal_adc_sample_t slot = {0};
 		am_hal_adc_samples_read(adc->handle, true, NULL, &samples, &slot);
