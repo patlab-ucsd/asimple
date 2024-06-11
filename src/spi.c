@@ -266,8 +266,8 @@ struct spi_bus *spi_bus_get_instance(enum spi_bus_instance instance)
 		bus->current_clock = 2000000u;
 		spi_config.ui32ClockFreq = bus->current_clock;
 		am_hal_iom_configure(bus->handle, &spi_config);
-		am_bsp_iom_pins_enable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
 		am_hal_iom_enable(bus->handle);
+		// Don't bother enabling pins, sleep is going to disable them anyway
 		spi_bus_sleep(bus);
 	}
 	return bus;
