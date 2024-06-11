@@ -214,7 +214,8 @@ int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t bu
 	write_register(lora->device, LORA_FIFO_ADDR, lora->tx_addr);
 	// Limit the amount to send per packet to the amount that will fit in the
 	// TX portion of the FIFO
-	const uint8_t max_to_send = 0x100 - lora->tx_addr;
+	const int max_tx_size = 0x100;
+	const uint8_t max_to_send = max_tx_size - lora->tx_addr;
 	uint8_t to_send =  buffer_size > max_to_send ? max_to_send : buffer_size;
 	write_register(lora->device, LORA_PAYLOAD_LEN, to_send);
 
@@ -236,7 +237,11 @@ int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t bu
 	tx_irq = read_register(lora->device, LORA_IRQ_FLAGS) & 0x08;
 	write_register(lora->device, LORA_IRQ_FLAGS, tx_irq);
 
+	// LORA_FIFO_ADDR wraps around to the bottom of memory. If we wrap around,
+	// we're at the max.
 	int sent = read_register(lora->device, LORA_FIFO_ADDR) - lora->tx_addr;
+	if (sent < 0)
+		sent = max_tx_size;
 	return sent;
 }
 
