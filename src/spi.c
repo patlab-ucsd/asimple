@@ -319,11 +319,18 @@ bool spi_bus_sleep(struct spi_bus *bus)
 {
 	// Note that turning off the hardware resets registers, which is why we
 	// request saving the state
-	int status = am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
-	if (status != AM_HAL_STATUS_SUCCESS)
+	// Also, spinloop while the device is busy
+	// Gabriel Marcano: I ran into a bug where for some gods forsaken reason
+	// only on POR, in spi_bus_get_instance, calling spi_bus_sleep would fail,
+	// and apparently it's because the IOM is in use? I'm not even sure why it
+	// would be if I'm literally just turning it on for the first time. Maybe
+	// there's something the bootrom is doing that is not well documented???
+	int status;
+	do
 	{
-		return false;
-	}
+		status = am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
+	} while (status == AM_HAL_STATUS_IN_USE);
+
 	am_bsp_iom_pins_disable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
 	return true;
 }
