@@ -266,15 +266,15 @@ void am1815_write_time(struct am1815 *rtc, const struct timeval *time)
 	regs[3] &= 0xC0;
 	regs[4] &= 0xC0;
 	regs[5] &= 0xE0;
+	regs[6] = to_bcd((date.tm_year + 1900) % 100);
 	regs[7] &= 0xF8;
 
 	regs[1] |= to_bcd(date.tm_sec);
 	regs[2] |= to_bcd(date.tm_min);
 	regs[3] |= to_bcd(date.tm_hour);
 	regs[4] |= to_bcd(date.tm_mday);
-	regs[5] |= to_bcd(date.tm_mon) + 1;
-	regs[6] |= to_bcd(date.tm_wday);
-	regs[7] |= to_bcd((date.tm_year + 1900) % 1000);
+	regs[5] |= to_bcd(date.tm_mon + 1);
+	regs[7] |= to_bcd(date.tm_wday);
 
 	am1815_write_bulk(rtc, 0x0, regs, 8);
 }
