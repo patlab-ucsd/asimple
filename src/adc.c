@@ -87,41 +87,124 @@ static void adc_timer_init(void)
 	am_hal_ctimer_start(TIMERNUM, AM_HAL_CTIMER_TIMERA);
 }
 
-// Configure the pins on the redboard
-static const am_hal_gpio_pincfg_t g_AM_PIN_16_ADCSE0 =
-{
-	.uFuncSel = AM_HAL_PIN_16_ADCSE0,
-};
 
-static const am_hal_gpio_pincfg_t g_AM_PIN_29_ADCSE1 =
-{
-	.uFuncSel = AM_HAL_PIN_29_ADCSE1,
-};
+// * *****************************************************************************
+// *
+// *                      Settings for each ADC Channel
+// *
+// * *****************************************************************************
 
-static const am_hal_gpio_pincfg_t g_AM_PIN_11_ADCSE2 =
-{
-	.uFuncSel = AM_HAL_PIN_11_ADCSE2,
-};
+typedef struct channel_settings {
+	am_hal_adc_slot_chan_e channel;
+	uint32_t pin_p; // primary/positive pin (-1 for channel with no pins)
+	uint32_t pin_n; // negative pin for diff channels (else -1)
+	uint32_t gpio_funcsel_p; // funcsel for the pin (-1 if no pin)
+	uint32_t gpio_funcsel_n; // funcsel for the negative pin (-1 if not differential)
+} channel_settings_t;
 
-void adc_init(struct adc *adc, const uint8_t *pins, size_t size)
+static const uint32_t NO_PIN = 0xFFFF;
+
+static const channel_settings_t g_channel_settings[] = {
+	// Channel                   pin_p    pin_n  funcsel_p                funcsel_n
+	// =====
+	// Single-ended channels
+	{AM_HAL_ADC_SLOT_CHSEL_SE0,     16,  NO_PIN, AM_HAL_PIN_16_ADCSE0,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE1,     29,  NO_PIN, AM_HAL_PIN_29_ADCSE1,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE2,     11,  NO_PIN, AM_HAL_PIN_11_ADCSE2,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE3,     31,  NO_PIN, AM_HAL_PIN_31_ADCSE3,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE4,     32,  NO_PIN, AM_HAL_PIN_32_ADCSE4,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE5,     33,  NO_PIN, AM_HAL_PIN_33_ADCSE5,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE6,     34,  NO_PIN, AM_HAL_PIN_34_ADCSE6,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE7,     35,  NO_PIN, AM_HAL_PIN_35_ADCSE7,    NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE8,     13,  NO_PIN, AM_HAL_PIN_13_ADCD0PSE8, NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_SE9,     12,  NO_PIN, AM_HAL_PIN_12_ADCD0NSE9, NO_PIN },
+	// Differential channels.
+	{AM_HAL_ADC_SLOT_CHSEL_DF0,     13,      12, AM_HAL_PIN_13_ADCD0PSE8, AM_HAL_PIN_12_ADCD0NSE9 },
+	{AM_HAL_ADC_SLOT_CHSEL_DF1,     14,      15, AM_HAL_PIN_14_ADCD1P,    AM_HAL_PIN_15_ADCD1N },
+	// Miscellaneous other signals.
+	{AM_HAL_ADC_SLOT_CHSEL_TEMP, NO_PIN, NO_PIN, NO_PIN,                  NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_BATT, NO_PIN, NO_PIN, NO_PIN,                  NO_PIN },
+	{AM_HAL_ADC_SLOT_CHSEL_VSS,  NO_PIN, NO_PIN, NO_PIN,                  NO_PIN },
+
+};
+//NOTE: ADC channels (type am_hal_adc_slot_chan_e) come from am_hal_adc.h
+const int ADC_CHANNEL_MAX = sizeof(g_channel_settings) / sizeof(g_channel_settings[1]);
+
+
+// * *****************************************************************************
+// *
+// *                           Main Functions
+// *
+// * *****************************************************************************
+
+// Converts a pin number to a single-ended ADC channel, if possible
+am_hal_adc_slot_chan_e adc_channel_for_pin(uint8_t pin) {
+
+	// Loop over single-ended channels, see if any match
+	for (int i = AM_HAL_ADC_SLOT_CHSEL_SE0; i <= AM_HAL_ADC_SLOT_CHSEL_SE9; i++) {
+
+		//sanity check assert: all channels should be in their own index
+		if (g_channel_settings[i].channel != i) {
+			am_util_stdio_printf("Error - asimple ADC channel settings table broken, panicking\r\n");
+			while(1);
+		}
+
+		if (g_channel_settings[i].pin_p == pin) { return i; }
+	}
+
+	// This pin matches no channel
+	am_util_stdio_printf("Error - Pin %d cannot be configured with ADC\r\n", pin);
+	while(1);
+}
+
+
+// Helper function to init adc old-style, using pins
+// NOTE: pins must correspond to single-ended channels
+void adc_init(struct adc *adc, const uint8_t *pins, size_t size) {
+	if (size > 8) {
+		am_util_stdio_printf("Error - ADC can't take more than 8 slots\r\n");
+		while(1);
+	}
+
+	// Convert pins to channels, then call the main function
+	am_hal_adc_slot_chan_e channels[8] = {};
+	for (size_t i = 0; i < size; i++)
+		{ channels[i] = adc_channel_for_pin(pins[i]); }
+
+	adc_init_channels(adc, channels, size);
+}
+
+void adc_init_channels(struct adc *adc, const am_hal_adc_slot_chan_e* channels, size_t size)
 {
+	if (size > 8) {
+		am_util_stdio_printf("Error - ADC can't take more than 8 slots\r\n");
+		while(1);
+	}
+
 	adc->slots_configured = size;
 
 	// Configure the pins given
-	for(size_t i = 0; i < size; i++){
-		if(pins[i] == 16){
-			am_hal_gpio_pinconfig(16, g_AM_PIN_16_ADCSE0);
+	for (size_t i = 0; i < size; i++){
+		channel_settings_t settings = g_channel_settings[channels[i]];
+
+		// If 2 pins specified, it's a differential channel
+		if (settings.pin_p != NO_PIN && settings.pin_n != NO_PIN) {
+			am_util_stdio_printf("Error - ADC Differential channels not yet implemented, panicking\r\n");
+			while(1);
+
+		// If 1 pin specified, it's a normal single-ended channel, set it's funcsel appropriately
+		} else if (settings.pin_p != NO_PIN) {
+			const am_hal_gpio_pincfg_t cfg = { .uFuncSel = settings.gpio_funcsel_p };
+
+			int status = am_hal_gpio_pinconfig(settings.pin_p, cfg);
+			if (status != AM_HAL_STATUS_SUCCESS) {
+				am_util_stdio_printf("Error - Couldnt configure pin %d, status=0x%x\r\n",
+						settings.pin_p, status);
+				while(1);
+			}
 		}
-		else if(pins[i] == 29){
-			am_hal_gpio_pinconfig(29, g_AM_PIN_29_ADCSE1);
-		}
-		else if(pins[i] == 11){
-			am_hal_gpio_pinconfig(11, g_AM_PIN_11_ADCSE2);
-		}
-		else{
-			am_util_stdio_printf("Error - Pin cannot be configured with ADC\r\n");
-			return;
-		}
+
+		// Else, misc ADC channels take no pins (bat VSS temp)
 	}
 
 	// Initialize the ADC and get the handle.
@@ -180,20 +263,15 @@ void adc_init(struct adc *adc, const uint8_t *pins, size_t size)
 	// Configure the input slot
 	slot_config.ePrecisionMode = AM_HAL_ADC_SLOT_14BIT;
 
-	// Configure the slots for the pins given
-	for(size_t i = 0; i < size; i++){
-		if(pins[i] == 16){
-			slot_config.eChannel = AM_HAL_ADC_SLOT_CHSEL_SE0;
-			am_hal_adc_configure_slot(adc->handle, 0, &slot_config);
-		}
-		else if(pins[i] == 29){
-			slot_config.eChannel = AM_HAL_ADC_SLOT_CHSEL_SE1;
-			am_hal_adc_configure_slot(adc->handle, 1, &slot_config);
-		}
-		else if(pins[i] == 11){
-			slot_config.eChannel = AM_HAL_ADC_SLOT_CHSEL_SE2;
-			am_hal_adc_configure_slot(adc->handle, 2, &slot_config);
-		}
+	// Configure the slots with the given channels
+	for (size_t i = 0; i < size; i++){
+		slot_config.eChannel = channels[i];
+		am_hal_adc_configure_slot(adc->handle, i, &slot_config);
+
+		//also save which channels went to which slots
+		adc->slot_channels[i] = channels[i];
+
+		am_util_stdio_printf("Configure slot %d to channel %d\n", i, channels[i]); //DEBUG
 	}
 
 	// Enable the ADC.
@@ -212,27 +290,43 @@ void adc_init(struct adc *adc, const uint8_t *pins, size_t size)
 		AM_HAL_ADC_INT_CNVCMP);
 }
 
-bool adc_get_sample(struct adc *adc, uint32_t sample[], const uint8_t pins[], size_t size)
-{
+// Helper function: converts pins to channels and calls adc_get_sample_channels
+bool adc_get_sample(struct adc *adc, uint32_t out_samples[], const uint8_t pins[], size_t size) {
+	if (size > 8) {
+		am_util_stdio_printf("Error - ADC can't take more than 8 slots\r\n");
+		while(1);
+	}
+
+	// Convert pins to channels, then call the main function
+	am_hal_adc_slot_chan_e channels[8] = {};
+	for (size_t i = 0; i < size; i++)
+		{ channels[i] = adc_channel_for_pin(pins[i]); }
+
+	return adc_get_sample_channels(adc, out_samples, channels, size);
+}
+
+bool adc_get_sample_channels(struct adc *adc, uint32_t out_samples[], const am_hal_adc_slot_chan_e req_channels[], size_t size) {
 	if (AM_HAL_ADC_FIFO_COUNT(ADC->FIFO) < adc->slots_configured)
 		return false;
 
-	for(size_t i = 0; i < size; i++){
-		uint32_t samples = 1;
-		am_hal_adc_sample_t slot = {0};
-		am_hal_adc_samples_read(adc->handle, true, NULL, &samples, &slot);
+	for (size_t i = 0; i < size; i++) {
+		uint32_t num_samples = 1; // in/out, is # samples requested and # received
+		am_hal_adc_sample_t data = {0};
+		am_hal_adc_samples_read(adc->handle, true, NULL, &num_samples, &data);
 
-		// we got a slot-- is it for a pin we care about?
-		for (size_t j = 0; j < size; ++j)
-		{
-			// Determine which slot it came from
-			if ((slot.ui32Slot == 0 && pins[j] == 16) ||
-				(slot.ui32Slot == 1 && pins[j] == 29) ||
-				(slot.ui32Slot == 2 && pins[j] == 11))
-			{
-				// The returned ADC sample is from pin 16, 29, or 11
-				// and the user requested that pin
-				sample[j] = AM_HAL_ADC_FIFO_SAMPLE(slot.ui32Sample);
+		// Some asserts for sanity checking
+		if (num_samples != 1)
+			{ am_util_stdio_printf("Error: adc returned no samples??\n"); while(1); }
+		if (data.ui32Slot >= adc->slots_configured)
+			{ am_util_stdio_printf("Error: adc returned sample for invalid slot?\n"); while(1); }
+
+		// Lookup what channel we had configured for the slot the sample is for
+		uint32_t data_channel = adc->slot_channels[data.ui32Slot];
+
+		// check which index user requested this channel at (if any)
+		for (size_t j = 0; j < size; ++j) {
+			if (req_channels[j] == data_channel) {
+				out_samples[j] = AM_HAL_ADC_FIFO_SAMPLE(data.ui32Sample);
 				break;
 			}
 		}
