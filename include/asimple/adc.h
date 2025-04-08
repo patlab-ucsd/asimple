@@ -18,15 +18,13 @@
 extern "C" {
 #endif
 
-/** ADC structure. */
-struct adc
-{
-	void *handle;
-	uint8_t slots_configured;
-	am_hal_adc_slot_chan_e slot_channels[8]; // actually an am_hal_adc_slot_chan_e
-};
+/** ADC structure forward declaration. */
+struct adc;
 
-/** Initializes the ADC.
+/** Returns the ADC instance.
+ *
+ * If it hasn't been initialized, it initializes the ADC instance. Before use
+ * it must be enabled. This tracks the number of times it's been borrowed.
  *
  * (JV: OUTDATED?)
  * Initialization involves setting up timer 3 to trigger an interrupt every 1/8
@@ -39,10 +37,33 @@ struct adc
  * @param[in] pins Array of pin numbers to initialize.
  * @param[in] size Size of pin array.
  */
-void adc_init(struct adc *adc, const uint8_t pins[], size_t size);
+struct adc *adc_get_instance(const uint8_t pins[], size_t size);
+//struct adc *adc_get_instance_channels(struct adc *adc, const am_hal_adc_slot_chan_e channels[], size_t size);
 
-// As above, but specified in terms of ADC channels
-void adc_init_channels(struct adc *adc, const am_hal_adc_slot_chan_e channels[], size_t size);
+/** Deinitializes the given adc structure, freeing resources held, including
+ * the associated UART instance, once all borrowed instances are
+ * de-initialized.
+ *
+ * @param[in] adc Pointer to adc structure to deinitialize.
+ */
+void adc_deinitialize(struct adc *adc);
+
+/** Enables/wakes up the adc module.
+ *
+ * @param[in,out] adc Pointer to the adc structure to enable.
+ *
+ * @returns True on success, false if it cannot be enabled. This usually
+ *  happens if the device is already awake.
+ */
+bool adc_enable(struct adc *adc);
+
+/** Places the adc module to sleep.
+ *
+ * @param[in,out] adc Pointer to the adc structure to set to sleep.
+ *
+ * @returns True on success, false if it cannot be put to sleep.
+ */
+bool adc_sleep(struct adc *adc);
 
 /** Get a batch of samples from the ADC.
  *

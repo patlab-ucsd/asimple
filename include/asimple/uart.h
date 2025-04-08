@@ -27,7 +27,7 @@ enum uart_instance
  *
  * The first time this is called (from boot or after a disable) this
  * initializes the hardware and allocates resources (in other words, lazy
- * initialization).
+ * initialization). This tracks how many times it's been borrowed.
  *
  * @param[in] instance UART instance to assign to UART structure.
  *
@@ -36,11 +36,29 @@ enum uart_instance
 struct uart* uart_get_instance(enum uart_instance instance);
 
 /** Deinitializes the given UART structure, freeing resources held, including
- * the associated UART instance.
+ * the associated UART instance, once all users have deinitialized it.
  *
  * @param[in] uart Pointer to uart structure to deinitialize.
  */
-void uart_disable(struct uart *uart);
+void uart_deinitialize(struct uart *uart);
+
+/** Enables/wakes up the UART module.
+ *
+ * @param[in,out] uart Pointer to the uart structure to enable.
+ *
+ * @returns True on success, false if it cannot be enabled. This usually
+ *  happens if the device is already awake.
+ */
+bool uart_enable(struct uart *uart);
+
+/** Places the uart module to sleep.
+ *
+ * @param[in,out] uart Pointer to the uart structure to set to sleep.
+ *
+ * @returns True on success, false if it cannot be put to sleep. This usually
+ * happens if the uart module is actively transfering data.
+ */
+bool uart_sleep(struct uart *uart);
 
 /** Sends the given buffer over UART.
  *

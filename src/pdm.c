@@ -13,11 +13,15 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
+#include <stdint.h>
+#include <stdatomic.h>
+
 struct pdm
 {
 	uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
     uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
     void *PDMHandle;
+	atomic_uint refcount;
 };
 
 static struct pdm pdm;
@@ -68,9 +72,60 @@ struct pdm* pdm_get_instance(void)
 				| AM_HAL_PDM_INT_OVF));
 
 		am_hal_pdm_fifo_flush(pdm.PDMHandle);
-		NVIC_EnableIRQ(PDM_IRQn);
+		pdm_sleep(&pdm);
 	}
+	pdm.refcount++;
 	return &pdm;
+}
+
+bool pdm_sleep(struct pdm *pdm)
+{
+	// Note that turning off the hardware resets registers, which is why we
+	// request saving the state
+	// Also, spinloop while the device is busy
+	// Implementation based off spi.c
+	NVIC_DisableIRQ(PDM_IRQn);
+	int status;
+	do
+	{
+		status = am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
+	} while (status == AM_HAL_STATUS_IN_USE);
+
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_HAL_GPIO_DISABLE);
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_HAL_GPIO_DISABLE);
+	return true;
+}
+
+bool pdm_enable(struct pdm *pdm)
+{
+	// This can fail if there is no saved state, which indicates we've never
+	// gone asleep
+	int status = am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_SYSCTRL_WAKE, true);
+	if (status != AM_HAL_STATUS_SUCCESS)
+	{
+		return false;
+	}
+
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_BSP_GPIO_MIC_DATA);
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_BSP_GPIO_MIC_CLK);
+	NVIC_EnableIRQ(PDM_IRQn);
+	return true;
+}
+
+void pdm_disable(struct pdm *pdm)
+{
+	if (pdm->refcount)
+	{
+		if (!--(pdm->refcount))
+		{
+			NVIC_DisableIRQ(PDM_IRQn);
+			am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_HAL_GPIO_DISABLE);
+			am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_HAL_GPIO_DISABLE);
+			am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+			am_hal_pdm_deinitialize(pdm->PDMHandle);
+			memset(pdm, 0, sizeof(*pdm));
+		}
+	}
 }
 
 uint32_t* pdm_get_buffer1(struct pdm *pdm)

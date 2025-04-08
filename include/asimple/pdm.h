@@ -24,9 +24,35 @@ struct pdm;
 /**
  * Get the PDM instance.
  *
+ * This tracks how many times it has been borrowed.
+ *
  * @returns A pointer to the PDM instance.
 */
 struct pdm* pdm_get_instance(void);
+
+/** Enables/wakes up the pdm module.
+ *
+ * @param[in,out] pdm Pointer to the pdm structure to enable.
+ *
+ * @returns True on success, false if it cannot be enabled. This usually
+ *  happens if the device is already awake.
+ */
+bool pdm_enable(struct pdm *pdm);
+
+/** Places the pdm module to sleep.
+ *
+ * @param[in,out] pdm Pointer to the pdm structure to set to sleep.
+ *
+ * @returns True on success, false if it cannot be put to sleep.
+ */
+bool pdm_sleep(struct pdm *pdm);
+
+/** Deinitializes the given pdm structure, freeing resources held, including
+ * the associated pdm instance, once all borrows are returned.
+ *
+ * @param[in] pdm Pointer to pdm structure to deinitialize.
+ */
+void pdm_deinitialize(struct pdm *pdm);
 
 /**
  * Get g_ui32PDMDataBuffer1 from the PDM struct.

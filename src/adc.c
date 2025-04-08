@@ -8,6 +8,17 @@
 #include <adc.h>
 
 #include <stdatomic.h>
+#include <string.h>
+
+struct adc
+{
+	void *handle;
+	uint8_t slots_configured;
+	am_hal_adc_slot_chan_e slot_channels[8]; // actually an am_hal_adc_slot_chan_e
+	atomic_uint refcount;
+};
+
+static struct adc adc;
 
 /** Configure ADC to:
  *
@@ -102,7 +113,7 @@ typedef struct channel_settings {
 	uint32_t gpio_funcsel_n; // funcsel for the negative pin (-1 if not differential)
 } channel_settings_t;
 
-static const uint32_t NO_PIN = 0xFFFF;
+static const uint32_t NO_PIN = 0xFFFFFFFF;
 
 static const channel_settings_t g_channel_settings[] = {
 	// Channel                   pin_p    pin_n  funcsel_p                funcsel_n
@@ -137,44 +148,7 @@ const int ADC_CHANNEL_MAX = sizeof(g_channel_settings) / sizeof(g_channel_settin
 // *
 // * *****************************************************************************
 
-// Converts a pin number to a single-ended ADC channel, if possible
-am_hal_adc_slot_chan_e adc_channel_for_pin(uint8_t pin) {
-
-	// Loop over single-ended channels, see if any match
-	for (int i = AM_HAL_ADC_SLOT_CHSEL_SE0; i <= AM_HAL_ADC_SLOT_CHSEL_SE9; i++) {
-
-		//sanity check assert: all channels should be in their own index
-		if (g_channel_settings[i].channel != i) {
-			am_util_stdio_printf("Error - asimple ADC channel settings table broken, panicking\r\n");
-			while(1);
-		}
-
-		if (g_channel_settings[i].pin_p == pin) { return i; }
-	}
-
-	// This pin matches no channel
-	am_util_stdio_printf("Error - Pin %d cannot be configured with ADC\r\n", pin);
-	while(1);
-}
-
-
-// Helper function to init adc old-style, using pins
-// NOTE: pins must correspond to single-ended channels
-void adc_init(struct adc *adc, const uint8_t *pins, size_t size) {
-	if (size > 8) {
-		am_util_stdio_printf("Error - ADC can't take more than 8 slots\r\n");
-		while(1);
-	}
-
-	// Convert pins to channels, then call the main function
-	am_hal_adc_slot_chan_e channels[8] = {};
-	for (size_t i = 0; i < size; i++)
-		{ channels[i] = adc_channel_for_pin(pins[i]); }
-
-	adc_init_channels(adc, channels, size);
-}
-
-void adc_init_channels(struct adc *adc, const am_hal_adc_slot_chan_e* channels, size_t size)
+static void adc_init_channels(struct adc *adc, const am_hal_adc_slot_chan_e* channels, size_t size)
 {
 	if (size > 8) {
 		am_util_stdio_printf("Error - ADC can't take more than 8 slots\r\n");
@@ -288,6 +262,153 @@ void adc_init_channels(struct adc *adc, const am_hal_adc_slot_chan_e* channels, 
 		AM_HAL_ADC_INT_FIFOOVR1 |
 		AM_HAL_ADC_INT_SCNCMP |
 		AM_HAL_ADC_INT_CNVCMP);
+}
+
+// Converts a pin number to a single-ended ADC channel, if possible
+am_hal_adc_slot_chan_e adc_channel_for_pin(uint8_t pin) {
+
+	// Loop over single-ended channels, see if any match
+	for (int i = AM_HAL_ADC_SLOT_CHSEL_SE0; i <= AM_HAL_ADC_SLOT_CHSEL_SE9; i++) {
+
+		//sanity check assert: all channels should be in their own index
+		if (g_channel_settings[i].channel != i) {
+			am_util_stdio_printf("Error - asimple ADC channel settings table broken, panicking\r\n");
+			while(1);
+		}
+
+		if (g_channel_settings[i].pin_p == pin) { return i; }
+	}
+
+	// This pin matches no channel
+	am_util_stdio_printf("Error - Pin %d cannot be configured with ADC\r\n", pin);
+	while(1);
+}
+
+struct adc *adc_get_instance(const uint8_t *pins, size_t size)
+{
+	if (!adc.handle)
+	{
+		if (size > 8) {
+			am_util_stdio_printf("Error - ADC can't take more than 8 slots\r\n");
+			while(1);
+		}
+
+		// Convert pins to channels, then call the main function
+		am_hal_adc_slot_chan_e channels[8] = {};
+		for (size_t i = 0; i < size; i++)
+			{ channels[i] = adc_channel_for_pin(pins[i]); }
+
+		adc_init_channels(&adc, channels, size);
+		adc_sleep(&adc);
+	}
+	adc.refcount++;
+	return &adc;
+}
+
+void adc_deinitialize(struct adc *adc)
+{
+	if (adc->refcount)
+	{
+		if (!--(adc->refcount))
+		{
+			NVIC_DisableIRQ(ADC_IRQn);
+			// We need to find what pins are configured and disable them.
+			for (uint8_t i = 0; i < adc->slots_configured; ++i)
+			{
+				for (uint8_t j = 0; j < ADC_CHANNEL_MAX; ++j)
+				{
+					if (adc->slot_channels[i] == g_channel_settings[j].channel)
+					{
+						if (g_channel_settings[j].pin_p != NO_PIN)
+						{
+							am_hal_gpio_pinconfig(g_channel_settings[j].pin_p, g_AM_HAL_GPIO_DISABLE);
+						}
+						if (g_channel_settings[j].pin_n != NO_PIN)
+						{
+							am_hal_gpio_pinconfig(g_channel_settings[j].pin_n, g_AM_HAL_GPIO_DISABLE);
+						}
+						break;
+					}
+				}
+			}
+
+			am_hal_adc_power_control(adc->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+			am_hal_adc_deinitialize(adc->handle);
+			memset(adc, 0, sizeof(*adc));
+		}
+	}
+}
+
+bool adc_sleep(struct adc *adc)
+{
+	NVIC_DisableIRQ(ADC_IRQn);
+
+	// Note that turning off the hardware resets registers, which is why we
+	// request saving the state
+	// Also, spinloop while the device is busy
+	// Implementation based off spi.c
+	int status;
+	do
+	{
+		status = am_hal_adc_power_control(adc->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
+	} while (status == AM_HAL_STATUS_IN_USE);
+
+	// We need to find what pins are configured and disable them.
+	for (uint8_t i = 0; i < adc->slots_configured; ++i)
+	{
+		for (uint8_t j = 0; j < ADC_CHANNEL_MAX; ++j)
+		{
+			if (adc->slot_channels[i] == g_channel_settings[j].channel)
+			{
+				if (g_channel_settings[j].pin_p != NO_PIN)
+				{
+					am_hal_gpio_pinconfig(g_channel_settings[j].pin_p, g_AM_HAL_GPIO_DISABLE);
+				}
+				if (g_channel_settings[j].pin_n != NO_PIN)
+				{
+					am_hal_gpio_pinconfig(g_channel_settings[j].pin_n, g_AM_HAL_GPIO_DISABLE);
+				}
+				break;
+			}
+		}
+	}
+	return true;
+}
+
+bool adc_enable(struct adc *adc)
+{
+	// This can fail if there is no saved state, which indicates we've never
+	// gone asleep
+	int status = am_hal_adc_power_control(adc->handle, AM_HAL_SYSCTRL_WAKE, true);
+	if (status != AM_HAL_STATUS_SUCCESS)
+	{
+		return false;
+	}
+
+	// We need to find what pins are configured and turn them on.
+	for (uint8_t i = 0; i < adc->slots_configured; ++i)
+	{
+		for (uint8_t j = 0; j < ADC_CHANNEL_MAX; ++j)
+		{
+			if (adc->slot_channels[i] == g_channel_settings[j].channel)
+			{
+				if (g_channel_settings[j].pin_p != NO_PIN)
+				{
+					const am_hal_gpio_pincfg_t cfg = { .uFuncSel = g_channel_settings[j].gpio_funcsel_p};
+					am_hal_gpio_pinconfig(g_channel_settings[j].pin_p, cfg);
+				}
+				if (g_channel_settings[j].pin_n != NO_PIN)
+				{
+					const am_hal_gpio_pincfg_t cfg = { .uFuncSel = g_channel_settings[j].gpio_funcsel_n};
+					am_hal_gpio_pinconfig(g_channel_settings[j].pin_n, cfg);
+				}
+				break;
+			}
+		}
+	}
+
+	NVIC_EnableIRQ(ADC_IRQn);
+	return true;
 }
 
 // Helper function: converts pins to channels and calls adc_get_sample_channels

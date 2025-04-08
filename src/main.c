@@ -19,7 +19,7 @@
 #include <inttypes.h>
 
 static struct uart *uart;
-static struct adc adc;
+static struct adc *adc;
 
 int main(void)
 {
@@ -38,7 +38,7 @@ int main(void)
 	uint8_t pins[1];
 	pins[0] = 16;
 	size_t size = 1;
-	adc_init(&adc, pins, size);
+	adc = adc_get_instance(pins, size);
 
 	// After init is done, enable interrupts
 	am_hal_interrupt_master_enable();
@@ -126,11 +126,11 @@ int main(void)
 	while (1)
 	{
 		// Trigger the ADC to start collecting data
-		adc_trigger(&adc);
+		adc_trigger(adc);
 
 		// Print the battery voltage and temperature for each interrupt
 		uint32_t data[3] = {0};
-		if (adc_get_sample(&adc, data, pins, size))
+		if (adc_get_sample(adc, data, pins, size))
 		{
 			// The math here is straight forward: we've asked the ADC to give
 			// us data in 14 bits (max value of 2^14 -1). We also specified the

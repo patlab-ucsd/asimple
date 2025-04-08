@@ -5,10 +5,11 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
+#include <uart.h>
+
 #include <string.h>
 #include <assert.h>
-
-#include <uart.h>
+#include <stdatomic.h>
 
 /** UART structure. */
 struct uart
@@ -19,6 +20,7 @@ struct uart
 	uint8_t tx_buffer[1024];
 	// FIXME does RX work?
 	uint8_t rx_buffer[1024];
+	atomic_uint refcount;
 };
 
 #define CHECK_ERRORS(x)               \
@@ -73,22 +75,60 @@ struct uart* uart_get_instance(enum uart_instance instance)
 		CHECK_ERRORS(am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_WAKE, false));
 		CHECK_ERRORS(am_hal_uart_configure(uart->handle, &config));
 
-		am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
-		am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
-
-		NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + (int)instance));
+		uart_sleep(uart);
 	}
+	uart->refcount++;
 	return uart;
 }
 
-void uart_disable(struct uart *uart)
+bool uart_sleep(struct uart *uart)
 {
-	NVIC_DisableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_HAL_GPIO_DISABLE);
+	// Note that turning off the hardware resets registers, which is why we
+	// request saving the state
+	// Also, spinloop while the device is busy
+	// Implementation based off spi.c
+	int status;
+	do
+	{
+		status = am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
+	} while (status == AM_HAL_STATUS_IN_USE);
+
 	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_HAL_GPIO_DISABLE);
-	am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
-	am_hal_uart_deinitialize(uart->handle);
-	memset(uart, 0, sizeof(*uart));
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_HAL_GPIO_DISABLE);
+	NVIC_DisableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));
+	return true;
+}
+
+bool uart_enable(struct uart *uart)
+{
+	// This can fail if there is no saved state, which indicates we've never
+	// gone asleep
+	int status = am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_WAKE, true);
+	if (status != AM_HAL_STATUS_SUCCESS)
+	{
+		return false;
+	}
+
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
+	am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
+	NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));
+	return true;
+}
+
+void uart_deinitialize(struct uart *uart)
+{
+	if (uart->refcount)
+	{
+		if (!--(uart->refcount))
+		{
+			NVIC_DisableIRQ((IRQn_Type)(UART0_IRQn + uart->instance));
+			am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_HAL_GPIO_DISABLE);
+			am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_HAL_GPIO_DISABLE);
+			am_hal_uart_power_control(uart->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+			am_hal_uart_deinitialize(uart->handle);
+			memset(uart, 0, sizeof(*uart));
+		}
+	}
 }
 
 size_t uart_write(struct uart *uart, const unsigned char *data, size_t size)

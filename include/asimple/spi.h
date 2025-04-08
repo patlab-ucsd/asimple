@@ -79,6 +79,8 @@ bool spi_bus_sleep(struct spi_bus *bus);
 
 /** Gets a SPI device under the given bus.
  *
+ * This tracks how many times the instance has been borrowed.
+ *
  * Which pin is used by the Apollo3 depends on the IOM in use.
  *
  * For IOM0:
@@ -107,7 +109,8 @@ struct spi_device *spi_device_get_instance(
 /** Releases all resources of the given spi device object.
  *
  * This de-initializes the MIO module, returning the GPIO pins to their prior
- * configuration. FIXME should we set them to a known state?
+ * configuration, once all borrowed instances are returned.
+ * FIXME should we set them to a known state?
  *
  * @param[in,out] device SPI device to deinitialize.
  */

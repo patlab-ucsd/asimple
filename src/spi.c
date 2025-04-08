@@ -11,12 +11,14 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 
 struct spi_device
 {
 	struct spi_bus *parent;
 	int chip_select;
 	unsigned clock;
+	atomic_uint refcount;
 };
 
 struct spi_bus
@@ -25,6 +27,7 @@ struct spi_bus
 	int iom_module;
 	unsigned current_clock;
 	struct spi_device devices[4];
+	atomic_uint refcount;
 };
 
 static struct spi_bus busses[3]; //FIXME how many busses do we have?
@@ -270,6 +273,7 @@ struct spi_bus *spi_bus_get_instance(enum spi_bus_instance instance)
 		// Don't bother enabling pins, sleep is going to disable them anyway
 		spi_bus_sleep(bus);
 	}
+	bus->refcount++;
 	return bus;
 }
 
@@ -283,6 +287,7 @@ struct spi_device *spi_device_get_instance(
 		device->chip_select = convert_chip_select(bus->iom_module, instance);
 		device->clock = select_clock(clock);
 	}
+	device->refcount++;
 	return device;
 }
 
@@ -303,16 +308,28 @@ void spi_device_set_clock(struct spi_device *device, uint32_t clock)
 
 void spi_bus_deinitialize(struct spi_bus *bus)
 {
-	am_hal_iom_disable(bus->handle);
-	am_bsp_iom_pins_disable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
-	am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
-	am_hal_iom_uninitialize(bus->handle);
-	memset(bus, 0, sizeof(*bus));
+	if (bus->refcount)
+	{
+		if (!--(bus->refcount))
+		{
+			am_hal_iom_disable(bus->handle);
+			am_bsp_iom_pins_disable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
+			am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+			am_hal_iom_uninitialize(bus->handle);
+			memset(bus, 0, sizeof(*bus));
+		}
+	}
 }
 
 void spi_device_deinitialize(struct spi_device *device)
 {
-	memset(device, 0, sizeof(*device));
+	if (device->refcount)
+	{
+		if (!--(device->refcount))
+		{
+			memset(device, 0, sizeof(*device));
+		}
+	}
 }
 
 bool spi_bus_sleep(struct spi_bus *bus)
