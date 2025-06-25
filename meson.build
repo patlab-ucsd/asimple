@@ -91,7 +91,7 @@ exe = executable(meson.project_name(),
   link_with: asimple_libs['asimple_rba_atp'],
   include_directories: includes,
   c_args: c_args,
-  link_args: link_args + ['-T' + meson.source_root() / 'linker.ld']
+  link_args: link_args + ['-T' + meson.project_source_root() / 'linker.ld']
 )
 
 # Custom flash target, to make it easier to program the RedBoard, requires
@@ -106,7 +106,7 @@ bin = custom_target(
 )
 
 run_target('flash',
-  command : ['python3', meson.source_root() / 'svl.py',
+  command : ['python3', meson.project_source_root() / 'svl.py',
     get_option('tty'), '-f',  bin, '-b', '921600', '-v'],
   depends : bin,
 )
