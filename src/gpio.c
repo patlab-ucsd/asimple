@@ -10,8 +10,6 @@
 #include <am_hal_status.h>
 #include <am_hal_gpio.h>
 
-static AM_HAL_GPIO_MASKCREATE(interrupt_mask);
-
 void gpio_init(
 	struct gpio *gpio, uint8_t pin, enum gpio_mode mode, bool init_state)
 {
@@ -22,7 +20,7 @@ void gpio_init(
 	gpio_set(gpio, init_state);
 	if (mode == GPIO_MODE_OUTPUT)
 		am_hal_gpio_pinconfig(pin, g_AM_HAL_GPIO_OUTPUT_WITH_READ);
-	if (mode == GPIO_MODE_INPUT)
+	else if (mode == GPIO_MODE_INPUT)
 	{
 		const am_hal_gpio_pincfg_t input_gpio =
 		{
@@ -33,7 +31,9 @@ void gpio_init(
 			.eIntDir   = AM_HAL_GPIO_PIN_INTDIR_LO2HI
 		};
 		am_hal_gpio_pinconfig(pin, input_gpio);
-		AM_HAL_GPIO_MASKBITSMULT(pinterrupt_mask, pin);
+
+		AM_HAL_GPIO_MASKCREATE(interrupt_mask);
+		AM_HAL_GPIO_MASKBIT(pinterrupt_mask, pin);
 		am_hal_gpio_interrupt_enable(pinterrupt_mask);
 		NVIC_EnableIRQ(GPIO_IRQn);
 	}
