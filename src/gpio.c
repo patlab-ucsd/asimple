@@ -37,6 +37,20 @@ void gpio_init(
 		am_hal_gpio_interrupt_enable(pinterrupt_mask);
 		NVIC_EnableIRQ(GPIO_IRQn);
 	}
+	else if (mode == GPIO_MODE_OPENDRAIN)
+	{
+		const am_hal_gpio_pincfg_t opendrain_gpio =
+		{
+			.uFuncSel       = 3,
+			.eGPOutcfg      = AM_HAL_GPIO_PIN_OUTCFG_OPENDRAIN,
+			.eGPInput       = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+			.eGPRdZero      = AM_HAL_GPIO_PIN_RDZERO_READPIN,
+			.ePullup        = AM_HAL_GPIO_PIN_PULLUP_NONE,
+			.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA,
+		};
+
+		am_hal_gpio_pinconfig(pin, opendrain_gpio);
+	}
 }
 
 void gpio_set(struct gpio *gpio, bool state)

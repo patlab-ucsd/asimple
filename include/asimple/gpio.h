@@ -21,7 +21,8 @@ struct gpio
 enum gpio_mode
 {
 	GPIO_MODE_OUTPUT,
-	GPIO_MODE_INPUT
+	GPIO_MODE_INPUT,
+	GPIO_MODE_OPENDRAIN
 };
 
 // FIXME we should let the type of GPIO be configurable, or document how to do so
