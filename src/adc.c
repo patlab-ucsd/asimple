@@ -70,6 +70,7 @@ static const am_hal_ctimer_config_t timer3_config = {
 	.ui32TimerBConfig = 0,
 };
 
+// FIXME this has a bunch of hard-coded parameters
 static void adc_timer_init(void)
 {
 	// Only CTIMER 3 supports the ADC.
@@ -250,7 +251,6 @@ static void adc_init_channels(struct adc *adc, const am_hal_adc_slot_chan_e* cha
 
 	// Enable the ADC.
 	am_hal_adc_enable(adc->handle);
-	adc_timer_init();
 	NVIC_EnableIRQ(ADC_IRQn);
 
 	// Enable the ADC interrupts in the ADC.
