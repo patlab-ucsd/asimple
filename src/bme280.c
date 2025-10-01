@@ -7,8 +7,8 @@
 #include <spi.h>
 #include <uart.h>
 
-#include <am_mcu_apollo.h>
 #include <am_bsp.h>
+#include <am_mcu_apollo.h>
 
 #include <stdint.h>
 #include <sys/endian.h>
@@ -18,7 +18,7 @@ void bme280_init(struct bme280 *bme280, struct spi_device *device)
 	bme280->spi = device;
 
 	// Read all compensation parameter storage data at once
-	uint8_t dig_part1[13*2];
+	uint8_t dig_part1[13 * 2];
 	bme280_read_register(bme280, 0x88, dig_part1, sizeof(dig_part1));
 	uint8_t dig_part2[6];
 	bme280_read_register(bme280, 0xE1, dig_part2, sizeof(dig_part2));
@@ -61,20 +61,24 @@ uint8_t bme280_read_id(struct bme280 *bme280)
 	return buffer[0];
 }
 
-void bme280_read_register(struct bme280 *bme280, uint8_t addr, uint8_t *buffer, uint32_t size)
+void bme280_read_register(
+	struct bme280 *bme280, uint8_t addr, uint8_t *buffer, uint32_t size
+)
 {
 	addr |= 0x80; // set top bit
 	spi_device_write_continue(bme280->spi, &addr, 1);
 	spi_device_read(bme280->spi, buffer, size);
 }
 
-void bme280_write_register(struct bme280 *bme280, uint8_t addr, const uint8_t *buffer, uint32_t size)
+void bme280_write_register(
+	struct bme280 *bme280, uint8_t addr, const uint8_t *buffer, uint32_t size
+)
 {
 	addr &= 0x7F; // clear top bit
 	spi_device_cmd_write(bme280->spi, addr, buffer, size);
 }
 
-inline static uint32_t be24dec(void* buff)
+inline static uint32_t be24dec(void *buff)
 {
 	unsigned char *data = buff;
 	return data[0] << 16 | data[1] << 8 | data[2];
@@ -98,8 +102,8 @@ struct bme280_sample bme280_get_sample(struct bme280 *bme280)
 	bme280_read_register(bme280, 0xF7, buffer, 8);
 	struct bme280_sample result = {
 		.raw_pressure = be24dec(buffer) >> 4,
-		.raw_temperature = be24dec(buffer+3) >> 4,
-		.raw_humidity = be16dec(buffer+6)
+		.raw_temperature = be24dec(buffer + 3) >> 4,
+		.raw_humidity = be16dec(buffer + 6)
 	};
 	return result;
 }
@@ -107,8 +111,10 @@ struct bme280_sample bme280_get_sample(struct bme280 *bme280)
 static uint32_t bme280_get_t_fine(struct bme280 *bme280, uint32_t raw_temp)
 {
 	double var1, var2;
-	var1 = (raw_temp/16384.0 - bme280->dig_T1/1024.0) * bme280->dig_T2;
-	var2 = ((raw_temp/131072.0 - bme280->dig_T1/8192.0) * (raw_temp/131072.0 - bme280->dig_T1/8192.0)) * bme280->dig_T3;
+	var1 = (raw_temp / 16384.0 - bme280->dig_T1 / 1024.0) * bme280->dig_T2;
+	var2 = ((raw_temp / 131072.0 - bme280->dig_T1 / 8192.0) *
+			(raw_temp / 131072.0 - bme280->dig_T1 / 8192.0)) *
+		   bme280->dig_T3;
 	return (uint32_t)(var1 + var2);
 }
 
@@ -119,16 +125,20 @@ double bme280_compensate_T_double(struct bme280 *bme280, uint32_t raw_temp)
 	return T;
 }
 
-double bme280_compensate_P_double(struct bme280 *bme280, uint32_t raw_press, uint32_t raw_temp)
+double bme280_compensate_P_double(
+	struct bme280 *bme280, uint32_t raw_press, uint32_t raw_temp
+)
 {
 	uint32_t t_fine = bme280_get_t_fine(bme280, raw_temp);
 	double var1, var2, p;
-	var1 = ((double)t_fine/2.0) - 64000.0;
+	var1 = ((double)t_fine / 2.0) - 64000.0;
 	var2 = var1 * var1 * ((double)bme280->dig_P6) / 32768.0;
 	var2 = var2 + var1 * ((double)bme280->dig_P5) * 2.0;
-	var2 = (var2/4.0)+(((double)bme280->dig_P4) * 65536.0);
-	var1 = (((double)bme280->dig_P3) * var1 * var1 / 524288.0 + ((double)bme280->dig_P2) * var1) / 524288.0;
-	var1 = (1.0 + var1 / 32768.0)*((double)bme280->dig_P1);
+	var2 = (var2 / 4.0) + (((double)bme280->dig_P4) * 65536.0);
+	var1 = (((double)bme280->dig_P3) * var1 * var1 / 524288.0 +
+			((double)bme280->dig_P2) * var1) /
+		   524288.0;
+	var1 = (1.0 + var1 / 32768.0) * ((double)bme280->dig_P1);
 	if (var1 == 0.0)
 	{
 		return 0; // avoid exception caused by division by zero

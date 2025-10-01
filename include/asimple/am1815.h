@@ -7,11 +7,12 @@
 
 #include <spi.h>
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Structure representing the AM1815 RTC */
@@ -60,7 +61,9 @@ void am1815_write_register(struct am1815 *rtc, uint8_t addr, uint8_t data);
  * @param[out] data Output buffer to save incoming reads to.
  * @param[in] size Size of output buffer, and how much to read.
  */
-void am1815_read_bulk(struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t size);
+void am1815_read_bulk(
+	struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t size
+);
 
 /** Writes a series of registers in sequence.
  *
@@ -69,11 +72,14 @@ void am1815_read_bulk(struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t si
  * @param[out] data Output buffer with data to write to the RTC.
  * @param[in] size Size of input buffer, and how much to write.
  */
-void am1815_write_bulk(struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size);
+void am1815_write_bulk(
+	struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size
+);
 
-/** Set RPT bits in Countdown Timer Control register to control how often the alarm interrupt repeats.
- * 0 means disable alarm, 1 means once per year, 2 means once per month, 3 means once per week,
- * 4 means once per day, 5 means once per hour, 6 means once per minute, 7 means once per second.
+/** Set RPT bits in Countdown Timer Control register to control how often the
+ * alarm interrupt repeats. 0 means disable alarm, 1 means once per year, 2
+ * means once per month, 3 means once per week, 4 means once per day, 5 means
+ * once per hour, 6 means once per minute, 7 means once per second.
  *
  * @param[in,out] rtc RTC to set the repeat function.
  * @param[in] repeat number to decide how often the alarm repeats
@@ -115,17 +121,18 @@ void am1815_write_time(struct am1815 *rtc, const struct timeval *time);
  *
  * @param[in] rtc RTC to read the time of.
  *
- * @returns The RTC's alarm time in seconds and microseconds. Since there is no year,
- * we set the year to 0 (i.e, 0 years since 1900). Note that the AM1815 has at best
- * centiseconds resolution.
-*/
+ * @returns The RTC's alarm time in seconds and microseconds. Since there is no
+ * year, we set the year to 0 (i.e, 0 years since 1900). Note that the AM1815
+ * has at best centiseconds resolution.
+ */
 struct timeval am1815_read_alarm(struct am1815 *rtc);
 
 /** Writes the alarm time on the RTC.
  *
  * @param[in, out] rtc RTC to write the alarm time of.
- * @param[in] atime The time in seconds and microseconds that we want to set the alarm to.
-*/
+ * @param[in] atime The time in seconds and microseconds that we want to set the
+ * alarm to.
+ */
 void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime);
 
 /**
@@ -134,7 +141,7 @@ void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime);
  * @param[in] rtc RTC to read the countdown timer of.
  *
  * @returns The current value of the countdown register (0x19).
-*/
+ */
 uint8_t am1815_read_timer(struct am1815 *rtc);
 
 /**
@@ -147,7 +154,7 @@ uint8_t am1815_read_timer(struct am1815 *rtc);
  *
  * @returns The actual period (in seconds) that the timer was set to. (It may
  * be different from the timer parameter because of the RTC's limitations.)
-*/
+ */
 double am1815_write_timer(struct am1815 *rtc, double timer);
 
 /** Enable the alarm interrupt and output to FOUT.
@@ -155,7 +162,9 @@ double am1815_write_timer(struct am1815 *rtc, double timer);
  * @param[in,out] rtc RTC to enable alarm on.
  * @param[in] pulse Pulse to set for alarm.
  */
-void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width pulse);
+void am1815_enable_alarm_interrupt(
+	struct am1815 *rtc, enum am1815_pulse_width pulse
+);
 
 /** Disable the alarm interrupt and output to FOUT.
  *
@@ -163,9 +172,8 @@ void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width p
  */
 void am1815_disable_alarm_interrupt(struct am1815 *rtc);
 
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif//AM1815_H_
+#endif // AM1815_H_

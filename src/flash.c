@@ -6,14 +6,14 @@
 #include <flash.h>
 #include <spi.h>
 
-#include <am_mcu_apollo.h>
 #include <am_bsp.h>
+#include <am_mcu_apollo.h>
 
+#include <assert.h>
 #include <stdint.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <string.h>
 
 void flash_init(struct flash *flash, struct spi_device *device)
 {
@@ -34,9 +34,11 @@ void flash_wait_busy(struct flash *flash)
 	uint8_t writeBuffer = 0x05;
 	spi_device_write_continue(flash->spi, &writeBuffer, 1);
 	uint8_t readBuffer = 0;
-	do {
+	do
+	{
 		spi_device_read_continue(flash->spi, &readBuffer, 1);
-	} while (readBuffer & 0x01);
+	}
+	while (readBuffer & 0x01);
 	// This has the potential to waste sime cycles as we need to bring down the
 	// CS line, and only way I know how to do that is to complete a transaction
 	// with the continue flag unset.
@@ -49,7 +51,9 @@ void flash_write_enable(struct flash *flash)
 	spi_device_write(flash->spi, &writeBuffer, 1);
 }
 
-void flash_read_data(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size)
+void flash_read_data(
+	struct flash *flash, uint32_t addr, uint8_t *buffer, uint32_t size
+)
 {
 	// Write command as least significant bit
 	uint8_t toWrite[] = {
@@ -64,7 +68,9 @@ void flash_read_data(struct flash *flash, uint32_t addr, uint8_t *buffer, uint32
 	spi_device_read(flash->spi, buffer, size);
 }
 
-uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *buffer, uint32_t size)
+uint8_t flash_page_program(
+	struct flash *flash, uint32_t addr, const uint8_t *buffer, uint32_t size
+)
 {
 	// Enable writing and check that status register updated
 	flash_write_enable(flash);
@@ -74,7 +80,8 @@ uint8_t flash_page_program(struct flash *flash, uint32_t addr, const uint8_t *bu
 	read = read >> 1;
 
 	// Indicate failure if write enable didn't work
-	if (read == 0) {
+	if (read == 0)
+	{
 		return 0;
 	}
 
@@ -102,7 +109,8 @@ uint8_t flash_sector_erase(struct flash *flash, uint32_t addr)
 	read = read >> 1;
 
 	// Indicate failure if write enable didn't work
-	if (read == 0) {
+	if (read == 0)
+	{
 		return 0;
 	}
 

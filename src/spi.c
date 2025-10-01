@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
 
-#include <spi.h>
 #include <gpio.h>
+#include <spi.h>
 
-#include <am_mcu_apollo.h>
 #include <am_bsp.h>
+#include <am_mcu_apollo.h>
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdatomic.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct spi_device
 {
@@ -30,12 +30,11 @@ struct spi_bus
 	atomic_uint refcount;
 };
 
-static struct spi_bus busses[3]; //FIXME how many busses do we have?
+static struct spi_bus busses[3]; // FIXME how many busses do we have?
 
 // Configuration structure for the IO Master.
 // FIXME I don't like why this isn't const...
-static am_hal_iom_config_t spi_config =
-{
+static am_hal_iom_config_t spi_config = {
 	.eInterfaceMode = AM_HAL_IOM_SPI_MODE,
 	.ui32ClockFreq = AM_HAL_IOM_4MHZ,
 	.eSpiMode = AM_HAL_IOM_SPI_MODE_0,
@@ -97,15 +96,15 @@ static int convert_chip_select(uint8_t module, enum spi_chip_select cs)
 #ifdef AM_BSP_IOM0_CS1_CHNL
 		case SPI_CS_1:
 			return AM_BSP_IOM0_CS1_CHNL;
-#endif//AM_BSP_IOM0_CS1_CHNL
+#endif // AM_BSP_IOM0_CS1_CHNL
 #ifdef AM_BSP_IOM0_CS2_CHNL
 		case SPI_CS_2:
 			return AM_BSP_IOM0_CS2_CHNL;
-#endif//AM_BSP_IOM0_CS2_CHNL
+#endif // AM_BSP_IOM0_CS2_CHNL
 #ifdef AM_BSP_IOM0_CS3_CHNL
 		case SPI_CS_3:
 			return AM_BSP_IOM0_CS3_CHNL;
-#endif//AM_BSP_IOM0_CS3_CHNL
+#endif // AM_BSP_IOM0_CS3_CHNL
 		case SPI_CS_0:
 		default:
 			return AM_BSP_IOM0_CS_CHNL;
@@ -116,15 +115,15 @@ static int convert_chip_select(uint8_t module, enum spi_chip_select cs)
 #ifdef AM_BSP_IOM1_CS1_CHNL
 		case SPI_CS_1:
 			return AM_BSP_IOM1_CS1_CHNL;
-#endif//AM_BSP_IOM1_CS1_CHNL
+#endif // AM_BSP_IOM1_CS1_CHNL
 #ifdef AM_BSP_IOM1_CS2_CHNL
 		case SPI_CS_2:
 			return AM_BSP_IOM1_CS2_CHNL;
-#endif//AM_BSP_IOM1_CS2_CHNL
+#endif // AM_BSP_IOM1_CS2_CHNL
 #ifdef AM_BSP_IOM1_CS3_CHNL
 		case SPI_CS_3:
 			return AM_BSP_IOM1_CS3_CHNL;
-#endif//AM_BSP_IOM1_CS3_CHNL
+#endif // AM_BSP_IOM1_CS3_CHNL
 		case SPI_CS_0:
 		default:
 			return AM_BSP_IOM1_CS_CHNL;
@@ -135,15 +134,15 @@ static int convert_chip_select(uint8_t module, enum spi_chip_select cs)
 #ifdef AM_BSP_IOM2_CS1_CHNL
 		case SPI_CS_1:
 			return AM_BSP_IOM2_CS1_CHNL;
-#endif//AM_BSP_IOM2_CS1_CHNL
+#endif // AM_BSP_IOM2_CS1_CHNL
 #ifdef AM_BSP_IOM2_CS2_CHNL
 		case SPI_CS_2:
 			return AM_BSP_IOM2_CS2_CHNL;
-#endif//AM_BSP_IOM2_CS2_CHNL
+#endif // AM_BSP_IOM2_CS2_CHNL
 #ifdef AM_BSP_IOM2_CS3_CHNL
 		case SPI_CS_3:
 			return AM_BSP_IOM2_CS3_CHNL;
-#endif//AM_BSP_IOM2_CS3_CHNL
+#endif // AM_BSP_IOM2_CS3_CHNL
 		case SPI_CS_0:
 		default:
 			return AM_BSP_IOM2_CS_CHNL;
@@ -154,15 +153,15 @@ static int convert_chip_select(uint8_t module, enum spi_chip_select cs)
 #ifdef AM_BSP_IOM3_CS1_CHNL
 		case SPI_CS_1:
 			return AM_BSP_IOM3_CS1_CHNL;
-#endif//AM_BSP_IOM3_CS1_CHNL
+#endif // AM_BSP_IOM3_CS1_CHNL
 #ifdef AM_BSP_IOM3_CS2_CHNL
 		case SPI_CS_2:
 			return AM_BSP_IOM3_CS2_CHNL;
-#endif//AM_BSP_IOM3_CS2_CHNL
+#endif // AM_BSP_IOM3_CS2_CHNL
 #ifdef AM_BSP_IOM3_CS3_CHNL
 		case SPI_CS_3:
 			return AM_BSP_IOM3_CS3_CHNL;
-#endif//AM_BSP_IOM3_CS3_CHNL
+#endif // AM_BSP_IOM3_CS3_CHNL
 		case SPI_CS_0:
 		default:
 			return AM_BSP_IOM3_CS_CHNL;
@@ -184,63 +183,65 @@ struct iom_pins
 	struct iom_pin cs[4];
 };
 
-struct iom_pins iom_pins[4] =
-{
+struct iom_pins iom_pins[4] = {
 	{
-		.clk = { AM_BSP_GPIO_IOM0_SCK, &g_AM_BSP_GPIO_IOM0_SCK },
-		.miso = { AM_BSP_GPIO_IOM0_MISO, &g_AM_BSP_GPIO_IOM0_MISO },
-		.mosi = { AM_BSP_GPIO_IOM0_MOSI, &g_AM_BSP_GPIO_IOM0_MOSI },
-		.cs = {
-			{AM_BSP_GPIO_IOM0_CS, &g_AM_BSP_GPIO_IOM0_CS},
+		.clk = {AM_BSP_GPIO_IOM0_SCK, &g_AM_BSP_GPIO_IOM0_SCK},
+		.miso = {AM_BSP_GPIO_IOM0_MISO, &g_AM_BSP_GPIO_IOM0_MISO},
+		.mosi = {AM_BSP_GPIO_IOM0_MOSI, &g_AM_BSP_GPIO_IOM0_MOSI},
+		.cs =
+			{
+				{AM_BSP_GPIO_IOM0_CS, &g_AM_BSP_GPIO_IOM0_CS},
 #ifdef AM_BSP_GPIO_IOM0_CS1
-			{AM_BSP_GPIO_IOM0_CS1, &g_AM_BSP_GPIO_IOM0_CS1},
+				{AM_BSP_GPIO_IOM0_CS1, &g_AM_BSP_GPIO_IOM0_CS1},
 #endif
 #ifdef AM_BSP_GPIO_IOM0_CS2
-			{AM_BSP_GPIO_IOM0_CS2, &g_AM_BSP_GPIO_IOM0_CS2},
+				{AM_BSP_GPIO_IOM0_CS2, &g_AM_BSP_GPIO_IOM0_CS2},
 #endif
 #ifdef AM_BSP_GPIO_IOM0_CS3
-			{AM_BSP_GPIO_IOM0_CS3, &g_AM_BSP_GPIO_IOM0_CS3},
+				{AM_BSP_GPIO_IOM0_CS3, &g_AM_BSP_GPIO_IOM0_CS3},
 #endif
-		},
+			},
 	},
 	{
-		.clk = { AM_BSP_GPIO_IOM1_SCK, &g_AM_BSP_GPIO_IOM1_SCK },
-		.miso = { AM_BSP_GPIO_IOM1_MISO, &g_AM_BSP_GPIO_IOM1_MISO },
-		.mosi = { AM_BSP_GPIO_IOM1_MOSI, &g_AM_BSP_GPIO_IOM1_MOSI },
-		.cs = {
-			{AM_BSP_GPIO_IOM1_CS, &g_AM_BSP_GPIO_IOM1_CS},
+		.clk = {AM_BSP_GPIO_IOM1_SCK, &g_AM_BSP_GPIO_IOM1_SCK},
+		.miso = {AM_BSP_GPIO_IOM1_MISO, &g_AM_BSP_GPIO_IOM1_MISO},
+		.mosi = {AM_BSP_GPIO_IOM1_MOSI, &g_AM_BSP_GPIO_IOM1_MOSI},
+		.cs =
+			{
+				{AM_BSP_GPIO_IOM1_CS, &g_AM_BSP_GPIO_IOM1_CS},
 #ifdef AM_BSP_GPIO_IOM1_CS1
-			{AM_BSP_GPIO_IOM1_CS1, &g_AM_BSP_GPIO_IOM1_CS1},
+				{AM_BSP_GPIO_IOM1_CS1, &g_AM_BSP_GPIO_IOM1_CS1},
 #endif
 #ifdef AM_BSP_GPIO_IOM1_CS2
-			{AM_BSP_GPIO_IOM1_CS2, &g_AM_BSP_GPIO_IOM1_CS2},
+				{AM_BSP_GPIO_IOM1_CS2, &g_AM_BSP_GPIO_IOM1_CS2},
 #endif
 #ifdef AM_BSP_GPIO_IOM1_CS3
-			{AM_BSP_GPIO_IOM1_CS3, &g_AM_BSP_GPIO_IOM1_CS3},
+				{AM_BSP_GPIO_IOM1_CS3, &g_AM_BSP_GPIO_IOM1_CS3},
 #endif
-		},
+			},
 	},
 	{
-		.clk = { AM_BSP_GPIO_IOM2_SCK, &g_AM_BSP_GPIO_IOM2_SCK },
-		.miso = { AM_BSP_GPIO_IOM2_MISO, &g_AM_BSP_GPIO_IOM2_MISO },
-		.mosi = { AM_BSP_GPIO_IOM2_MOSI, &g_AM_BSP_GPIO_IOM2_MOSI },
-		.cs = {
-			{AM_BSP_GPIO_IOM2_CS, &g_AM_BSP_GPIO_IOM2_CS},
+		.clk = {AM_BSP_GPIO_IOM2_SCK, &g_AM_BSP_GPIO_IOM2_SCK},
+		.miso = {AM_BSP_GPIO_IOM2_MISO, &g_AM_BSP_GPIO_IOM2_MISO},
+		.mosi = {AM_BSP_GPIO_IOM2_MOSI, &g_AM_BSP_GPIO_IOM2_MOSI},
+		.cs =
+			{
+				{AM_BSP_GPIO_IOM2_CS, &g_AM_BSP_GPIO_IOM2_CS},
 #ifdef AM_BSP_GPIO_IOM2_CS1
-			{AM_BSP_GPIO_IOM2_CS1, &g_AM_BSP_GPIO_IOM2_CS1},
+				{AM_BSP_GPIO_IOM2_CS1, &g_AM_BSP_GPIO_IOM2_CS1},
 #endif
 #ifdef AM_BSP_GPIO_IOM2_CS2
-			{AM_BSP_GPIO_IOM2_CS2, &g_AM_BSP_GPIO_IOM2_CS2},
+				{AM_BSP_GPIO_IOM2_CS2, &g_AM_BSP_GPIO_IOM2_CS2},
 #endif
 #ifdef AM_BSP_GPIO_IOM2_CS3
-			{AM_BSP_GPIO_IOM2_CS3, &g_AM_BSP_GPIO_IOM2_CS3},
+				{AM_BSP_GPIO_IOM2_CS3, &g_AM_BSP_GPIO_IOM2_CS3},
 #endif
-		},
+			},
 	},
 	{
-		.clk = { AM_BSP_GPIO_IOM3_SCK, &g_AM_BSP_GPIO_IOM3_SCK },
-		.miso = { AM_BSP_GPIO_IOM3_MISO, &g_AM_BSP_GPIO_IOM3_MISO },
-		.mosi = { AM_BSP_GPIO_IOM3_MOSI, &g_AM_BSP_GPIO_IOM3_MOSI },
+		.clk = {AM_BSP_GPIO_IOM3_SCK, &g_AM_BSP_GPIO_IOM3_SCK},
+		.miso = {AM_BSP_GPIO_IOM3_MISO, &g_AM_BSP_GPIO_IOM3_MISO},
+		.mosi = {AM_BSP_GPIO_IOM3_MOSI, &g_AM_BSP_GPIO_IOM3_MOSI},
 		.cs = {
 			{AM_BSP_GPIO_IOM3_CS, &g_AM_BSP_GPIO_IOM3_CS},
 #ifdef AM_BSP_GPIO_IOM3_CS1
@@ -278,7 +279,8 @@ struct spi_bus *spi_bus_get_instance(enum spi_bus_instance instance)
 }
 
 struct spi_device *spi_device_get_instance(
-	struct spi_bus *bus, enum spi_chip_select instance, uint32_t clock)
+	struct spi_bus *bus, enum spi_chip_select instance, uint32_t clock
+)
 {
 	struct spi_device *device = &bus->devices[(int)instance];
 	if (!device->parent)
@@ -345,8 +347,10 @@ bool spi_bus_sleep(struct spi_bus *bus)
 	int status;
 	do
 	{
-		status = am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
-	} while (status == AM_HAL_STATUS_IN_USE);
+		status =
+			am_hal_iom_power_ctrl(bus->handle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
+	}
+	while (status == AM_HAL_STATUS_IN_USE);
 
 	am_bsp_iom_pins_disable(bus->iom_module, AM_HAL_IOM_SPI_MODE);
 	return true;
@@ -366,11 +370,11 @@ bool spi_bus_enable(struct spi_bus *bus)
 }
 
 void spi_device_cmd_read(
-	struct spi_device *device, uint8_t command, uint8_t *buffer, uint32_t size)
+	struct spi_device *device, uint8_t command, uint8_t *buffer, uint32_t size
+)
 {
-	uint32_t *buf = malloc((size + 3)/4 * 4);
-	am_hal_iom_transfer_t transaction =
-	{
+	uint32_t *buf = malloc((size + 3) / 4 * 4);
+	am_hal_iom_transfer_t transaction = {
 		.ui32InstrLen = 1,
 		.ui32Instr = command,
 		.eDirection = AM_HAL_IOM_RX,
@@ -390,19 +394,20 @@ void spi_device_cmd_read(
 }
 
 void spi_device_cmd_write(
-	struct spi_device *device, uint8_t command, const uint8_t *buffer, uint32_t size)
+	struct spi_device *device, uint8_t command, const uint8_t *buffer,
+	uint32_t size
+)
 {
 	uint32_t *buf = malloc(((size + 3) / 4) * 4);
 	memcpy(buf, buffer, size);
-	am_hal_iom_transfer_t transaction =
-	{
-		.ui32InstrLen	= 1,
-		.ui32Instr	   = command,
-		.eDirection	  = AM_HAL_IOM_TX,
-		.ui32NumBytes	= size,
-		.pui32TxBuffer   = buf,
-		.bContinue	   = false,
-		.ui8RepeatCount  = 0,
+	am_hal_iom_transfer_t transaction = {
+		.ui32InstrLen = 1,
+		.ui32Instr = command,
+		.eDirection = AM_HAL_IOM_TX,
+		.ui32NumBytes = size,
+		.pui32TxBuffer = buf,
+		.bContinue = false,
+		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
@@ -413,12 +418,10 @@ void spi_device_cmd_write(
 	free(buf);
 }
 
-void spi_device_read(
-	struct spi_device *device, uint8_t *buffer, uint32_t size)
+void spi_device_read(struct spi_device *device, uint8_t *buffer, uint32_t size)
 {
 	uint32_t *buf = malloc(((size + 3) / 4) * 4);
-	am_hal_iom_transfer_t transaction =
-	{
+	am_hal_iom_transfer_t transaction = {
 		.ui32InstrLen = 0,
 		.eDirection = AM_HAL_IOM_RX,
 		.ui32NumBytes = size,
@@ -437,18 +440,18 @@ void spi_device_read(
 }
 
 void spi_device_write(
-	struct spi_device *device, const uint8_t *buffer, uint32_t size)
+	struct spi_device *device, const uint8_t *buffer, uint32_t size
+)
 {
 	uint32_t *buf = malloc(((size + 3) / 4) * 4);
 	memcpy(buf, buffer, size);
-	am_hal_iom_transfer_t transaction =
-	{
-		.ui32InstrLen	= 0,
-		.eDirection	  = AM_HAL_IOM_TX,
-		.ui32NumBytes	= size,
-		.pui32TxBuffer   = buf,
-		.bContinue	   = false,
-		.ui8RepeatCount  = 0,
+	am_hal_iom_transfer_t transaction = {
+		.ui32InstrLen = 0,
+		.eDirection = AM_HAL_IOM_TX,
+		.ui32NumBytes = size,
+		.pui32TxBuffer = buf,
+		.bContinue = false,
+		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
@@ -460,11 +463,11 @@ void spi_device_write(
 }
 
 void spi_device_read_continue(
-	struct spi_device *device, uint8_t *buffer, uint32_t size)
+	struct spi_device *device, uint8_t *buffer, uint32_t size
+)
 {
 	uint32_t *buf = malloc(((size + 3) / 4) * 4);
-	am_hal_iom_transfer_t transaction =
-	{
+	am_hal_iom_transfer_t transaction = {
 		.ui32InstrLen = 0,
 		.eDirection = AM_HAL_IOM_RX,
 		.ui32NumBytes = size,
@@ -483,18 +486,18 @@ void spi_device_read_continue(
 }
 
 void spi_device_write_continue(
-	struct spi_device *device, const uint8_t *buffer, uint32_t size)
+	struct spi_device *device, const uint8_t *buffer, uint32_t size
+)
 {
-	uint32_t *buf = malloc(((size + 3)/4) * 4);
+	uint32_t *buf = malloc(((size + 3) / 4) * 4);
 	memcpy(buf, buffer, size);
-	am_hal_iom_transfer_t transaction =
-	{
-		.ui32InstrLen	= 0,
-		.eDirection	  = AM_HAL_IOM_TX,
-		.ui32NumBytes	= size,
-		.pui32TxBuffer   = buf,
-		.bContinue	   = true,
-		.ui8RepeatCount  = 0,
+	am_hal_iom_transfer_t transaction = {
+		.ui32InstrLen = 0,
+		.eDirection = AM_HAL_IOM_TX,
+		.ui32NumBytes = size,
+		.pui32TxBuffer = buf,
+		.bContinue = true,
+		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
@@ -506,26 +509,23 @@ void spi_device_write_continue(
 }
 
 void spi_device_readwrite(
-	struct spi_device *device,
-	uint32_t command,
-	uint8_t *rx_buffer,
-	const uint8_t *tx_buffer,
-	uint32_t size)
+	struct spi_device *device, uint32_t command, uint8_t *rx_buffer,
+	const uint8_t *tx_buffer, uint32_t size
+)
 {
-	uint32_t *bufr = malloc(((size + 3)/4) * 4);
-	uint32_t *bufw = malloc(((size + 3)/4) * 4);
+	uint32_t *bufr = malloc(((size + 3) / 4) * 4);
+	uint32_t *bufw = malloc(((size + 3) / 4) * 4);
 	memcpy(bufw, tx_buffer, size);
-	am_hal_iom_transfer_t transaction =
-	{
-		.ui32InstrLen	= 1,
-		.ui32Instr	   = command,
-		.eDirection	  = AM_HAL_IOM_FULLDUPLEX,
-		.ui32NumBytes	= size,
+	am_hal_iom_transfer_t transaction = {
+		.ui32InstrLen = 1,
+		.ui32Instr = command,
+		.eDirection = AM_HAL_IOM_FULLDUPLEX,
+		.ui32NumBytes = size,
 		// FIXME I really don't like how I need to strip const here...
-		.pui32TxBuffer   = bufw,
+		.pui32TxBuffer = bufw,
 		.pui32RxBuffer = bufr,
-		.bContinue	   = false,
-		.ui8RepeatCount  = 0,
+		.bContinue = false,
+		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
@@ -539,25 +539,23 @@ void spi_device_readwrite(
 }
 
 void spi_device_readwrite_continue(
-	struct spi_device *device,
-	uint8_t *rx_buffer,
-	const uint8_t *tx_buffer,
-	uint32_t size)
+	struct spi_device *device, uint8_t *rx_buffer, const uint8_t *tx_buffer,
+	uint32_t size
+)
 {
-	uint32_t *bufr = malloc(((size + 3)/4) * 4);
-	uint32_t *bufw = malloc(((size + 3)/4) * 4);
+	uint32_t *bufr = malloc(((size + 3) / 4) * 4);
+	uint32_t *bufw = malloc(((size + 3) / 4) * 4);
 	memcpy(bufw, tx_buffer, size);
-	am_hal_iom_transfer_t transaction =
-	{
-		.ui32InstrLen	= 0,
-		.ui32Instr	   = 0,
-		.eDirection	  = AM_HAL_IOM_FULLDUPLEX,
-		.ui32NumBytes	= size,
+	am_hal_iom_transfer_t transaction = {
+		.ui32InstrLen = 0,
+		.ui32Instr = 0,
+		.eDirection = AM_HAL_IOM_FULLDUPLEX,
+		.ui32NumBytes = size,
 		// FIXME I really don't like how I need to strip const here...
-		.pui32TxBuffer   = bufw,
+		.pui32TxBuffer = bufw,
 		.pui32RxBuffer = bufr,
-		.bContinue	   = true,
-		.ui8RepeatCount  = 0,
+		.bContinue = true,
+		.ui8RepeatCount = 0,
 		.ui32PauseCondition = 0,
 		.ui32StatusSetClr = 0,
 
@@ -579,9 +577,7 @@ void spi_device_toggle(struct spi_device *device, uint32_t size)
 	const struct iom_pin *cs_pin =
 		&iom_pins[device->parent->iom_module].cs[device->chip_select];
 	gpio_init(&cs, cs_pin->pin, GPIO_MODE_OUTPUT, 1);
-	uint8_t data[4] = {
-		0xFFu, 0xFFu, 0xFFu, 0xFFu
-	};
+	uint8_t data[4] = {0xFFu, 0xFFu, 0xFFu, 0xFFu};
 	spi_device_update_clock(device);
 	for (; size > 4; size -= 4)
 		spi_device_write(device, data, 4);

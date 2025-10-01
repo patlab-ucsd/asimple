@@ -3,10 +3,13 @@
 
 #include <lfs.h>
 
-#include <flash.h>
 #include <asimple_littlefs.h>
+#include <flash.h>
 
-static int asimple_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
+static int asimple_lfs_read(
+	const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer,
+	lfs_size_t size
+)
 {
 	struct asimple_littlefs *fs = c->context;
 	flash_wait_busy(fs->flash);
@@ -14,7 +17,10 @@ static int asimple_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_o
 	return 0;
 }
 
-static int asimple_lfs_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
+static int asimple_lfs_prog(
+	const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
+	const void *buffer, lfs_size_t size
+)
 {
 	struct asimple_littlefs *fs = c->context;
 	flash_wait_busy(fs->flash);
@@ -47,7 +53,7 @@ void asimple_littlefs_init(struct asimple_littlefs *fs, struct flash *flash)
 		.erase = asimple_lfs_erase,
 		.sync = asimple_lfs_sync,
 		.read_size = 1,
-		.prog_size =  256,
+		.prog_size = 256,
 		.block_size = 4096,
 		.block_count = 512,
 		.cache_size = 256,

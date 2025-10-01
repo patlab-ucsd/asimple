@@ -5,15 +5,16 @@
 #ifndef LORA_H_
 #define LORA_H_
 
-#include <spi.h>
 #include <gpio.h>
+#include <spi.h>
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 // Radio registers, from the Semtech SX1276 datasheet
@@ -108,12 +109,12 @@ struct lora
 /** LoRa low-noise amplifier gain. The maximum gain is G1, minimum is G6 */
 enum lora_lna_gain
 {
-    LORA_LNA_G1,
-    LORA_LNA_G2,
-    LORA_LNA_G3,
-    LORA_LNA_G4,
-    LORA_LNA_G5,
-    LORA_LNA_G6
+	LORA_LNA_G1,
+	LORA_LNA_G2,
+	LORA_LNA_G3,
+	LORA_LNA_G4,
+	LORA_LNA_G5,
+	LORA_LNA_G6
 };
 
 /** Initializes the lora module.
@@ -151,7 +152,10 @@ enum lora_lna_gain
  *
  * @returns True on success, false otherwise. Fails if LoRa module is unknown.
  */
-bool lora_init(struct lora *lora, struct spi_device *device, uint32_t frequency, unsigned dio0_pin);
+bool lora_init(
+	struct lora *lora, struct spi_device *device, uint32_t frequency,
+	unsigned dio0_pin
+);
 
 /** Releases all resources held by the given lora object.
  *
@@ -177,7 +181,9 @@ void lora_destroy(struct lora *lora);
  * given buffer size if there was not enough data in the FIFO to fill the
  * buffer. This returns a negative number of error.
  */
-int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size);
+int lora_receive_packet(
+	struct lora *lora, unsigned char buffer[], size_t buffer_size
+);
 
 /** Sends a LoRa packet, blocking until it is transmitted.
  *
@@ -194,7 +200,9 @@ int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer
  *
  * @returns The number of bytes sent on success, a negative number of failure.
  */
-int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size);
+int lora_send_packet(
+	struct lora *lora, const unsigned char buffer[], uint8_t buffer_size
+);
 
 /** Configures the LoRa spreading factor for RX and TX.
  *
@@ -327,7 +335,9 @@ uint8_t lora_get_register(struct lora *lora, uint8_t address);
  * @param[in] high_current Whether to boost the current to 150% or not, ignored
  *  for low frequency operation.
  */
-void lora_set_lna(struct lora *lora, enum lora_lna_gain gain, bool high_current);
+void lora_set_lna(
+	struct lora *lora, enum lora_lna_gain gain, bool high_current
+);
 
 /** Sets the transmit level in dBm.
  *
@@ -350,4 +360,4 @@ bool lora_set_transmit_level(struct lora *lora, int8_t dBm, bool high_power);
 } // extern "C"
 #endif
 
-#endif//LORA_H_
+#endif // LORA_H_

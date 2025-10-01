@@ -5,11 +5,12 @@
 #ifndef GPIO_H_
 #define GPIO_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** GPIO struct. */
@@ -25,7 +26,8 @@ enum gpio_mode
 	GPIO_MODE_OPENDRAIN
 };
 
-// FIXME we should let the type of GPIO be configurable, or document how to do so
+// FIXME we should let the type of GPIO be configurable, or document how to do
+// so
 
 /** Initializes the GPIO structure and given pin hardware.
  *
@@ -35,7 +37,9 @@ enum gpio_mode
  * @param[in] mode The mode of the GPIO, see enum gpio_mode for options.
  * @param[in] init_state Initial state of the GPIO pin.
  */
-void gpio_init(struct gpio *gpio, uint8_t pin, enum gpio_mode mode, bool init_state);
+void gpio_init(
+	struct gpio *gpio, uint8_t pin, enum gpio_mode mode, bool init_state
+);
 
 /** Sets the GPIO pin state.
  *
@@ -56,4 +60,4 @@ bool gpio_read(struct gpio *gpio);
 } // extern "C"
 #endif
 
-#endif//GPIO_H_
+#endif // GPIO_H_

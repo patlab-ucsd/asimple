@@ -5,12 +5,13 @@
 #ifndef SYSCALLS_H_
 #define SYSCALLS_H_
 
-#include <uart.h>
 #include <am1815.h>
 #include <asimple_littlefs.h>
+#include <uart.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Links the given RTC object with the time syscalls.
@@ -44,4 +45,4 @@ void syscalls_littlefs_init(struct asimple_littlefs *fs);
 } // extern "C"
 #endif
 
-#endif//SYSCALLS_H_
+#endif // SYSCALLS_H_

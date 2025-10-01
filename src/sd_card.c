@@ -4,8 +4,8 @@
 #include <sd_card.h>
 #include <systick.h>
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,7 +90,8 @@ static uint16_t crc16_update(const uint8_t *data, size_t size, uint16_t crc)
 	return crc;
 }
 
-static uint8_t begin_transaction(struct sd_card *sd_card, uint8_t command, uint32_t argument)
+static uint8_t
+begin_transaction(struct sd_card *sd_card, uint8_t command, uint32_t argument)
 {
 	uint8_t buf[6];
 	buf[0] = 0x40 | command;
@@ -161,7 +162,8 @@ static uint8_t initialize_v1(struct sd_card *sd_card)
 	{
 		status = sd_card_command(sd_card, 55, 0x0);
 		status = sd_card_command(sd_card, 41, 0x40000000);
-	} while (status == 0x01);
+	}
+	while (status == 0x01);
 
 	if (status == 0x00)
 	{
@@ -189,7 +191,8 @@ static uint8_t initialize_v2(struct sd_card *sd_card)
 	{
 		status = sd_card_command(sd_card, 55, 0x0);
 		status = sd_card_command(sd_card, 41, 0x40000000);
-	} while (status == 0x01);
+	}
+	while (status == 0x01);
 
 	if (status != 0x00)
 		return status;
@@ -228,22 +231,22 @@ static uint8_t initialize_v2(struct sd_card *sd_card)
 		// FIXME we did not receive a start_block token!
 		return 0xFFu;
 	}
-	uint16_t crc = crc16_update(cmd_result+2, 16, 0);
+	uint16_t crc = crc16_update(cmd_result + 2, 16, 0);
 	if (crc != ((cmd_result[18] << 8) | cmd_result[19]))
 	{
 		// FIXME we did not receive a valid CRC!
 		return 0xFFu;
 	}
 	// FIXME we now have CSD-- what fields do we want to check?
-	uint8_t *csd = cmd_result+2;
+	uint8_t *csd = cmd_result + 2;
 	sd_card->blocks = (csd[9] | csd[8] << 8 | (0x3F & csd[7]) << 16) + 1;
 	sd_card->blocks *= 1024;
 
 	// FIXME should we enable CRC7 for every command? By default SPI doesn't
 	// need it, even if we're actually computing it.
-	//spi_device_set_clock(sd_card->spi, 25000000);
+	// spi_device_set_clock(sd_card->spi, 25000000);
 
-	//FIXME should we disbble pullup on CS?
+	// FIXME should we disbble pullup on CS?
 	return 0;
 }
 
@@ -291,8 +294,7 @@ uint8_t sd_card_init(struct sd_card *sd_card, struct spi_device *spi)
 	return initialize_v2(sd_card);
 }
 
-uint8_t sd_card_command(
-	struct sd_card *sd_card, uint8_t command, uint32_t data)
+uint8_t sd_card_command(struct sd_card *sd_card, uint8_t command, uint32_t data)
 {
 	uint8_t result;
 	sd_card_command_result(sd_card, command, data, &result, 1);
@@ -300,11 +302,9 @@ uint8_t sd_card_command(
 }
 
 uint8_t sd_card_command_result(
-	struct sd_card *sd_card,
-	uint8_t command,
-	uint32_t data,
-	uint8_t *result,
-	size_t size)
+	struct sd_card *sd_card, uint8_t command, uint32_t data, uint8_t *result,
+	size_t size
+)
 {
 	begin_transaction(sd_card, command, data);
 
@@ -330,7 +330,7 @@ uint8_t sd_card_command_result(
 		{
 			for (retry = 0; retry < 8; ++retry)
 			{
-				read_spi(sd_card, result+1, 1);
+				read_spi(sd_card, result + 1, 1);
 				if (!(result[1] != 0xFE))
 					break;
 			}
@@ -348,10 +348,8 @@ uint8_t sd_card_command_result(
 }
 
 uint8_t sd_card_read_blocks(
-	struct sd_card *sd_card,
-	uint32_t block,
-	uint8_t *buffer,
-	size_t blocks)
+	struct sd_card *sd_card, uint32_t block, uint8_t *buffer, size_t blocks
+)
 {
 	if (blocks == 0)
 		return 0;
@@ -378,7 +376,9 @@ uint8_t sd_card_read_blocks(
 		do
 		{
 			read_spi(sd_card, &token, 1);
-		} while(token != SD_CARD_START_TOKEN && (systick_jiffies() - start < 100));
+		}
+		while (token != SD_CARD_START_TOKEN &&
+			   (systick_jiffies() - start < 100));
 
 		if (token != SD_CARD_START_TOKEN)
 		{
@@ -388,7 +388,7 @@ uint8_t sd_card_read_blocks(
 
 		read_spi(sd_card, pos, 512);
 		uint16_t crc16;
-		read_spi(sd_card, (uint8_t*)&crc16, 2);
+		read_spi(sd_card, (uint8_t *)&crc16, 2);
 		// Data is actually in big endian...
 		crc16 = crc16 >> 8 | crc16 << 8;
 
@@ -421,14 +421,14 @@ static void send_stop_and_wait(struct sd_card *sd_card)
 	do
 	{
 		read_spi(sd_card, &busy, 1);
-	} while (busy == 0x00);
+	}
+	while (busy == 0x00);
 }
 
 uint8_t sd_card_write_blocks(
-	struct sd_card *sd_card,
-	uint32_t block,
-	const uint8_t *buffer,
-	size_t blocks)
+	struct sd_card *sd_card, uint32_t block, const uint8_t *buffer,
+	size_t blocks
+)
 {
 	if (blocks == 0)
 		return 0;
@@ -446,7 +446,8 @@ uint8_t sd_card_write_blocks(
 		goto terminate;
 	}
 
-	const uint8_t token = blocks == 1 ? SD_CARD_START_TOKEN : SD_CARD_START_WRITE_TOKEN;
+	const uint8_t token =
+		blocks == 1 ? SD_CARD_START_TOKEN : SD_CARD_START_WRITE_TOKEN;
 
 	for (const uint8_t *pos = buffer; pos < buffer + blocks * 512; pos += 512)
 	{
@@ -460,7 +461,7 @@ uint8_t sd_card_write_blocks(
 		uint16_t crc16 = crc16_update(pos, 512, 0);
 		// Data is actually in big endian...
 		crc16 = crc16 >> 8 | crc16 << 8;
-		spi_device_write_continue(sd_card->spi, (uint8_t*)&crc16, 2);
+		spi_device_write_continue(sd_card->spi, (uint8_t *)&crc16, 2);
 
 		uint8_t resp;
 		read_spi(sd_card, &resp, 1);
@@ -471,8 +472,9 @@ uint8_t sd_card_write_blocks(
 		}
 		if ((resp & 0x0E) != 0x04)
 		{
-			// FIXME we should figure out if we failed CRC or got anoter write error, and then go check CMD13
-			// Maybe we should also get the number of bytes transmitted using ACMD22
+			// FIXME we should figure out if we failed CRC or got anoter write
+			// error, and then go check CMD13 Maybe we should also get the
+			// number of bytes transmitted using ACMD22
 			if (blocks != 1)
 			{
 				// Spec requires at least 1 byte of padding before we send stop
@@ -484,12 +486,14 @@ uint8_t sd_card_write_blocks(
 		}
 
 		// Check for busy FIXME should there be a timeout?
-		// In theory, we can also deassert CS and go do something else while busy
+		// In theory, we can also deassert CS and go do something else while
+		// busy
 		uint8_t busy = 0;
 		do
 		{
 			read_spi(sd_card, &busy, 1);
-		} while (busy == 0x00);
+		}
+		while (busy == 0x00);
 	}
 
 	if (blocks != 1)

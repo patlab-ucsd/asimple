@@ -5,11 +5,12 @@
 #ifndef SPI_H_
 #define SPI_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Opaque structure holding SPI bus information and state. */
@@ -102,9 +103,8 @@ bool spi_bus_sleep(struct spi_bus *bus);
  * @returns A pointer to the SPI device.
  */
 struct spi_device *spi_device_get_instance(
-	struct spi_bus *bus,
-	enum spi_chip_select,
-	uint32_t clock);
+	struct spi_bus *bus, enum spi_chip_select, uint32_t clock
+);
 
 /** Releases all resources of the given spi device object.
  *
@@ -135,10 +135,8 @@ void spi_device_set_clock(struct spi_device *device, uint32_t clock);
  * @param[in] size Size of the buffer.
  */
 void spi_device_cmd_read(
-	struct spi_device *device,
-	uint8_t command,
-	uint8_t *buffer,
-	uint32_t size);
+	struct spi_device *device, uint8_t command, uint8_t *buffer, uint32_t size
+);
 
 /** Writes data (blocking) to the SPI device, sending a command byte
  *  beforehand.
@@ -153,10 +151,9 @@ void spi_device_cmd_read(
  * @param[in] size Size of the buffer.
  */
 void spi_device_cmd_write(
-	struct spi_device *device,
-	uint8_t command,
-	const uint8_t *buffer,
-	uint32_t size);
+	struct spi_device *device, uint8_t command, const uint8_t *buffer,
+	uint32_t size
+);
 
 /** Reads data (blocking) from the SPI device.
  *
@@ -166,8 +163,7 @@ void spi_device_cmd_write(
  * @param[in] buffer Pointer to buffer with outgoing data.
  * @param[in] size Size of the buffer.
  */
-void spi_device_read(
-	struct spi_device *device, uint8_t *buffer, uint32_t size);
+void spi_device_read(struct spi_device *device, uint8_t *buffer, uint32_t size);
 
 /** Writes data (blocking) to the SPI device.
  *
@@ -178,7 +174,8 @@ void spi_device_read(
  * @param[in] size Size of the buffer.
  */
 void spi_device_write(
-	struct spi_device *device, const uint8_t *buffer, uint32_t size);
+	struct spi_device *device, const uint8_t *buffer, uint32_t size
+);
 
 /** Reads data (blocking) to the SPI device, and leave CS active (low).
  *
@@ -189,7 +186,8 @@ void spi_device_write(
  * @param[in] size Size of the buffer.
  */
 void spi_device_read_continue(
-	struct spi_device *device, uint8_t *buffer, uint32_t size);
+	struct spi_device *device, uint8_t *buffer, uint32_t size
+);
 
 /** Writes data (blocking) to the SPI device, and leaves CS active (low).
  *
@@ -200,7 +198,8 @@ void spi_device_read_continue(
  * @param[in] size Size of the buffer.
  */
 void spi_device_write_continue(
-	struct spi_device *device, const uint8_t *buffer, uint32_t size);
+	struct spi_device *device, const uint8_t *buffer, uint32_t size
+);
 
 /** Write and read data to/from the SPI device simultaneously.
  *
@@ -214,11 +213,9 @@ void spi_device_write_continue(
  * @param[in] size Size of the buffers, should be the same for both.
  */
 void spi_device_cmd_readwrite(
-	struct spi_device *device,
-	uint32_t command,
-	uint8_t *rx_buffer,
-	const uint8_t *tx_buffer,
-	uint32_t size);
+	struct spi_device *device, uint32_t command, uint8_t *rx_buffer,
+	const uint8_t *tx_buffer, uint32_t size
+);
 
 /** Write and read data to/from the SPI device simultaneously.
  *
@@ -232,10 +229,9 @@ void spi_device_cmd_readwrite(
  * @param[in] size Size of the buffers, should be the same for both.
  */
 void spi_device_readwrite_continue(
-	struct spi_device *device,
-	uint8_t *rx_buffer,
-	const uint8_t *tx_buffer,
-	uint32_t size);
+	struct spi_device *device, uint8_t *rx_buffer, const uint8_t *tx_buffer,
+	uint32_t size
+);
 
 /** Forces MOSI to the given logic level.
  *
@@ -269,4 +265,4 @@ void spi_device_toggle(struct spi_device *device, uint32_t size);
 } // extern "C"
 #endif
 
-#endif//SPI_H_
+#endif // SPI_H_

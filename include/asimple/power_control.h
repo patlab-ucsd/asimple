@@ -8,7 +8,8 @@
 #include <gpio.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 struct power_control_functions
@@ -19,19 +20,18 @@ struct power_control_functions
 };
 
 struct power_control
-{
-};
+{};
 
 void power_control_init(struct power_control *control);
 
-void power_control_register(struct power_control *control, struct power_control_functions *functions);
+void power_control_register(
+	struct power_control *control, struct power_control_functions *functions
+);
 
 void power_control_shutdown(struct power_control *control);
-
-
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif//POWER_CONTROL_H_
+#endif // POWER_CONTROL_H_

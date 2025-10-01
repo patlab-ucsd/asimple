@@ -5,15 +5,16 @@
 #ifndef SYSCALLS_INTERNAL_H_
 #define SYSCALLS_INTERNAL_H_
 
-#include <uart.h>
 #include <am1815.h>
 #include <asimple_littlefs.h>
+#include <uart.h>
 
-#include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Base polymorphic class for syscall implementations.
@@ -28,7 +29,9 @@ struct syscalls_base
 	int (*read)(void *context, int file, char *ptr, int len);
 	int (*write)(void *context, int file, char *ptr, int len);
 	int (*lseek)(void *context, int file, int ptr, int dir);
-	int (*gettimeofday)(void *context, struct timeval *ptimeval, void *ptimezone);
+	int (*gettimeofday)(
+		void *context, struct timeval *ptimeval, void *ptimezone
+	);
 	int (*fstat)(void *context, int fd, struct stat *st);
 	int (*stat)(void *context, const char *filename, struct stat *st);
 };
@@ -49,4 +52,4 @@ void syscalls_register_fs(void *device);
 } // extern "C"
 #endif
 
-#endif//SYSCALLS__INTERNAL_H_
+#endif // SYSCALLS__INTERNAL_H_

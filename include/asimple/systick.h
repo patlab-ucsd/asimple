@@ -5,11 +5,12 @@
 #ifndef SYSTICK_H_
 #define SYSTICK_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Returns whether or not the systick subsystem is running.
@@ -59,4 +60,4 @@ struct timespec systick_time(void);
 } // extern "C"
 #endif
 
-#endif//SYSTICK_H_
+#endif // SYSTICK_H_

@@ -6,11 +6,12 @@
 #define SD_CARD_H_
 
 #include <spi.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 struct sd_card
@@ -39,8 +40,8 @@ uint8_t sd_card_init(struct sd_card *sd_card, struct spi_device *spi);
  *
  * @returns The R1 response from the SD card.
  */
-uint8_t sd_card_command(
-	struct sd_card *sd_card, uint8_t command, uint32_t data);
+uint8_t
+sd_card_command(struct sd_card *sd_card, uint8_t command, uint32_t data);
 
 /** Sends a command to an initialized SD card.
  *
@@ -54,11 +55,9 @@ uint8_t sd_card_command(
  * @returns The R1 response from the SD card.
  */
 uint8_t sd_card_command_result(
-	struct sd_card *sd_card,
-	uint8_t command,
-	uint32_t data,
-	uint8_t *result,
-	size_t size);
+	struct sd_card *sd_card, uint8_t command, uint32_t data, uint8_t *result,
+	size_t size
+);
 
 /** Reads the given number of blocks from the SD card.
  *
@@ -71,7 +70,8 @@ uint8_t sd_card_command_result(
  *  buffer are undefined.
  */
 uint8_t sd_card_read_blocks(
-	struct sd_card *sd_card, uint32_t block, uint8_t *buffer, size_t blocks);
+	struct sd_card *sd_card, uint32_t block, uint8_t *buffer, size_t blocks
+);
 
 /** Writes the given number of blocks to the SD card.
  *
@@ -82,13 +82,13 @@ uint8_t sd_card_read_blocks(
  *
  * @returns The R1 response from the SD card.
  *
- * FIXME On an error, we should check CMD13 to figure out what went wrong if possible.
+ * FIXME On an error, we should check CMD13 to figure out what went wrong if
+ * possible.
  */
 uint8_t sd_card_write_blocks(
-	struct sd_card *sd_card,
-	uint32_t block,
-	const uint8_t *buffer,
-	size_t blocks);
+	struct sd_card *sd_card, uint32_t block, const uint8_t *buffer,
+	size_t blocks
+);
 
 /** Detects whether an SD card is plugged in or not.
  *
@@ -103,4 +103,4 @@ bool sd_card_detected(struct spi_device *spi);
 } // extern "C"
 #endif
 
-#endif//SD_CARD_H_
+#endif // SD_CARD_H_

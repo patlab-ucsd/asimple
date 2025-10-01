@@ -12,7 +12,8 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Structure representing the BMP280 sensor */
@@ -47,7 +48,7 @@ void bmp280_init(struct bmp280 *bmp280, struct spi_device *device);
  * @param[in] bmp280 BMP280 sensor to read ID of.
  *
  * @returns A byte integer, which contains the ID information.
-*/
+ */
 uint8_t bmp280_read_id(struct bmp280 *bmp280);
 
 /**
@@ -55,10 +56,13 @@ uint8_t bmp280_read_id(struct bmp280 *bmp280);
  *
  * @param[in] bmp280 BMP280 sensor to read the registers from.
  * @param[in] addr BMP280 sensor address to read from.
- * @param[out] buffer Buffer that registers from the BMP280 sensor will be written into.
+ * @param[out] buffer Buffer that registers from the BMP280 sensor will be
+ * written into.
  * @param[in] size Number of bytes to read, starting at addr.
-*/
-void bmp280_read_register(struct bmp280 *bmp280, uint8_t addr, uint8_t *buffer, uint32_t size);
+ */
+void bmp280_read_register(
+	struct bmp280 *bmp280, uint8_t addr, uint8_t *buffer, uint32_t size
+);
 
 /**
  * Writes to registers on the BMP280 sensor.
@@ -67,16 +71,19 @@ void bmp280_read_register(struct bmp280 *bmp280, uint8_t addr, uint8_t *buffer, 
  * @param[in] addr BMP280 sensor address to start writing to.
  * @param[in] buffer Buffer with data to write.
  * @param[in] size Number of bytes to write, starting at addr.
-*/
-void bmp280_write_register(struct bmp280 *bmp280, uint8_t addr, const uint8_t *buffer, uint32_t size);
+ */
+void bmp280_write_register(
+	struct bmp280 *bmp280, uint8_t addr, const uint8_t *buffer, uint32_t size
+);
 
 /**
- * Gets the raw temperature value from the temperature registers of the BMP280 sensor.
+ * Gets the raw temperature value from the temperature registers of the BMP280
+ * sensor.
  *
  * @param[in] bmp280 BMP280 sensor to read the registers from.
  *
  * @returns The raw temperature value.
-*/
+ */
 uint32_t bmp280_get_adc_temp(struct bmp280 *bmp280);
 
 /**
@@ -85,7 +92,7 @@ uint32_t bmp280_get_adc_temp(struct bmp280 *bmp280);
  * @param[in] bmp280 BMP280 sensor to read the registers from.
  *
  * @returns The raw pressure value.
-*/
+ */
 uint32_t bmp280_get_adc_pressure(struct bmp280 *bmp280);
 
 /**
@@ -95,7 +102,7 @@ uint32_t bmp280_get_adc_pressure(struct bmp280 *bmp280);
  * @param[in] raw_temp Raw temperature value.
  *
  * @returns The temperature in celsius as a double.
-*/
+ */
 double bmp280_compensate_T_double(struct bmp280 *bmp280, uint32_t raw_temp);
 
 /**
@@ -106,11 +113,13 @@ double bmp280_compensate_T_double(struct bmp280 *bmp280, uint32_t raw_temp);
  * @param[in] raw_temp Raw temperature value.
  *
  * @returns The pressure in pascals as a double.
-*/
-double bmp280_compensate_P_double(struct bmp280 *bmp280, uint32_t raw_press, uint32_t raw_temp);
+ */
+double bmp280_compensate_P_double(
+	struct bmp280 *bmp280, uint32_t raw_press, uint32_t raw_temp
+);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif//BMP280_H_
+#endif // BMP280_H_

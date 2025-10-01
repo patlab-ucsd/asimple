@@ -12,7 +12,8 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Structure representing the BME280 sensor */
@@ -59,7 +60,7 @@ void bme280_init(struct bme280 *bme280, struct spi_device *device);
  * @param[in] bme280 BME280 sensor to read ID of.
  *
  * @returns A byte integer, which contains the ID information.
-*/
+ */
 uint8_t bme280_read_id(struct bme280 *bme280);
 
 /**
@@ -67,10 +68,13 @@ uint8_t bme280_read_id(struct bme280 *bme280);
  *
  * @param[in] bme280 BME280 sensor to read the registers from.
  * @param[in] addr BME280 sensor address to read from.
- * @param[out] buffer Buffer that registers from the BME280 sensor will be written into.
+ * @param[out] buffer Buffer that registers from the BME280 sensor will be
+ * written into.
  * @param[in] size Number of bytes to read, starting at addr.
-*/
-void bme280_read_register(struct bme280 *bme280, uint8_t addr, uint8_t *buffer, uint32_t size);
+ */
+void bme280_read_register(
+	struct bme280 *bme280, uint8_t addr, uint8_t *buffer, uint32_t size
+);
 
 /**
  * Writes to registers on the BME280 sensor.
@@ -79,8 +83,10 @@ void bme280_read_register(struct bme280 *bme280, uint8_t addr, uint8_t *buffer, 
  * @param[in] addr BME280 sensor address to start writing to.
  * @param[in] buffer Buffer with data to write.
  * @param[in] size Number of bytes to write, starting at addr.
-*/
-void bme280_write_register(struct bme280 *bme280, uint8_t addr, const uint8_t *buffer, uint32_t size);
+ */
+void bme280_write_register(
+	struct bme280 *bme280, uint8_t addr, const uint8_t *buffer, uint32_t size
+);
 
 /** Trigger and collect a sample from all sensors.
  *
@@ -94,7 +100,7 @@ struct bme280_sample bme280_get_sample(struct bme280 *bme280);
  * @param[in] raw_temp Raw temperature value.
  *
  * @returns The temperature in celsius as a double.
-*/
+ */
 double bme280_compensate_T_double(struct bme280 *bme280, uint32_t raw_temp);
 
 /**
@@ -105,11 +111,13 @@ double bme280_compensate_T_double(struct bme280 *bme280, uint32_t raw_temp);
  * @param[in] raw_temp Raw temperature value.
  *
  * @returns The pressure in pascals as a double.
-*/
-double bme280_compensate_P_double(struct bme280 *bme280, uint32_t raw_press, uint32_t raw_temp);
+ */
+double bme280_compensate_P_double(
+	struct bme280 *bme280, uint32_t raw_press, uint32_t raw_temp
+);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif//BME280_H_
+#endif // BME280_H_

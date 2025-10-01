@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
 
+#include <gpio.h>
 #include <lora.h>
 #include <spi.h>
-#include <gpio.h>
 
-#include <am_mcu_apollo.h>
 #include <am_bsp.h>
+#include <am_mcu_apollo.h>
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 // FIXME overall error checking is missing
@@ -21,7 +21,8 @@ static uint8_t read_register(struct spi_device *device, uint8_t address)
 	return rx_buffer;
 }
 
-static void write_register(struct spi_device *device, uint8_t address, uint8_t data)
+static void
+write_register(struct spi_device *device, uint8_t address, uint8_t data)
 {
 	uint8_t tx_buffer = data;
 	spi_device_cmd_write(device, address | 0x80, &tx_buffer, 1);
@@ -35,7 +36,10 @@ static void change_mode(struct spi_device *device, uint8_t mode)
 	write_register(device, LORA_OPMODE, new_mode);
 }
 
-bool lora_init(struct lora *lora, struct spi_device *device, uint32_t frequency, unsigned dio0_pin)
+bool lora_init(
+	struct lora *lora, struct spi_device *device, uint32_t frequency,
+	unsigned dio0_pin
+)
 {
 	lora->device = device;
 
@@ -58,7 +62,10 @@ bool lora_init(struct lora *lora, struct spi_device *device, uint32_t frequency,
 	lora_sleep(lora);
 
 	// Enable Lora mode
-	write_register(lora->device, LORA_OPMODE, read_register(lora->device, LORA_OPMODE) | 0x80);
+	write_register(
+		lora->device, LORA_OPMODE,
+		read_register(lora->device, LORA_OPMODE) | 0x80
+	);
 
 	lora_set_frequency(lora, frequency);
 	lora_set_lna(lora, LORA_LNA_G1, true);
@@ -74,7 +81,6 @@ bool lora_init(struct lora *lora, struct spi_device *device, uint32_t frequency,
 	// pins, and only connects PA_BOOST. As such, for this board, high_power
 	// must always be true.
 	lora_set_transmit_level(lora, 2, true);
-
 
 	return true;
 }
@@ -133,7 +139,9 @@ bool lora_set_transmit_level(struct lora *lora, int8_t dBm, bool high_power)
 	return true;
 }
 
-int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer_size)
+int lora_receive_packet(
+	struct lora *lora, unsigned char buffer[], size_t buffer_size
+)
 {
 	// FIXME should we block until we receive something?
 	// FIXME what if we don't receive something?
@@ -176,7 +184,10 @@ int lora_receive_packet(struct lora *lora, unsigned char buffer[], size_t buffer
 		length = read_register(lora->device, LORA_RX_BYTES);
 		length = length > buffer_size ? buffer_size : length;
 		// Move current pointer to current Rx location
-		write_register(lora->device, LORA_FIFO_ADDR, read_register(lora->device, LORA_FIFO_RX_CURRENT_ADDR));
+		write_register(
+			lora->device, LORA_FIFO_ADDR,
+			read_register(lora->device, LORA_FIFO_RX_CURRENT_ADDR)
+		);
 
 		// Now, start reading?
 		for (uint8_t i = 0; i < length; ++i)
@@ -193,7 +204,9 @@ uint8_t lora_get_rx_bytes(struct lora *lora)
 	return read_register(lora->device, LORA_RX_BYTES);
 }
 
-int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t buffer_size)
+int lora_send_packet(
+	struct lora *lora, const unsigned char buffer[], uint8_t buffer_size
+)
 {
 	if (!buffer || buffer_size == 0)
 		return 0;
@@ -216,7 +229,7 @@ int lora_send_packet(struct lora *lora, const unsigned char buffer[], uint8_t bu
 	// TX portion of the FIFO
 	const int max_tx_size = 0x100;
 	const uint8_t max_to_send = max_tx_size - lora->tx_addr;
-	uint8_t to_send =  buffer_size > max_to_send ? max_to_send : buffer_size;
+	uint8_t to_send = buffer_size > max_to_send ? max_to_send : buffer_size;
 	write_register(lora->device, LORA_PAYLOAD_LEN, to_send);
 
 	for (uint8_t i = 0; i < to_send; ++i)
@@ -290,17 +303,22 @@ uint8_t lora_rx_amount(struct lora *lora)
 void lora_receive_mode(struct lora *lora)
 {
 	/* explicit header */
-	write_register(lora->device, LORA_MODEM_CONFIG1, read_register(lora->device, LORA_MODEM_CONFIG1) & ~0x1u);
+	write_register(
+		lora->device, LORA_MODEM_CONFIG1,
+		read_register(lora->device, LORA_MODEM_CONFIG1) & ~0x1u
+	);
 	change_mode(lora->device, 0x05);
 }
 
 void lora_transmit_mode(struct lora *lora)
 {
 	/* explicit header */
-	write_register(lora->device, LORA_MODEM_CONFIG1, read_register(lora->device, LORA_MODEM_CONFIG1) & ~0x1u);
+	write_register(
+		lora->device, LORA_MODEM_CONFIG1,
+		read_register(lora->device, LORA_MODEM_CONFIG1) & ~0x1u
+	);
 	change_mode(lora->device, 0x03);
 }
-
 
 bool lora_transmitting(struct lora *lora)
 {
@@ -334,24 +352,24 @@ void lora_set_lna(struct lora *lora, enum lora_lna_gain gain, bool high_current)
 	lna_config &= 0x1Fu;
 	switch (gain)
 	{
-		case LORA_LNA_G1:
-			lna_config |= (0x1 << 5);
-			break;
-		case LORA_LNA_G2:
-			lna_config |= (0x2 << 5);
-			break;
-		case LORA_LNA_G3:
-			lna_config |= (0x3 << 5);
-			break;
-		case LORA_LNA_G4:
-			lna_config |= (0x4 << 5);
-			break;
-		case LORA_LNA_G5:
-			lna_config |= (0x5 << 5);
-			break;
-		case LORA_LNA_G6:
-			lna_config |= (0x6 << 5);
-			break;
+	case LORA_LNA_G1:
+		lna_config |= (0x1 << 5);
+		break;
+	case LORA_LNA_G2:
+		lna_config |= (0x2 << 5);
+		break;
+	case LORA_LNA_G3:
+		lna_config |= (0x3 << 5);
+		break;
+	case LORA_LNA_G4:
+		lna_config |= (0x4 << 5);
+		break;
+	case LORA_LNA_G5:
+		lna_config |= (0x5 << 5);
+		break;
+	case LORA_LNA_G6:
+		lna_config |= (0x6 << 5);
+		break;
 	}
 
 	write_register(lora->device, LORA_LNA, lna_config);

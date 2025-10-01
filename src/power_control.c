@@ -5,9 +5,7 @@
 #include <power_control.h>
 
 void power_control_init(struct power_control *control)
-{
-}
+{}
 
 void power_control_shutdown(struct power_control *control)
-{
-}
+{}

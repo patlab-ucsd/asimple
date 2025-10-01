@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
 
 #include <am1815.h>
-#include <time.h>
-#include <sys/time.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
 
 uint8_t am1815_read_register(struct am1815 *rtc, uint8_t addr)
 {
@@ -28,7 +28,8 @@ static uint8_t to_bcd(uint8_t value)
 {
 	uint8_t result = 0;
 	uint8_t decade = 0;
-	while(value != 0){
+	while (value != 0)
+	{
 		uint8_t digit = value % 10;
 		value = value / 10;
 		result |= digit << (4 * decade);
@@ -61,12 +62,16 @@ struct timeval am1815_read_time(struct am1815 *rtc)
 	return result;
 }
 
-void am1815_read_bulk(struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t size)
+void am1815_read_bulk(
+	struct am1815 *rtc, uint8_t addr, uint8_t *data, size_t size
+)
 {
 	spi_device_cmd_read(rtc->spi, addr, data, size);
 }
 
-void am1815_write_bulk(struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size)
+void am1815_write_bulk(
+	struct am1815 *rtc, uint8_t addr, const uint8_t *data, size_t size
+)
 {
 	spi_device_cmd_write(rtc->spi, 0x80 | addr, data, size);
 }
@@ -121,10 +126,12 @@ void am1815_write_alarm(struct am1815 *rtc, struct timeval *atime)
 	am1815_write_bulk(rtc, 0x08, regs, 7);
 }
 
-// Set RPT bits in Countdown Timer Control register to control how often the alarm interrupt repeats.
+// Set RPT bits in Countdown Timer Control register to control how often the
+// alarm interrupt repeats.
 bool am1815_repeat_alarm(struct am1815 *rtc, int repeat)
 {
-	if(repeat < 0 || repeat > 7){
+	if (repeat < 0 || repeat > 7)
+	{
 		return false;
 	}
 	uint8_t timerControl = am1815_read_register(rtc, 0x18);
@@ -150,31 +157,37 @@ void am1815_disable_trickle(struct am1815 *rtc)
 void am1815_init(struct am1815 *rtc, struct spi_device *device)
 {
 	rtc->spi = device;
-	//am1815_enable_trickle(rtc);
+	// am1815_enable_trickle(rtc);
 }
 
 uint8_t am1815_read_timer(struct am1815 *rtc)
 {
 	uint8_t buffer;
 	spi_device_cmd_read(rtc->spi, 0x19, &buffer, 1);
-	return (uint8_t)buffer;;
+	return (uint8_t)buffer;
+	;
 }
 
 static double find_timer(double timer)
 {
-	if(timer <= 0.0625){
-		timer = ((int)(timer * 4096))/4096.0;
+	if (timer <= 0.0625)
+	{
+		timer = ((int)(timer * 4096)) / 4096.0;
 	}
-	else if(timer <= 4){
-		timer = ((int)(timer * 64))/64.0;
+	else if (timer <= 4)
+	{
+		timer = ((int)(timer * 64)) / 64.0;
 	}
-	else if(timer <= 256){
+	else if (timer <= 256)
+	{
 		timer = (int)timer;
 	}
-	else if(timer <= 15360){
-		timer = ((int)(timer/60)) * 60;
+	else if (timer <= 15360)
+	{
+		timer = ((int)(timer / 60)) * 60;
 	}
-	else{
+	else
+	{
 		timer = 15360;
 	}
 	return timer;
@@ -184,7 +197,8 @@ double am1815_write_timer(struct am1815 *rtc, double timer)
 {
 	double finalTimer = find_timer(timer);
 
-	if(finalTimer == 0){
+	if (finalTimer == 0)
+	{
 		return 0;
 	}
 
@@ -196,21 +210,25 @@ double am1815_write_timer(struct am1815 *rtc, double timer)
 	uint8_t RPT = countdowntimer & 0b00011100;
 	uint8_t timerResult = 0b10100000 + RPT;
 	uint32_t timerinitial = 0;
-	if(finalTimer <= 0.0625){
+	if (finalTimer <= 0.0625)
+	{
 		timerResult += 0b00;
 		timerinitial = ((int)(finalTimer * 4096)) - 1;
 	}
-	else if(finalTimer <= 4){
+	else if (finalTimer <= 4)
+	{
 		timerResult += 0b01;
 		timerinitial = ((int)(finalTimer * 64)) - 1;
 	}
-	else if(finalTimer <= 256){
+	else if (finalTimer <= 256)
+	{
 		timerResult += 0b10;
 		timerinitial = ((int)timer) - 1;
 	}
-	else{
+	else
+	{
 		timerResult += 0b11;
-		timerinitial = ((int)(finalTimer * (1/60))) - 1;
+		timerinitial = ((int)(finalTimer * (1 / 60))) - 1;
 	}
 
 	am1815_write_register(rtc, 0x19, timerinitial);
@@ -220,7 +238,9 @@ double am1815_write_timer(struct am1815 *rtc, double timer)
 	return finalTimer;
 }
 
-void am1815_enable_alarm_interrupt(struct am1815 *rtc, enum am1815_pulse_width pulse)
+void am1815_enable_alarm_interrupt(
+	struct am1815 *rtc, enum am1815_pulse_width pulse
+)
 {
 	// Configure AIRQ (alarm) interrupt
 	// IM (level/pulse) AIE (enables interrupt) 0x12 intmask

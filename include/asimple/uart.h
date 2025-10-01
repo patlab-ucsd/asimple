@@ -5,11 +5,12 @@
 #ifndef UART_H_
 #define UART_H_
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Declaration of opaque struct for UART handle. */
@@ -33,7 +34,7 @@ enum uart_instance
  *
  * @returns Opaque pointer to UART instance.
  */
-struct uart* uart_get_instance(enum uart_instance instance);
+struct uart *uart_get_instance(enum uart_instance instance);
 
 /** Deinitializes the given UART structure, freeing resources held, including
  * the associated UART instance, once all users have deinitialized it.
@@ -92,7 +93,7 @@ size_t uart_read(struct uart *uart, unsigned char *data, size_t size);
  */
 void uart_set_baud_rate(struct uart *uart, unsigned int baud_rate);
 
-//FIXME what about RX and TX functions?
+// FIXME what about RX and TX functions?
 
 /** Blocks until UART is done transmitting.
  *
@@ -104,4 +105,4 @@ void uart_sync(struct uart *uart);
 } // extern "C"
 #endif
 
-#endif//UART_H_
+#endif // UART_H_

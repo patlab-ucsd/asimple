@@ -4,8 +4,8 @@
 #include <am1815.h>
 #include <syscalls_internal.h>
 
-#include <sys/time.h>
 #include <fcntl.h>
+#include <sys/time.h>
 
 #include <stdint.h>
 
@@ -19,10 +19,12 @@ struct syscalls_rtc
 	struct am1815 *rtc;
 };
 
-int syscalls_rtc_gettimeofday(void *context, struct timeval *ptimeval, void *ptimezone)
+int syscalls_rtc_gettimeofday(
+	void *context, struct timeval *ptimeval, void *ptimezone
+)
 {
 	(void)ptimezone;
-	struct syscalls_rtc *rtc = (struct syscalls_rtc*)context;
+	struct syscalls_rtc *rtc = (struct syscalls_rtc *)context;
 
 	// Return an error if rtc hasn't been initialized
 	if (!rtc->rtc)

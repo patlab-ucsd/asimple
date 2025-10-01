@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
 
-#include <uart.h>
 #include <adc.h>
-#include <spi.h>
-#include <lora.h>
 #include <gpio.h>
+#include <lora.h>
+#include <spi.h>
 #include <syscalls.h>
+#include <uart.h>
 
-#include "am_mcu_apollo.h"
 #include "am_bsp.h"
+#include "am_mcu_apollo.h"
 #include "am_util.h"
 
-#include <string.h>
 #include <assert.h>
-#include <stdio.h>
-#include <math.h>
 #include <inttypes.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 static struct uart *uart;
 static struct adc *adc;
@@ -53,44 +53,51 @@ int main(void)
 	printf("Vendor Name: %s\r\n", device_id.pui8VendorName);
 	printf("Device type: %s\r\n", device_id.pui8DeviceName);
 
-	printf("Qualified: %s\r\n",
-		device_id.sMcuCtrlDevice.ui32Qualified ?
-		"Yes" : "No");
+	printf(
+		"Qualified: %s\r\n",
+		device_id.sMcuCtrlDevice.ui32Qualified ? "Yes" : "No"
+	);
 
-	printf("Device Info:\r\n"
-		"\tPart number: 0x%08"PRIX32"\r\n"
-		"\tChip ID0:	0x%08"PRIX32"\r\n"
-		"\tChip ID1:	0x%08"PRIX32"\r\n"
-		"\tRevision:	0x%08"PRIX32" (Rev%c%c)\r\n",
+	printf(
+		"Device Info:\r\n"
+		"\tPart number: 0x%08" PRIX32 "\r\n"
+		"\tChip ID0:	0x%08" PRIX32 "\r\n"
+		"\tChip ID1:	0x%08" PRIX32 "\r\n"
+		"\tRevision:	0x%08" PRIX32 " (Rev%c%c)\r\n",
 		device_id.sMcuCtrlDevice.ui32ChipPN,
 		device_id.sMcuCtrlDevice.ui32ChipID0,
 		device_id.sMcuCtrlDevice.ui32ChipID1,
-		device_id.sMcuCtrlDevice.ui32ChipRev,
-		device_id.ui8ChipRevMaj, device_id.ui8ChipRevMin );
+		device_id.sMcuCtrlDevice.ui32ChipRev, device_id.ui8ChipRevMaj,
+		device_id.ui8ChipRevMin
+	);
 
 	// If not a multiple of 1024 bytes, append a plus sign to the KB.
-	char mem_size = ( device_id.sMcuCtrlDevice.ui32FlashSize % 1024 ) ? '+' : 0;
-	printf("\tFlash size:  %7"PRIu32" (%"PRIu32" KB%s)\r\n",
+	char mem_size = (device_id.sMcuCtrlDevice.ui32FlashSize % 1024) ? '+' : 0;
+	printf(
+		"\tFlash size:  %7" PRIu32 " (%" PRIu32 " KB%s)\r\n",
 		device_id.sMcuCtrlDevice.ui32FlashSize,
-		device_id.sMcuCtrlDevice.ui32FlashSize / 1024,
-		&mem_size);
+		device_id.sMcuCtrlDevice.ui32FlashSize / 1024, &mem_size
+	);
 
-	mem_size = ( device_id.sMcuCtrlDevice.ui32SRAMSize % 1024 ) ? '+' : 0;
-	printf("\tSRAM size:  %7"PRIu32" (%"PRIu32" KB%s)\r\n",
+	mem_size = (device_id.sMcuCtrlDevice.ui32SRAMSize % 1024) ? '+' : 0;
+	printf(
+		"\tSRAM size:  %7" PRIu32 " (%" PRIu32 " KB%s)\r\n",
 		device_id.sMcuCtrlDevice.ui32SRAMSize,
-		device_id.sMcuCtrlDevice.ui32SRAMSize / 1024,
-		&mem_size);
+		device_id.sMcuCtrlDevice.ui32SRAMSize / 1024, &mem_size
+	);
 
 	// Print the compiler version.
 	uart_sync(uart);
 	printf("App Compiler:	%s\r\n", COMPILER_VERSION);
 	printf("HAL Compiler:	%s\r\n", g_ui8HALcompiler);
-	printf("HAL SDK version: %d.%d.%d\r\n",
-		g_ui32HALversion.s.Major,
-		g_ui32HALversion.s.Minor,
-		g_ui32HALversion.s.Revision);
-	printf("HAL compiled with %s-style registers\r\n",
-						 g_ui32HALversion.s.bAMREGS ? "AM_REG" : "CMSIS");
+	printf(
+		"HAL SDK version: %d.%d.%d\r\n", g_ui32HALversion.s.Major,
+		g_ui32HALversion.s.Minor, g_ui32HALversion.s.Revision
+	);
+	printf(
+		"HAL compiled with %s-style registers\r\n",
+		g_ui32HALversion.s.bAMREGS ? "AM_REG" : "CMSIS"
+	);
 
 	am_hal_security_info_t security_info;
 	uint32_t status = am_hal_security_get_info(&security_info);
@@ -99,28 +106,35 @@ int main(void)
 		char string_buffer[32];
 		if (security_info.bInfo0Valid)
 		{
-			am_util_stdio_sprintf(string_buffer, "INFO0 valid, ver 0x%X", security_info.info0Version);
+			am_util_stdio_sprintf(
+				string_buffer, "INFO0 valid, ver 0x%X",
+				security_info.info0Version
+			);
 		}
 		else
 		{
 			am_util_stdio_sprintf(string_buffer, "INFO0 invalid");
 		}
 
-		printf("SBL ver: 0x%"PRIx32" - 0x%"PRIx32", %s\r\n",
-			security_info.sblVersion, security_info.sblVersionAddInfo, string_buffer);
+		printf(
+			"SBL ver: 0x%" PRIx32 " - 0x%" PRIx32 ", %s\r\n",
+			security_info.sblVersion, security_info.sblVersionAddInfo,
+			string_buffer
+		);
 	}
 	else
 	{
-		printf("am_hal_security_get_info failed 0x%"PRIX32"\r\n", status);
+		printf("am_hal_security_get_info failed 0x%" PRIX32 "\r\n", status);
 	}
 
 	struct gpio lora_power;
 	gpio_init(&lora_power, 10, GPIO_MODE_OUTPUT, false);
 	struct spi_bus *spi_bus = spi_bus_get_instance(SPI_BUS_0);
-	struct spi_device *device = spi_device_get_instance(spi_bus, SPI_CS_0, 4000000u);
+	struct spi_device *device =
+		spi_device_get_instance(spi_bus, SPI_CS_0, 4000000u);
 
 	struct lora lora;
-	//lora_receive_mode(&lora);
+	// lora_receive_mode(&lora);
 
 	// Wait here for the ISR to grab a buffer of samples.
 	while (1)
@@ -141,7 +155,11 @@ int main(void)
 			const double reference = 2.0;
 			double voltage = data[0] * reference / ((1 << 14) - 1);
 
-			double temperature = 5.506 - sqrt((-5.506)*(-5.506) + 4 * 0.00176 * (870.6 - voltage*1000));
+			double temperature =
+				5.506 -
+				sqrt(
+					(-5.506) * (-5.506) + 4 * 0.00176 * (870.6 - voltage * 1000)
+				);
 			temperature /= (2 * -.00176);
 			temperature += 30;
 
@@ -151,7 +169,8 @@ int main(void)
 			am_util_delay_ms(10);
 			// Only continue if we initialize
 			// FIXME what if we never initialize?
-			while(!lora_init(&lora, device, 915000000, 42));
+			while (!lora_init(&lora, device, 915000000, 42))
+				;
 			lora_standby(&lora);
 			lora_set_spreading_factor(&lora, 7);
 			lora_set_coding_rate(&lora, 1);
@@ -159,11 +178,12 @@ int main(void)
 
 			unsigned char buffer[64];
 			int magnitude = 10000;
-			snprintf((char*)buffer, sizeof(buffer),
+			snprintf(
+				(char *)buffer, sizeof(buffer),
 				"{ \"temperature\": %i, \"magnitude\": %i }",
-				(int)(temperature * magnitude),
-				magnitude);
-			lora_send_packet(&lora, buffer, strlen((char*)buffer));
+				(int)(temperature * magnitude), magnitude
+			);
+			lora_send_packet(&lora, buffer, strlen((char *)buffer));
 			if (lora_rx_amount(&lora))
 			{
 				printf("length %i\r\n", lora_rx_amount(&lora));

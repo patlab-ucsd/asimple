@@ -5,17 +5,15 @@
 #ifndef ADC_H_
 #define ADC_H_
 
-// TODO: needed to bring in am_hal_adc_slot_chan_e
-// (and adc.h depends on sysctrl.h)
-#include "am_hal_sysctrl.h"
 #include "am_hal_adc.h"
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** ADC structure forward declaration. */
@@ -38,7 +36,8 @@ struct adc;
  * @param[in] size Size of pin array.
  */
 struct adc *adc_get_instance(const uint8_t pins[], size_t size);
-//struct adc *adc_get_instance_channels(struct adc *adc, const am_hal_adc_slot_chan_e channels[], size_t size);
+// struct adc *adc_get_instance_channels(struct adc *adc, const
+// am_hal_adc_slot_chan_e channels[], size_t size);
 
 /** Deinitializes the given adc structure, freeing resources held, including
  * the associated UART instance, once all borrowed instances are
@@ -71,18 +70,22 @@ bool adc_sleep(struct adc *adc);
  * Samples will be placed at locations corresponding to pins[]
  *
  * @param[in] adc Pointer to the ADC object to use.
- * @param[out] out_samples Data extracted from the ADC, if there is data available.
+ * @param[out] out_samples Data extracted from the ADC, if there is data
+ * available.
  * @param[in] pins The pins we want to get data from.
  * @param[in] size The number of pins we want to get data from.
  *
  * @returns True if there was data in the queue to extract, false otherwise.
  */
 bool adc_get_sample(
-	struct adc *adc, uint32_t out_samples[], const uint8_t pins[], size_t size);
+	struct adc *adc, uint32_t out_samples[], const uint8_t pins[], size_t size
+);
 
 // As above, but specified in terms of ADC channels
 bool adc_get_sample_channels(
-	struct adc *adc, uint32_t out_samples[], const am_hal_adc_slot_chan_e channels[], size_t size);
+	struct adc *adc, uint32_t out_samples[],
+	const am_hal_adc_slot_chan_e channels[], size_t size
+);
 
 /** Trigger the ADC to collect a sample.
  *
@@ -94,4 +97,4 @@ void adc_trigger(struct adc *adc);
 } // extern "C"
 #endif
 
-#endif//ADC_H_
+#endif // ADC_H_

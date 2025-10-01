@@ -9,7 +9,8 @@
 #include <lfs.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 struct asimple_littlefs
@@ -28,4 +29,4 @@ int asimple_littlefs_unmount(struct asimple_littlefs *fs);
 } // extern "C"
 #endif
 
-#endif//ASIMPLE_LITTLEFS_H_
+#endif // ASIMPLE_LITTLEFS_H_

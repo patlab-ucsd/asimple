@@ -4,9 +4,9 @@
 #include <syscalls.h>
 #include <syscalls_internal.h>
 
-#include <sys/time.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <stdint.h>
 
@@ -69,7 +69,8 @@ static int syscalls_close(void *sys, int file)
 	return base->close(base, file);
 }
 
-static int syscalls_gettimeofday(void *sys, struct timeval *ptimeval, void *ptimezone)
+static int
+syscalls_gettimeofday(void *sys, struct timeval *ptimeval, void *ptimezone)
 {
 	struct syscalls_base *base = sys;
 	if (!base || !base->gettimeofday)
@@ -112,33 +113,33 @@ struct syscalls_devices
 static struct syscalls_devices devices;
 void syscalls_register_rtc(void *device)
 {
-	devices.rtc = (struct syscalls_base*)device;
+	devices.rtc = (struct syscalls_base *)device;
 }
 
 void syscalls_register_stdin(void *device)
 {
-	devices.stdio[0] = (struct syscalls_base*)device;
+	devices.stdio[0] = (struct syscalls_base *)device;
 }
 
 void syscalls_register_stdout(void *device)
 {
-	devices.stdio[1] = (struct syscalls_base*)device;
+	devices.stdio[1] = (struct syscalls_base *)device;
 }
 
 void syscalls_register_stderr(void *device)
 {
-	devices.stdio[2] = (struct syscalls_base*)device;
+	devices.stdio[2] = (struct syscalls_base *)device;
 }
 
 void syscalls_register_fs(void *device)
 {
-	devices.fs = (struct syscalls_base*)device;
+	devices.fs = (struct syscalls_base *)device;
 }
 
 // Syscalls
 
-__attribute__ ((used))
-int _gettimeofday(struct timeval *ptimeval, void *ptimezone)
+__attribute__((used)) int
+_gettimeofday(struct timeval *ptimeval, void *ptimezone)
 {
 	(void)ptimezone;
 
@@ -159,8 +160,7 @@ int _gettimeofday(struct timeval *ptimeval, void *ptimezone)
 	return result;
 }
 
-__attribute__ ((used))
-int _open(const char *name, int flags, int mode)
+__attribute__((used)) int _open(const char *name, int flags, int mode)
 {
 	// FIXME check if mounted?
 	if (devices.fs && strncmp(name, "fs:/", 4) == 0)
@@ -176,8 +176,7 @@ int _open(const char *name, int flags, int mode)
 	return -1;
 }
 
-__attribute__ ((used))
-int _read(int file, char *ptr, int len)
+__attribute__((used)) int _read(int file, char *ptr, int len)
 {
 	if (file < 3)
 	{
@@ -191,8 +190,7 @@ int _read(int file, char *ptr, int len)
 	return -1;
 }
 
-__attribute__ ((used))
-int _write(int file, char *ptr, int len)
+__attribute__((used)) int _write(int file, char *ptr, int len)
 {
 	// stdin, stdout, stderr
 	if (file < 3)
@@ -207,12 +205,12 @@ int _write(int file, char *ptr, int len)
 	return -1;
 }
 
-__attribute__ ((used))
-int _lseek (int file, int ptr, int dir)
+__attribute__((used)) int _lseek(int file, int ptr, int dir)
 {
 	if (file < 3)
 	{
-		return syscalls_lseek(devices.stdio[file], file, ptr, dir);;
+		return syscalls_lseek(devices.stdio[file], file, ptr, dir);
+		;
 	}
 	else if (file >= 3)
 	{
@@ -222,8 +220,7 @@ int _lseek (int file, int ptr, int dir)
 	return -1;
 }
 
-__attribute__ ((used))
-int _close (int file)
+__attribute__((used)) int _close(int file)
 {
 	if (file < 3)
 	{
@@ -238,8 +235,7 @@ int _close (int file)
 	return -1;
 }
 
-__attribute__((used))
-int _kill(int pid, int sig)
+__attribute__((used)) int _kill(int pid, int sig)
 {
 	(void)pid;
 	(void)sig;
@@ -247,14 +243,12 @@ int _kill(int pid, int sig)
 	return -1;
 }
 
-__attribute((used))
-int _getpid(void)
+__attribute((used)) int _getpid(void)
 {
 	return 1;
 }
 
-__attribute__((used))
-int _isatty(int file)
+__attribute__((used)) int _isatty(int file)
 {
 	(void)file;
 	if (file < 3)
@@ -264,8 +258,7 @@ int _isatty(int file)
 	return 0;
 }
 
-__attribute__((used))
-int _fstat(int file, struct stat *st)
+__attribute__((used)) int _fstat(int file, struct stat *st)
 {
 	if (file < 3)
 	{
@@ -277,8 +270,7 @@ int _fstat(int file, struct stat *st)
 	}
 }
 
-__attribute__((used))
-int _stat(char *filename, struct stat *st)
+__attribute__((used)) int _stat(char *filename, struct stat *st)
 {
 	if (devices.fs && strncmp(filename, "fs:/", 4) == 0)
 	{

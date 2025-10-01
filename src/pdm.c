@@ -9,18 +9,18 @@
 
 #include <arm_math.h>
 
-#include "am_mcu_apollo.h"
 #include "am_bsp.h"
+#include "am_mcu_apollo.h"
 #include "am_util.h"
 
-#include <stdint.h>
 #include <stdatomic.h>
+#include <stdint.h>
 
 struct pdm
 {
 	uint32_t g_ui32PDMDataBuffer1[PDM_SIZE];
-    uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
-    void *PDMHandle;
+	uint32_t g_ui32PDMDataBuffer2[PDM_SIZE];
+	void *PDMHandle;
 	atomic_uint refcount;
 };
 
@@ -28,8 +28,7 @@ static struct pdm pdm;
 
 static volatile bool g_bPDMDataReady = false;
 
-am_hal_pdm_config_t g_sPdmConfig =
-{
+am_hal_pdm_config_t g_sPdmConfig = {
 	.eClkDivider = AM_HAL_PDM_MCLKDIV_1,
 	.eLeftGain = AM_HAL_PDM_GAIN_P405DB,
 	.eRightGain = AM_HAL_PDM_GAIN_P405DB,
@@ -48,7 +47,7 @@ am_hal_pdm_config_t g_sPdmConfig =
 	.bLRSwap = 0,
 };
 
-struct pdm* pdm_get_instance(void)
+struct pdm *pdm_get_instance(void)
 {
 	if (!pdm.PDMHandle)
 	{
@@ -65,11 +64,9 @@ struct pdm* pdm_get_instance(void)
 		// Configure and enable PDM interrupts (set up to trigger on DMA
 		// completion).
 		am_hal_pdm_interrupt_enable(
-			pdm.PDMHandle,
-			(AM_HAL_PDM_INT_DERR
-				| AM_HAL_PDM_INT_DCMP
-				| AM_HAL_PDM_INT_UNDFL
-				| AM_HAL_PDM_INT_OVF));
+			pdm.PDMHandle, (AM_HAL_PDM_INT_DERR | AM_HAL_PDM_INT_DCMP |
+							AM_HAL_PDM_INT_UNDFL | AM_HAL_PDM_INT_OVF)
+		);
 
 		am_hal_pdm_fifo_flush(pdm.PDMHandle);
 		pdm_sleep(&pdm);
@@ -88,8 +85,11 @@ bool pdm_sleep(struct pdm *pdm)
 	int status;
 	do
 	{
-		status = am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_SYSCTRL_DEEPSLEEP, true);
-	} while (status == AM_HAL_STATUS_IN_USE);
+		status = am_hal_pdm_power_control(
+			pdm->PDMHandle, AM_HAL_SYSCTRL_DEEPSLEEP, true
+		);
+	}
+	while (status == AM_HAL_STATUS_IN_USE);
 
 	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_HAL_GPIO_DISABLE);
 	am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_HAL_GPIO_DISABLE);
@@ -100,7 +100,8 @@ bool pdm_enable(struct pdm *pdm)
 {
 	// This can fail if there is no saved state, which indicates we've never
 	// gone asleep
-	int status = am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_SYSCTRL_WAKE, true);
+	int status =
+		am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_SYSCTRL_WAKE, true);
 	if (status != AM_HAL_STATUS_SUCCESS)
 	{
 		return false;
@@ -121,19 +122,21 @@ void pdm_disable(struct pdm *pdm)
 			NVIC_DisableIRQ(PDM_IRQn);
 			am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_DATA, g_AM_HAL_GPIO_DISABLE);
 			am_hal_gpio_pinconfig(AM_BSP_GPIO_MIC_CLK, g_AM_HAL_GPIO_DISABLE);
-			am_hal_pdm_power_control(pdm->PDMHandle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+			am_hal_pdm_power_control(
+				pdm->PDMHandle, AM_HAL_SYSCTRL_DEEPSLEEP, false
+			);
 			am_hal_pdm_deinitialize(pdm->PDMHandle);
 			memset(pdm, 0, sizeof(*pdm));
 		}
 	}
 }
 
-uint32_t* pdm_get_buffer1(struct pdm *pdm)
+uint32_t *pdm_get_buffer1(struct pdm *pdm)
 {
 	return pdm->g_ui32PDMDataBuffer1;
 }
 
-uint32_t* pdm_get_buffer2(struct pdm *pdm)
+uint32_t *pdm_get_buffer2(struct pdm *pdm)
 {
 	return pdm->g_ui32PDMDataBuffer2;
 }
@@ -143,7 +146,7 @@ void pdm_flush(struct pdm *pdm)
 	am_hal_pdm_fifo_flush(pdm->PDMHandle);
 }
 
-void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer)
+void pdm_data_get(struct pdm *pdm, uint32_t *g_ui32PDMDataBuffer)
 {
 	am_hal_interrupt_master_disable();
 	g_bPDMDataReady = false;
@@ -151,7 +154,7 @@ void pdm_data_get(struct pdm *pdm, uint32_t* g_ui32PDMDataBuffer)
 
 	// Configure DMA and target address.
 	am_hal_pdm_transfer_t sTransfer;
-	sTransfer.ui32TargetAddr = (uint32_t ) g_ui32PDMDataBuffer;
+	sTransfer.ui32TargetAddr = (uint32_t)g_ui32PDMDataBuffer;
 	sTransfer.ui32TotalCount = PDM_BYTES;
 
 	// Start the data transfer.
@@ -172,15 +175,16 @@ void am_pdm0_isr(void)
 	}
 }
 
-void pcm_print(struct uart *uart, uint32_t* g_ui32PDMDataBuffer)
+void pcm_print(struct uart *uart, uint32_t *g_ui32PDMDataBuffer)
 {
-	int16_t *pi16PDMData = (int16_t *) g_ui32PDMDataBuffer;
+	int16_t *pi16PDMData = (int16_t *)g_ui32PDMDataBuffer;
 
 	// Convert the PDM samples to floats.
 	for (uint32_t i = 0; i < PDM_SIZE; i++)
 	{
 		uint16_t data = pi16PDMData[i];
-		for (size_t sent = 0; sent != 2;) {
+		for (size_t sent = 0; sent != 2;)
+		{
 			sent += uart_write(uart, (uint8_t *)&data + sent, 2 - sent);
 		}
 	}

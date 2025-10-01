@@ -3,12 +3,12 @@
 
 #include "cli.h"
 
+#include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
-#include <assert.h>
 
 static const int ring_size = 4;
 
@@ -39,8 +39,10 @@ int read_line(char buf[], size_t size, bool echo)
 		if (echo)
 			putchar((char)c);
 		// Check for special characters
-		if (c == '\b') {
-			if (i > 0) {
+		if (c == '\b')
+		{
+			if (i > 0)
+			{
 				--i;
 			}
 			if (echo)
@@ -51,7 +53,8 @@ int read_line(char buf[], size_t size, bool echo)
 			}
 			continue;
 		}
-		else if (c == '\r') {
+		else if (c == '\r')
+		{
 			buf[i] = '\0';
 			if (echo)
 			{
@@ -62,16 +65,17 @@ int read_line(char buf[], size_t size, bool echo)
 		}
 		if (echo)
 			fflush(stdout);
-		if (i < size-1)
+		if (i < size - 1)
 			buf[i++] = c;
 	}
 	return 0;
 }
 
-cli_line_buffer* cli_read_line(struct cli *cli)
+cli_line_buffer *cli_read_line(struct cli *cli)
 {
 	cli_line_buffer *buf = ring_buffer_get(&cli->history, ring_size - 1);
-	int result = read_line((char*)buf, sizeof(*buf)/sizeof((*buf)[0]), cli->echo);
+	int result =
+		read_line((char *)buf, sizeof(*buf) / sizeof((*buf)[0]), cli->echo);
 	if (result == 0)
 	{
 		ring_buffer_advance(&cli->history);
@@ -86,7 +90,7 @@ void ring_buffer_init(struct ring_buffer *buf, size_t size)
 	buf->end = 0;
 	buf->start = 0;
 	static_assert(sizeof(buf->data[0]) > 8, "wrong size guess");
-	buf->data = malloc(sizeof(buf->data[0])*size);
+	buf->data = malloc(sizeof(buf->data[0]) * size);
 }
 
 void ring_buffer_destroy(struct ring_buffer *buf)
@@ -110,7 +114,8 @@ void ring_buffer_advance(struct ring_buffer *buf)
 		buf->empty = false;
 	buf->start = (buf->start + 1) % ring_size;
 	if (buf->start == buf->end)
-		buf->end = (buf->end + 1) % ring_size;;
+		buf->end = (buf->end + 1) % ring_size;
+	;
 }
 
 size_t ring_buffer_in_use(struct ring_buffer *buf)

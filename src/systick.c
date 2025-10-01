@@ -7,8 +7,8 @@
 
 #include <sys/time.h>
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 static bool initialized = false;
 static volatile uint64_t jiffies;
@@ -83,13 +83,15 @@ struct timespec systick_time(void)
 	do
 	{
 		prev = systick_jiffies();
-		counter = ((SYSTEM_CLOCK / 1000) - 1) -  SysTick->VAL;
+		counter = ((SYSTEM_CLOCK / 1000) - 1) - SysTick->VAL;
 		current = systick_jiffies();
-	} while (prev != current);
+	}
+	while (prev != current);
 
 	struct timespec result = {
 		.tv_sec = current / 1000,
-		.tv_nsec = (current % 1000u) * 1000000ull + ((counter + 1) * 1000ull / 48),
+		.tv_nsec =
+			(current % 1000u) * 1000000ull + ((counter + 1) * 1000ull / 48),
 	};
 	return result;
 }

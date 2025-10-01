@@ -14,7 +14,7 @@
 #undef errno
 extern int errno;
 
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
 
 struct syscalls_littlefs
 {
@@ -27,7 +27,7 @@ struct syscalls_littlefs
 int littlefs_open_(void *context, const char *name, int flags, int mode)
 {
 	(void)mode; // We don't use mode as we don't have permissions
-	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs *)context;
 	size_t max = ARRAY_SIZE(fs->files);
 	size_t i;
 	for (i = 0; i < max; ++i)
@@ -62,7 +62,7 @@ int littlefs_open_(void *context, const char *name, int flags, int mode)
 	int result = lfs_file_open(&fs->fs->lfs, &fs->files[i], name, lfs_flags);
 	if (result < 0)
 	{
-		//FIXME convert into errno
+		// FIXME convert into errno
 		errno = result;
 		return -1;
 	}
@@ -73,11 +73,11 @@ int littlefs_open_(void *context, const char *name, int flags, int mode)
 
 int littlefs_read_(void *context, int file, char *ptr, int len)
 {
-	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs *)context;
 	int result = lfs_file_read(&fs->fs->lfs, fs->active_files[file], ptr, len);
 	if (result < 0)
 	{
-		//FIXME convert into errno
+		// FIXME convert into errno
 		errno = result;
 		return -1;
 	}
@@ -86,11 +86,11 @@ int littlefs_read_(void *context, int file, char *ptr, int len)
 
 int littlefs_write_(void *context, int file, char *ptr, int len)
 {
-	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs *)context;
 	int result = lfs_file_write(&fs->fs->lfs, fs->active_files[file], ptr, len);
 	if (result < 0)
 	{
-		//FIXME convert into errno
+		// FIXME convert into errno
 		errno = result;
 		return -1;
 	}
@@ -99,21 +99,22 @@ int littlefs_write_(void *context, int file, char *ptr, int len)
 
 int littlefs_lseek_(void *context, int file, int ptr, int dir)
 {
-	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs *)context;
 	int lfs_dir;
-	switch(dir)
+	switch (dir)
 	{
-		case SEEK_SET:
-			lfs_dir = LFS_SEEK_SET;
-			break;
-		case SEEK_CUR:
-			lfs_dir = LFS_SEEK_CUR;
-			break;
-		case SEEK_END:
-			lfs_dir = LFS_SEEK_END;
-			break;
+	case SEEK_SET:
+		lfs_dir = LFS_SEEK_SET;
+		break;
+	case SEEK_CUR:
+		lfs_dir = LFS_SEEK_CUR;
+		break;
+	case SEEK_END:
+		lfs_dir = LFS_SEEK_END;
+		break;
 	}
-	int result = lfs_file_seek(&fs->fs->lfs, fs->active_files[file], ptr, lfs_dir);
+	int result =
+		lfs_file_seek(&fs->fs->lfs, fs->active_files[file], ptr, lfs_dir);
 	if (result < 0)
 	{
 		// FIXME convert into errno
@@ -125,14 +126,14 @@ int littlefs_lseek_(void *context, int file, int ptr, int dir)
 
 int littlefs_close_(void *context, int file)
 {
-	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs *)context;
 	if (!fs->active_files[file])
 	{
 		errno = EBADF;
 		return -1;
 	}
 	int result = lfs_file_close(&fs->fs->lfs, fs->active_files[file]);
-	//FIXME what happens in the case of an error??????????????
+	// FIXME what happens in the case of an error??????????????
 
 	if (result < 0)
 	{
@@ -142,13 +143,12 @@ int littlefs_close_(void *context, int file)
 	}
 	fs->active_files[file] = NULL;
 	return result;
-
-
 }
 
-static int littlefs_stat_(void *context, const char* filename, struct stat *stat)
+static int
+littlefs_stat_(void *context, const char *filename, struct stat *stat)
 {
-	struct syscalls_littlefs *fs = (struct syscalls_littlefs*)context;
+	struct syscalls_littlefs *fs = (struct syscalls_littlefs *)context;
 	if (!fs)
 	{
 		errno = ENOENT;
@@ -175,7 +175,8 @@ static int littlefs_stat_(void *context, const char* filename, struct stat *stat
 		.st_rdev = 2, // FIXME
 		.st_size = info.size,
 		.st_blksize = fs->fs->lfs.cfg->block_size, // FIXME is this right?
-		.st_blocks = (info.size - 1) / fs->fs->lfs.cfg->block_size + 1, // FIXME is this right?
+		.st_blocks = (info.size - 1) / fs->fs->lfs.cfg->block_size +
+					 1, // FIXME is this right?
 		.st_atim = {0}, // FIXME
 		.st_mtim = {0}, // FIXME
 		.st_ctim = {0}, // FIXME

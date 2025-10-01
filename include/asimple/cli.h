@@ -5,11 +5,12 @@
 #ifndef CLI_H_
 #define CLI_H_
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 typedef char cli_line_buffer[32];
@@ -61,4 +62,4 @@ int read_line(char buf[], size_t size, bool echo);
 } // extern "C"
 #endif
 
-#endif//CLI_H_
+#endif // CLI_H_
