@@ -22,21 +22,20 @@ static struct adc adc;
 
 /** Configure ADC to:
  *
- * - Use the high-freq clock/2 as a clock
+ * - Use the high-freq clock as a clock
  * - Trigger on a rising edge of whatever enables it
  * - Trigger by software only
  * - Internal 2.0V reference
- * - Low power CLKMODE (turns clock off between samples)
- * - Low power mode (disables ADC between samples, has 50uS latency)
- * - Use Timer3 to keep sampling automatically after initial trigger
+ * - High power CLKMODE (remains active between samples)
+ * - High power mode (low latency when triggering new sample)
  */
 static const am_hal_adc_config_t adc_config = {
-	.eClock = AM_HAL_ADC_CLKSEL_HFRC_DIV2,
+	.eClock = AM_HAL_ADC_CLKSEL_HFRC,
 	.ePolarity = AM_HAL_ADC_TRIGPOL_RISING,
 	.eTrigger = AM_HAL_ADC_TRIGSEL_SOFTWARE,
 	.eReference = AM_HAL_ADC_REFSEL_INT_2P0,
-	.eClockMode = AM_HAL_ADC_CLKMODE_LOW_POWER,
-	.ePowerMode = AM_HAL_ADC_LPMODE1,
+	.eClockMode = AM_HAL_ADC_CLKMODE_LOW_LATENCY,
+	.ePowerMode = AM_HAL_ADC_LPMODE0,
 	.eRepeat = AM_HAL_ADC_SINGLE_SCAN
 };
 
