@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Gabriel Marcano, 2023
 
-#include "am_bsp.h"
 #include "am_mcu_apollo.h"
 #include "am_util.h"
 
@@ -19,7 +18,7 @@ struct adc
 	atomic_uint refcount;
 };
 
-static struct adc adc;
+static struct adc adc_;
 
 /** Configure ADC to:
  *
@@ -154,7 +153,7 @@ const int ADC_CHANNEL_MAX =
 // * *****************************************************************************
 
 static void adc_init_channels(
-	struct adc *adc, const am_hal_adc_slot_chan_e *channels, size_t size
+	struct adc *adc, const am_hal_adc_slot_chan_e *channels, uint8_t size
 )
 {
 	if (size > 8)
@@ -190,7 +189,7 @@ static void adc_init_channels(
 				.uFuncSel = settings.gpio_funcsel_p
 			};
 
-			int status = am_hal_gpio_pinconfig(settings.pin_p, cfg);
+			uint32_t status = am_hal_gpio_pinconfig(settings.pin_p, cfg);
 			if (status != AM_HAL_STATUS_SUCCESS)
 			{
 				am_util_stdio_printf(
@@ -217,7 +216,7 @@ static void adc_init_channels(
 	// Power on the ADC.
 	// Don't save power state (actually can't-- state is saved when switching
 	// to SLEEP, restored on WAKE)
-	int result =
+	uint32_t result =
 		am_hal_adc_power_control(adc->handle, AM_HAL_SYSCTRL_WAKE, false);
 
 	if (result != AM_HAL_STATUS_SUCCESS)
@@ -293,7 +292,8 @@ am_hal_adc_slot_chan_e adc_channel_for_pin(uint8_t pin)
 {
 
 	// Loop over single-ended channels, see if any match
-	for (int i = AM_HAL_ADC_SLOT_CHSEL_SE0; i <= AM_HAL_ADC_SLOT_CHSEL_SE9; i++)
+	for (size_t i = AM_HAL_ADC_SLOT_CHSEL_SE0; i <= AM_HAL_ADC_SLOT_CHSEL_SE9;
+		 i++)
 	{
 
 		// sanity check assert: all channels should be in their own index
@@ -309,7 +309,7 @@ am_hal_adc_slot_chan_e adc_channel_for_pin(uint8_t pin)
 
 		if (g_channel_settings[i].pin_p == pin)
 		{
-			return i;
+			return (am_hal_adc_slot_chan_e)i;
 		}
 	}
 
@@ -321,9 +321,9 @@ am_hal_adc_slot_chan_e adc_channel_for_pin(uint8_t pin)
 		;
 }
 
-struct adc *adc_get_instance(const uint8_t *pins, size_t size)
+struct adc *adc_get_instance(const uint8_t *pins, uint8_t size)
 {
-	if (!adc.handle)
+	if (!adc_.handle)
 	{
 		if (size > 8)
 		{
@@ -341,11 +341,11 @@ struct adc *adc_get_instance(const uint8_t *pins, size_t size)
 			channels[i] = adc_channel_for_pin(pins[i]);
 		}
 
-		adc_init_channels(&adc, channels, size);
-		adc_sleep(&adc);
+		adc_init_channels(&adc_, channels, size);
+		adc_sleep(&adc_);
 	}
-	adc.refcount++;
-	return &adc;
+	adc_.refcount++;
+	return &adc_;
 }
 
 void adc_deinitialize(struct adc *adc)
@@ -398,7 +398,7 @@ bool adc_sleep(struct adc *adc)
 	// request saving the state
 	// Also, spinloop while the device is busy
 	// Implementation based off spi.c
-	int status;
+	uint32_t status;
 	do
 	{
 		status = am_hal_adc_power_control(
@@ -437,7 +437,7 @@ bool adc_enable(struct adc *adc)
 {
 	// This can fail if there is no saved state, which indicates we've never
 	// gone asleep
-	int status =
+	uint32_t status =
 		am_hal_adc_power_control(adc->handle, AM_HAL_SYSCTRL_WAKE, true);
 	if (status != AM_HAL_STATUS_SUCCESS)
 	{

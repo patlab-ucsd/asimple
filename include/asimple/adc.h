@@ -35,7 +35,7 @@ struct adc;
  * @param[in] pins Array of pin numbers to initialize.
  * @param[in] size Size of pin array.
  */
-struct adc *adc_get_instance(const uint8_t pins[], size_t size);
+struct adc *adc_get_instance(const uint8_t pins[], uint8_t size);
 // struct adc *adc_get_instance_channels(struct adc *adc, const
 // am_hal_adc_slot_chan_e channels[], size_t size);
 
