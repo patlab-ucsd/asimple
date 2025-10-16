@@ -37,6 +37,40 @@ void gpio_init(
 		am_hal_gpio_interrupt_enable(pinterrupt_mask);
 		NVIC_EnableIRQ(GPIO_IRQn);
 	}
+	else if (mode == GPIO_MODE_INPUT_PULLUP)
+	{
+		const am_hal_gpio_pincfg_t input_gpio = {
+			.uFuncSel = 3,
+			.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_DISABLE,
+			.eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+			.eGPRdZero = AM_HAL_GPIO_PIN_RDZERO_READPIN,
+			.ePullup = AM_HAL_GPIO_PIN_PULLUP_WEAK,
+			.eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI
+		};
+		am_hal_gpio_pinconfig(pin, input_gpio);
+
+		AM_HAL_GPIO_MASKCREATE(interrupt_mask);
+		AM_HAL_GPIO_MASKBIT(pinterrupt_mask, pin);
+		am_hal_gpio_interrupt_enable(pinterrupt_mask);
+		NVIC_EnableIRQ(GPIO_IRQn);
+	}
+	else if (mode == GPIO_MODE_INPUT_PULLDOWN)
+	{
+		const am_hal_gpio_pincfg_t input_gpio = {
+			.uFuncSel = 3,
+			.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_DISABLE,
+			.eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+			.eGPRdZero = AM_HAL_GPIO_PIN_RDZERO_READPIN,
+			.ePullup = AM_HAL_GPIO_PIN_PULLDOWN,
+			.eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI
+		};
+		am_hal_gpio_pinconfig(pin, input_gpio);
+
+		AM_HAL_GPIO_MASKCREATE(interrupt_mask);
+		AM_HAL_GPIO_MASKBIT(pinterrupt_mask, pin);
+		am_hal_gpio_interrupt_enable(pinterrupt_mask);
+		NVIC_EnableIRQ(GPIO_IRQn);
+	}
 	else if (mode == GPIO_MODE_OPENDRAIN)
 	{
 		const am_hal_gpio_pincfg_t opendrain_gpio = {
