@@ -5,6 +5,8 @@
 #ifndef GPIO_H_
 #define GPIO_H_
 
+#include <am_mcu_apollo.h>
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -16,6 +18,7 @@ extern "C"
 /** GPIO struct. */
 struct gpio
 {
+	am_hal_gpio_pincfg_t config;
 	uint8_t pin;
 };
 
@@ -26,6 +29,12 @@ enum gpio_mode
 	GPIO_MODE_INPUT_PULLUP,
 	GPIO_MODE_INPUT_PULLDOWN,
 	GPIO_MODE_OPENDRAIN
+};
+
+enum gpio_interrupt_direction
+{
+	GPIO_INTERRUPT_DIRECTION_LO2HI,
+	GPIO_INTERRUPT_DIRECTION_HI2LO,
 };
 
 // FIXME we should let the type of GPIO be configurable, or document how to do
@@ -57,6 +66,14 @@ void gpio_set(struct gpio *gpio, bool state);
  * @Returns True if the pin reads high, false otherwise.
  */
 bool gpio_read(struct gpio *gpio);
+
+/** Set the GPIO interrupt direction.
+ *
+ * @param[in] direction The direction of the interrupt.
+ */
+void gpio_set_interrupt_direction(
+	struct gpio *gpio, enum gpio_interrupt_direction direction
+);
 
 #ifdef __cplusplus
 } // extern "C"
